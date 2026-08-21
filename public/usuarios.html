@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Britech — Crear usuario</title>
+    <link rel="stylesheet" href="/assets/css/login.css">
+</head>
+<body>
+    <main class="login-caja">
+        <h1 class="login-logo">Britech</h1>
+        <p class="login-sub">Crear usuario</p>
+
+        <form id="form-usuario">
+            <label for="nombre">Nombre</label>
+            <input id="nombre" type="text" required autofocus>
+
+            <label for="email">Email</label>
+            <input id="email" type="email" required>
+
+            <label for="rol">Rol</label>
+            <select id="rol">
+                <option value="2">Vendedor</option>
+                <option value="1">Administrador</option>
+            </select>
+
+            <p id="msg-error" class="login-error oculto"></p>
+            <p id="msg-ok" class="login-ok oculto"></p>
+            <button type="submit">Crear y enviar invitación</button>
+        </form>
+
+        <p class="volver"><a href="/pos.html">← Volver al POS</a></p>
+    </main>
+
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/usuarios.js"></script>
+</body>
+</html>

@@ -371,6 +371,11 @@ input.addEventListener('keydown', async (e) => {
     catch { window.location.href = '/login.html'; return; }
     document.getElementById('vendedor-nombre').textContent = sesion.usuario.nombre;
 
+    // El link a "Usuarios" solo lo ve el admin.
+    if (sesion.usuario.rol === 'admin') {
+        document.getElementById('link-usuarios').classList.remove('oculto');
+    }
+
     document.getElementById('btn-logout').addEventListener('click', async () => {
         try { await api.post('/api/logout', {}); } catch {}
         window.location.href = '/login.html';

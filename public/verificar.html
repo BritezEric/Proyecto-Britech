@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Britech — Activar cuenta</title>
+    <link rel="stylesheet" href="/assets/css/login.css">
+</head>
+<body>
+    <main class="login-caja">
+        <h1 class="login-logo">Britech</h1>
+        <p class="login-sub">Activá tu cuenta</p>
+
+        <form id="form-verificar">
+            <label for="password">Nueva contraseña</label>
+            <input id="password" type="password" required autocomplete="new-password" minlength="8">
+
+            <label for="password2">Repetir contraseña</label>
+            <input id="password2" type="password" required autocomplete="new-password">
+
+            <p id="msg-error" class="login-error oculto"></p>
+            <p id="msg-ok" class="login-ok oculto"></p>
+            <button type="submit">Activar cuenta</button>
+        </form>
+    </main>
+
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/verificar.js"></script>
+</body>
+</html>

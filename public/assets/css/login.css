@@ -42,3 +42,16 @@ button:disabled { background: #93c5fd; cursor: not-allowed; }
     background: #fee2e2; color: #991b1b; border-radius: 8px; font-size: .9rem;
 }
 .oculto { display: none; }
+
+/* Reutilizado por las páginas de usuarios / activar / recuperar */
+select {
+    padding: .7rem .8rem; margin-bottom: 1rem;
+    border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; background: #fff;
+}
+.login-ok {
+    margin: 0 0 1rem; padding: .6rem .8rem;
+    background: #dcfce7; color: #166534; border-radius: 8px; font-size: .9rem;
+}
+.volver { text-align: center; margin: 1rem 0 0; font-size: .85rem; }
+.volver a, .login-link { color: #2563eb; text-decoration: none; }
+.login-link-fila { text-align: center; margin-top: 1rem; font-size: .85rem; }

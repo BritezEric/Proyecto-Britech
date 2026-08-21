@@ -76,5 +76,10 @@ Se crea el usuario → se genera un TOKEN → se envía por email un link
   Probado: login OK/erróneo, rutas protegidas (401), logout.
 - ✅ **B2 — PHPMailer** (2026-08-19): instalado vía Composer; `App\Core\Mailer`
   envía por SMTP con credenciales del `.env`. Correo de prueba enviado OK.
-- ⬜ **B3 — Verificación de correo:** tokens + link + verificar.
-- ⬜ **B4 — Recuperación de contraseña:** olvidé → link → nueva contraseña.
+- ✅ **B3 — Registro + verificación** (2026-08-19): el admin crea usuarios
+  (`UsuarioService`/`UsuarioController`, solo admin), se genera token y se manda
+  correo; el usuario define su contraseña en `verificar.html`. `TokenRepository`
+  (tokens hasheados, expiración, un solo uso). Probado end-to-end.
+- ✅ **B4 — Recuperación de contraseña** (2026-08-19): `olvide.html` → correo con
+  link → `restablecer.html`. No revela si el email existe. Probado: la clave vieja
+  deja de funcionar tras el reset.

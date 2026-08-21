@@ -10,13 +10,20 @@ use App\Controllers\ClienteController;
 use App\Controllers\TipoPagoController;
 use App\Controllers\VentaController;
 use App\Controllers\AuthController;
+use App\Controllers\UsuarioController;
 
 /** @var App\Core\Router $router */
 
 // --- Autenticación (públicas) ---
-$router->post('/api/login',  [AuthController::class, 'login']);
-$router->post('/api/logout', [AuthController::class, 'logout']);
-$router->get('/api/yo',      [AuthController::class, 'yo']);
+$router->post('/api/login',      [AuthController::class, 'login']);
+$router->post('/api/logout',     [AuthController::class, 'logout']);
+$router->get('/api/yo',          [AuthController::class, 'yo']);
+$router->post('/api/verificar',    [UsuarioController::class, 'verificar']);
+$router->post('/api/olvide',       [AuthController::class, 'olvide']);
+$router->post('/api/restablecer',  [AuthController::class, 'restablecer']);
+
+// --- Usuarios (crear: solo admin, verificado dentro del controlador) ---
+$router->post('/api/usuarios',   [UsuarioController::class, 'crear'], true);
 
 // --- POS (requieren login) ---
 $router->get('/api/productos',         [ProductoController::class, 'index'],  true);

@@ -37,4 +37,25 @@ class AuthController
         }
         Response::json(['ok' => true, 'usuario' => $usuario]);
     }
+
+    /** "Olvidé mi contraseña": manda el correo si el email existe. */
+    public function olvide(): void
+    {
+        $datos = Request::json();
+        (new AuthService())->solicitarReset($datos['email'] ?? '');
+        // Siempre respondemos ok: no revelamos si el email existe.
+        Response::json(['ok' => true]);
+    }
+
+    /** Restablecer contraseña con el token del correo. */
+    public function restablecer(): void
+    {
+        $datos = Request::json();
+        try {
+            (new AuthService())->restablecer($datos['token'] ?? '', $datos['password'] ?? '');
+            Response::json(['ok' => true]);
+        } catch (ValidacionException $e) {
+            Response::json(['ok' => false, 'error' => $e->getMessage()], 422);
+        }
+    }
 }

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Britech — Recuperar contraseña</title>
+    <link rel="stylesheet" href="/assets/css/login.css">
+</head>
+<body>
+    <main class="login-caja">
+        <h1 class="login-logo">Britech</h1>
+        <p class="login-sub">Recuperar contraseña</p>
+
+        <form id="form-olvide">
+            <label for="email">Email</label>
+            <input id="email" type="email" required autofocus>
+            <p id="msg-ok" class="login-ok oculto"></p>
+            <button type="submit">Enviar enlace</button>
+        </form>
+
+        <p class="volver"><a href="/login.html">← Volver a ingresar</a></p>
+    </main>
+
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/olvide.js"></script>
+</body>
+</html>

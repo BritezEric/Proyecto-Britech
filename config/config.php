@@ -26,6 +26,7 @@ return [
         'nombre'  => $leer('APP_NAME', 'Britech'),
         'entorno' => $leer('APP_ENV', 'local'),
         'debug'   => $leer('APP_DEBUG', 'false') === 'true',
+        'url'     => $leer('APP_URL', 'http://127.0.0.1:8123'),
     ],
     'db' => [
         'host'    => $leer('DB_HOST', '127.0.0.1'),
