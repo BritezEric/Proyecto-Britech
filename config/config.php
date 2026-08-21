@@ -35,4 +35,13 @@ return [
         'pass'    => $leer('DB_PASS', ''),
         'charset' => $leer('DB_CHARSET', 'utf8mb4'),
     ],
+    'mail' => [
+        'host'        => $leer('MAIL_HOST', 'smtp.gmail.com'),
+        'port'        => $leer('MAIL_PORT', '587'),
+        'secure'      => $leer('MAIL_SECURE', 'tls'),
+        'user'        => $leer('MAIL_USER', ''),
+        'password'    => $leer('MAIL_PASSWORD', ''),
+        'from_email'  => $leer('MAIL_FROM_EMAIL', 'no-reply@britech.local'),
+        'from_nombre' => $leer('MAIL_FROM_NOMBRE', 'Britech'),
+    ],
 ];
