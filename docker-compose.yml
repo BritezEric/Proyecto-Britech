@@ -1,0 +1,36 @@
+# Orquesta los 2 contenedores de Britech: la app (PHP+Apache) y la base (MySQL).
+# Se levanta todo con: docker compose up
+
+services:
+  # --- Contenedor de la aplicacion (PHP + Apache) ---
+  app:
+    build: .                       # construye la imagen usando el Dockerfile
+    ports:
+      - "8080:80"                  # http://localhost:8080  ->  Apache del contenedor
+    volumes:
+      - .:/var/www/html            # monta el proyecto dentro del contenedor
+    environment:                   # credenciales de la base (sobrescriben al .env)
+      DB_HOST: db                  # "db" = el nombre del otro contenedor
+      DB_PORT: "3306"
+      DB_NAME: britech_v2
+      DB_USER: root
+      DB_PASS: britech
+      DB_CHARSET: utf8mb4
+    depends_on:
+      - db                         # espera a que arranque la base
+
+  # --- Contenedor de la base de datos (MySQL) ---
+  db:
+    image: mysql:8.4               # imagen oficial de MySQL, ya lista
+    ports:
+      - "3307:3306"                # 3307 en tu PC (para no chocar con Laragon)
+    environment:
+      MYSQL_ROOT_PASSWORD: britech
+      MYSQL_DATABASE: britech_v2
+    volumes:
+      - db_data:/var/lib/mysql                       # guarda los datos (persisten)
+      - ./database:/docker-entrypoint-initdb.d       # importa el schema al crear la base
+
+# Volumen con nombre: mantiene los datos de MySQL aunque se apague el contenedor.
+volumes:
+  db_data:

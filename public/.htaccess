@@ -1,0 +1,8 @@
+# Envia todas las peticiones que NO sean un archivo/carpeta real a index.php.
+# Asi las rutas /api/... llegan al Front Controller, pero los archivos
+# estaticos (css, js, imagenes) se sirven directamente.
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]

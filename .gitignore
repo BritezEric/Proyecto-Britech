@@ -1,0 +1,9 @@
+# Dependencias de Composer (se regeneran con "composer install")
+/vendor/
+
+# Credenciales y config local: NUNCA subir al repo
+.env
+
+# Logs y archivos temporales
+/storage/logs/*
+!/storage/logs/.gitkeep

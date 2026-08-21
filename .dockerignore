@@ -1,0 +1,5 @@
+# Archivos que Docker no necesita en el contexto de build.
+.git
+.env
+storage/logs/*
+docs

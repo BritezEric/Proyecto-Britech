@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Britech — Punto de Venta</title>
+    <link rel="stylesheet" href="/assets/css/pos.css">
+</head>
+<body>
+    <header class="barra">
+        <span class="logo">Britech · POS</span>
+        <span class="vendedor">Vendedor: Administrador</span>
+    </header>
+
+    <main class="pos">
+        <!-- IZQUIERDA: buscar / escanear productos -->
+        <section class="panel panel-productos">
+            <label for="busqueda" class="etiqueta">Buscar o escanear producto</label>
+            <input
+                id="busqueda"
+                class="buscador"
+                type="text"
+                placeholder="Escaneá el código, o escribí nombre / SKU…"
+                autocomplete="off"
+                autofocus>
+
+            <div id="resultados" class="resultados">
+                <p class="vacio">Escribí o escaneá para buscar un producto.</p>
+            </div>
+        </section>
+
+        <!-- DERECHA: la venta (cliente + carrito + total) -->
+        <aside class="panel panel-venta">
+            <div class="venta-cliente">
+                <label for="cliente" class="etiqueta">Cliente</label>
+                <select id="cliente" class="select-cliente"></select>
+            </div>
+
+            <div id="carrito" class="carrito">
+                <p class="vacio-carrito">Carrito vacío.<br>Buscá o escaneá un producto para agregarlo.</p>
+            </div>
+
+            <div class="venta-total">
+                <span>Total</span>
+                <span id="total">$ 0,00</span>
+            </div>
+
+            <button id="btn-cobrar" class="btn-cobrar" disabled>Cobrar (Paso 3)</button>
+        </aside>
+    </main>
+
+    <!-- Primero la capa AJAX, después la lógica del POS -->
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/pos.js"></script>
+</body>
+</html>

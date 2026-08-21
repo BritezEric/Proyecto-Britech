@@ -1,0 +1,14 @@
+{
+    "name": "britech/britech",
+    "description": "Britech - Plataforma de gestion y venta de productos tecnologicos",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    }
+}
