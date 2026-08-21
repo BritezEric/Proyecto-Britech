@@ -289,6 +289,11 @@ Todas las validaciones se hacen **en el backend** (aunque también haya ayudas e
   - `GET /api/tipos-pago`, `POST /api/ventas`. Nuevos: `VentaRepository`,
     `InventarioRepository`, `TipoPagoRepository`, `ValidacionException`.
   - Probado: venta OK, stock insuficiente (rollback), pago que no coincide.
-  - ⬜ Falta: pantalla de cobro (frontend) para confirmar desde el POS.
+- ✅ **Paso 3 (frontend) — Pantalla de cobro** (2026-08-19).
+  - Modal de cobro (elegir medio de pago), `api.post('/api/ventas')`, manejo de
+    errores, anti doble-clic. Venta completa desde la pantalla, probada.
+- ✅ **Paso 4 — Ticket** (2026-08-19).
+  - Ticket interno con formato térmico + botón Imprimir (CSS `@media print` que
+    imprime solo el ticket). Probado: venta V-000002 con su ticket.
 - ⬜ Paso 3b — Descuentos (línea + total) + pago mixto.
-- ⬜ Paso 4 — Ticket.
+- ⬜ Ticket en PDF (Dompdf) — opcional, más adelante.

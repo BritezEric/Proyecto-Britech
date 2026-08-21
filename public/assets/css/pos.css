@@ -196,3 +196,72 @@ body {
     .pos { grid-template-columns: 1fr; }
     .panel-venta { display: none; }
 }
+
+/* ===== Modales (cobro y ticket) ===== */
+.oculto { display: none !important; }
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, .55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 50;
+}
+.modal-caja {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.25);
+}
+.modal-caja h2 { margin: 0 0 1rem; }
+
+.cobro-total {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: .75rem 0; margin-bottom: 1rem;
+    border-bottom: 2px solid #eef0f3;
+}
+.cobro-total strong { font-size: 1.6rem; }
+.cobro-error {
+    margin: .75rem 0 0; padding: .6rem .8rem;
+    background: #fee2e2; color: #991b1b; border-radius: 8px; font-size: .9rem;
+}
+
+.modal-botones { display: flex; gap: .6rem; margin-top: 1.25rem; }
+.modal-botones .btn-cobrar, .modal-botones .btn-secundario { margin-top: 0; flex: 1; }
+.btn-secundario {
+    padding: .85rem; border: 1px solid #d1d5db; border-radius: 8px;
+    background: #fff; color: #374151; font-size: 1rem; font-weight: 600; cursor: pointer;
+}
+.btn-secundario:hover { background: #f3f4f6; }
+
+/* ===== Ticket (formato térmico) ===== */
+.ticket {
+    font-family: "Courier New", monospace;
+    width: 280px; margin: 0 auto; color: #000; font-size: 13px; line-height: 1.5;
+}
+.t-cabecera { text-align: center; display: flex; flex-direction: column; }
+.t-cabecera strong { font-size: 16px; letter-spacing: .06em; }
+.t-sep { border-top: 1px dashed #000; margin: 8px 0; }
+.t-datos div, .t-item, .t-total { display: flex; justify-content: space-between; gap: 1rem; }
+.t-item span:first-child { text-align: left; }
+.t-total { font-weight: bold; font-size: 15px; }
+.t-pago { margin-top: 4px; }
+.t-gracias { text-align: center; margin-top: 4px; }
+
+/* ===== Impresión: solo el ticket ===== */
+@media print {
+    body * { visibility: hidden; }
+    #modal-ticket, #modal-ticket * { visibility: visible; }
+    #modal-ticket {
+        position: absolute; inset: 0; background: #fff;
+        display: block; padding: 0;
+    }
+    #modal-ticket .modal-caja { box-shadow: none; max-width: none; padding: 0; }
+    .no-imprimir { display: none !important; }
+    .ticket { width: 72mm; }
+}

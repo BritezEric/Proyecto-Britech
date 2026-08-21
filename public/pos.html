@@ -16,40 +16,60 @@
         <!-- IZQUIERDA: buscar / escanear productos -->
         <section class="panel panel-productos">
             <label for="busqueda" class="etiqueta">Buscar o escanear producto</label>
-            <input
-                id="busqueda"
-                class="buscador"
-                type="text"
-                placeholder="Escaneá el código, o escribí nombre / SKU…"
-                autocomplete="off"
-                autofocus>
-
+            <input id="busqueda" class="buscador" type="text"
+                   placeholder="Escaneá el código, o escribí nombre / SKU…"
+                   autocomplete="off" autofocus>
             <div id="resultados" class="resultados">
                 <p class="vacio">Escribí o escaneá para buscar un producto.</p>
             </div>
         </section>
 
-        <!-- DERECHA: la venta (cliente + carrito + total) -->
+        <!-- DERECHA: la venta -->
         <aside class="panel panel-venta">
             <div class="venta-cliente">
                 <label for="cliente" class="etiqueta">Cliente</label>
                 <select id="cliente" class="select-cliente"></select>
             </div>
-
             <div id="carrito" class="carrito">
                 <p class="vacio-carrito">Carrito vacío.<br>Buscá o escaneá un producto para agregarlo.</p>
             </div>
-
             <div class="venta-total">
                 <span>Total</span>
                 <span id="total">$ 0,00</span>
             </div>
-
-            <button id="btn-cobrar" class="btn-cobrar" disabled>Cobrar (Paso 3)</button>
+            <button id="btn-cobrar" class="btn-cobrar" disabled>Cobrar</button>
         </aside>
     </main>
 
-    <!-- Primero la capa AJAX, después la lógica del POS -->
+    <!-- MODAL DE COBRO -->
+    <div id="modal-cobro" class="modal oculto">
+        <div class="modal-caja">
+            <h2>Cobro</h2>
+            <div class="cobro-total">
+                <span>Total a cobrar</span>
+                <strong id="cobro-total">$ 0,00</strong>
+            </div>
+            <label for="medio-pago" class="etiqueta">Medio de pago</label>
+            <select id="medio-pago" class="select-cliente"></select>
+            <p id="cobro-error" class="cobro-error oculto"></p>
+            <div class="modal-botones">
+                <button id="btn-cancelar" class="btn-secundario">Cancelar</button>
+                <button id="btn-confirmar" class="btn-cobrar">Confirmar venta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TICKET (se muestra tras confirmar) -->
+    <div id="modal-ticket" class="modal oculto">
+        <div class="modal-caja">
+            <div id="ticket" class="ticket"></div>
+            <div class="modal-botones no-imprimir">
+                <button id="btn-imprimir" class="btn-secundario">Imprimir</button>
+                <button id="btn-nueva-venta" class="btn-cobrar">Nueva venta</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/pos.js"></script>
 </body>

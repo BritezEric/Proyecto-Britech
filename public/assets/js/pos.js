@@ -1,6 +1,5 @@
-// ===== POS - Paso 2: buscar + carrito + cliente =====
-// Usa la capa AJAX (api.js). El frontend arma el carrito en memoria;
-// recién en el Paso 3 se envía al backend para confirmar la venta.
+// ===== POS - Pasos 2 y 3: buscar + carrito + cliente + cobro + ticket =====
+// Usa la capa AJAX (api.js).
 
 const input       = document.getElementById('busqueda');
 const resultados  = document.getElementById('resultados');
@@ -9,42 +8,53 @@ const cajaCarrito = document.getElementById('carrito');
 const elTotal     = document.getElementById('total');
 const btnCobrar   = document.getElementById('btn-cobrar');
 
-// --- Estado en memoria ---
-let clientes         = [];   // lista de clientes traída del backend
-let clienteActual    = null; // el cliente elegido (define la lista de precios)
-let ultimosResultados = [];  // resultados de la última búsqueda (para agregar)
-let carrito          = [];   // líneas: { id, nombre, precio, cantidad, stock, sobrePedido }
+// Modal de cobro
+const modalCobro  = document.getElementById('modal-cobro');
+const cobroTotal  = document.getElementById('cobro-total');
+const selMedio    = document.getElementById('medio-pago');
+const cobroError  = document.getElementById('cobro-error');
+const btnConfirmar= document.getElementById('btn-confirmar');
+const btnCancelar = document.getElementById('btn-cancelar');
 
-// Formatea plata argentina: 15000 -> "$ 15.000,00"
+// Ticket
+const modalTicket = document.getElementById('modal-ticket');
+const elTicket    = document.getElementById('ticket');
+const btnImprimir = document.getElementById('btn-imprimir');
+const btnNuevaVta = document.getElementById('btn-nueva-venta');
+
+// --- Estado ---
+let clientes = [], clienteActual = null, tiposPago = [];
+let ultimosResultados = [];
+let carrito = []; // { id, nombre, precio, cantidad, stock, sobrePedido }
+
 const money = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 
-// ================= CLIENTES =================
+// ================= CLIENTES / MEDIOS DE PAGO =================
 
 async function cargarClientes() {
     const { datos } = await api.get('/api/clientes');
     clientes = datos;
-    clienteActual = clientes[0]; // por defecto: Consumidor Final
-
+    clienteActual = clientes[0];
     selCliente.innerHTML = clientes.map(c =>
-        `<option value="${c.id}">${c.nombre} — ${c.lista}</option>`
-    ).join('');
+        `<option value="${c.id}">${c.nombre} — ${c.lista}</option>`).join('');
 }
 
-// Al cambiar de cliente: cambia la lista de precios → recalcular todo.
+async function cargarTiposPago() {
+    const { datos } = await api.get('/api/tipos-pago');
+    tiposPago = datos;
+    selMedio.innerHTML = tiposPago.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+}
+
 selCliente.addEventListener('change', async () => {
     clienteActual = clientes.find(c => c.id == selCliente.value);
     await recalcularPreciosCarrito();
-    if (input.value.trim() !== '') buscar(input.value); // refrescar resultados
+    if (input.value.trim() !== '') buscar(input.value);
 });
 
-// Pide al backend los precios de los productos del carrito para la nueva lista.
 async function recalcularPreciosCarrito() {
     if (carrito.length === 0) return;
-
     const ids = carrito.map(i => i.id).join(',');
     const { datos } = await api.get(`/api/productos/precios?ids=${ids}&lista=${clienteActual.lista_precio_id}`);
-
-    // datos = [{producto_id, precio}] -> actualizamos cada línea.
     carrito.forEach(item => {
         const p = datos.find(d => d.producto_id == item.id);
         if (p) item.precio = Number(p.precio);
@@ -79,11 +89,9 @@ function mostrarResultados(productos) {
     resultados.innerHTML = productos.map(p => {
         const sinStock    = p.stock == 0 && p.es_sobre_pedido == 0;
         const sobrePedido = p.es_sobre_pedido == 1;
-
         let estado = `<span class="stock ok">Stock: ${p.stock}</span>`;
         if (sobrePedido) estado = `<span class="stock pedido">Sobre pedido</span>`;
         else if (sinStock) estado = `<span class="stock agotado">Sin stock</span>`;
-
         return `
             <article class="producto ${sinStock ? 'inhabilitado' : 'clic'}" data-id="${p.id}">
                 <div class="info">
@@ -94,12 +102,10 @@ function mostrarResultados(productos) {
                     <span class="precio">${money.format(p.precio ?? 0)}</span>
                     ${estado}
                 </div>
-            </article>
-        `;
+            </article>`;
     }).join('');
 }
 
-// Clic en un resultado = agregarlo al carrito (un solo clic, RNF6).
 resultados.addEventListener('click', (e) => {
     const fila = e.target.closest('.producto');
     if (!fila || fila.classList.contains('inhabilitado')) return;
@@ -111,26 +117,16 @@ resultados.addEventListener('click', (e) => {
 function agregarAlCarrito(idProducto) {
     const p = ultimosResultados.find(r => r.id == idProducto);
     if (!p) return;
+    if (p.stock == 0 && p.es_sobre_pedido == 0) { alert('Este producto no tiene stock.'); return; }
 
-    const sinStock = p.stock == 0 && p.es_sobre_pedido == 0;
-    if (sinStock) { alert('Este producto no tiene stock.'); return; }
-
-    // ¿Ya está en el carrito? Sumamos cantidad; si no, lo agregamos.
     const existente = carrito.find(i => i.id == p.id);
     if (existente) {
-        if (!p.es_sobre_pedido && existente.cantidad + 1 > p.stock) {
-            alert('No hay más stock de este producto.');
-            return;
-        }
+        if (!p.es_sobre_pedido && existente.cantidad + 1 > p.stock) { alert('No hay más stock.'); return; }
         existente.cantidad++;
     } else {
         carrito.push({
-            id: p.id,
-            nombre: p.nombre,
-            precio: Number(p.precio),
-            cantidad: 1,
-            stock: Number(p.stock),
-            sobrePedido: p.es_sobre_pedido == 1,
+            id: p.id, nombre: p.nombre, precio: Number(p.precio),
+            cantidad: 1, stock: Number(p.stock), sobrePedido: p.es_sobre_pedido == 1,
         });
     }
     renderCarrito();
@@ -139,13 +135,9 @@ function agregarAlCarrito(idProducto) {
 function cambiarCantidad(idProducto, delta) {
     const item = carrito.find(i => i.id == idProducto);
     if (!item) return;
-
     const nueva = item.cantidad + delta;
     if (nueva <= 0) { quitar(idProducto); return; }
-    if (!item.sobrePedido && nueva > item.stock) {
-        alert('No hay más stock de este producto.');
-        return;
-    }
+    if (!item.sobrePedido && nueva > item.stock) { alert('No hay más stock.'); return; }
     item.cantidad = nueva;
     renderCarrito();
 }
@@ -162,7 +154,6 @@ function renderCarrito() {
         btnCobrar.disabled = true;
         return;
     }
-
     cajaCarrito.innerHTML = carrito.map(item => `
         <div class="linea" data-id="${item.id}">
             <div class="linea-info">
@@ -176,56 +167,131 @@ function renderCarrito() {
             </div>
             <span class="linea-sub">${money.format(item.precio * item.cantidad)}</span>
             <button class="linea-quitar" data-accion="quitar" aria-label="Quitar">×</button>
-        </div>
-    `).join('');
-
+        </div>`).join('');
     elTotal.textContent = money.format(calcularTotal());
     btnCobrar.disabled = false;
 }
 
 function calcularTotal() {
-    return carrito.reduce((suma, i) => suma + i.precio * i.cantidad, 0);
+    return carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
 }
 
-// Clics dentro del carrito (delegación de eventos).
 cajaCarrito.addEventListener('click', (e) => {
     const boton = e.target.closest('button[data-accion]');
     if (!boton) return;
     const id = Number(boton.closest('.linea').dataset.id);
-
     if (boton.dataset.accion === 'mas')    cambiarCantidad(id, +1);
     if (boton.dataset.accion === 'menos')  cambiarCantidad(id, -1);
     if (boton.dataset.accion === 'quitar') quitar(id);
 });
 
+// ================= COBRO =================
+
+btnCobrar.addEventListener('click', () => {
+    if (carrito.length === 0) return;
+    cobroError.classList.add('oculto');
+    cobroTotal.textContent = money.format(calcularTotal());
+    modalCobro.classList.remove('oculto');
+});
+
+btnCancelar.addEventListener('click', () => modalCobro.classList.add('oculto'));
+
+btnConfirmar.addEventListener('click', async () => {
+    const total = Number(calcularTotal().toFixed(2));
+    const payload = {
+        cliente_id: Number(clienteActual.id),
+        items: carrito.map(i => ({ producto_id: i.id, cantidad: i.cantidad })),
+        pagos: [{ tipo_pago_id: Number(selMedio.value), monto: total }],
+    };
+
+    btnConfirmar.disabled = true; // evita doble clic
+    try {
+        const resp = await api.post('/api/ventas', payload);
+        if (!resp.ok) throw new Error(resp.error || 'No se pudo registrar la venta.');
+
+        // Guardamos los datos para el ticket ANTES de vaciar el carrito.
+        const medio = tiposPago.find(t => t.id == selMedio.value)?.nombre ?? '';
+        renderTicket(resp.venta.numero, [...carrito], clienteActual.nombre, medio, total);
+
+        // Reset de la venta.
+        carrito = [];
+        renderCarrito();
+        modalCobro.classList.add('oculto');
+        modalTicket.classList.remove('oculto');
+    } catch (e) {
+        cobroError.textContent = e.message;
+        cobroError.classList.remove('oculto');
+    } finally {
+        btnConfirmar.disabled = false;
+    }
+});
+
+// ================= TICKET =================
+
+function renderTicket(numero, items, cliente, medio, total) {
+    const fecha = new Date().toLocaleString('es-AR');
+    const lineas = items.map(i => `
+        <div class="t-item">
+            <span>${i.cantidad} x ${i.nombre}</span>
+            <span>${money.format(i.precio * i.cantidad)}</span>
+        </div>`).join('');
+
+    elTicket.innerHTML = `
+        <div class="t-cabecera">
+            <strong>BRITECH</strong>
+            <span>Punto de Venta</span>
+        </div>
+        <div class="t-sep"></div>
+        <div class="t-datos">
+            <div><span>Ticket:</span><span>${numero}</span></div>
+            <div><span>Fecha:</span><span>${fecha}</span></div>
+            <div><span>Cliente:</span><span>${cliente}</span></div>
+        </div>
+        <div class="t-sep"></div>
+        ${lineas}
+        <div class="t-sep"></div>
+        <div class="t-total"><span>TOTAL</span><span>${money.format(total)}</span></div>
+        <div class="t-pago">Pago: ${medio}</div>
+        <div class="t-sep"></div>
+        <div class="t-gracias">¡Gracias por su compra!</div>`;
+}
+
+btnImprimir.addEventListener('click', () => window.print());
+
+btnNuevaVta.addEventListener('click', () => {
+    modalTicket.classList.add('oculto');
+    input.value = '';
+    buscar('');
+    input.focus();
+});
+
 // ================= BUSCADOR (eventos) =================
 
-// Debounce: espera 250ms tras la última tecla antes de buscar.
 let temporizador = null;
 input.addEventListener('input', () => {
     clearTimeout(temporizador);
     temporizador = setTimeout(() => buscar(input.value), 250);
 });
 
-// Enter (o fin del escaneo): si hay UN solo resultado, lo agrega y limpia.
-input.addEventListener('keydown', (e) => {
+input.addEventListener('keydown', async (e) => {
     if (e.key !== 'Enter') return;
     clearTimeout(temporizador);
-
+    // Esperamos la búsqueda fresca (importante al escanear: el Enter llega
+    // apenas termina de "tipear" el código, antes de que corra el debounce).
+    await buscar(input.value);
     if (ultimosResultados.length === 1) {
         agregarAlCarrito(ultimosResultados[0].id);
         input.value = '';
-        buscar('');       // limpia resultados
-    } else {
-        buscar(input.value);
+        buscar('');
     }
-    input.focus();        // el foco vuelve al buscador para seguir escaneando
+    input.focus();
 });
 
 // ================= ARRANQUE =================
 
 (async function iniciar() {
     await cargarClientes();
+    await cargarTiposPago();
     renderCarrito();
     input.focus();
 })();
