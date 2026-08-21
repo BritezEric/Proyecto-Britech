@@ -74,6 +74,7 @@ Se crea el usuario → se genera un TOKEN → se envía por email un link
   `true` = requieren login), página `login.html`, POS protegido (redirige al login
   si no hay sesión), y la venta usa el **usuario logueado** como vendedor.
   Probado: login OK/erróneo, rutas protegidas (401), logout.
-- ⬜ **B2 — PHPMailer:** instalar, configurar SMTP (.env), enviar un correo de prueba.
+- ✅ **B2 — PHPMailer** (2026-08-19): instalado vía Composer; `App\Core\Mailer`
+  envía por SMTP con credenciales del `.env`. Correo de prueba enviado OK.
 - ⬜ **B3 — Verificación de correo:** tokens + link + verificar.
 - ⬜ **B4 — Recuperación de contraseña:** olvidé → link → nueva contraseña.
