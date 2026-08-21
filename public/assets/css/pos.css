@@ -316,3 +316,11 @@ body {
 .cobro-estado > div { display: flex; gap: .5rem; }
 .neg { color: #dc2626; font-weight: 700; }
 .ok  { color: #16a34a; font-weight: 700; }
+
+/* Header: nombre del vendedor + salir */
+.barra-derecha { display: flex; align-items: center; gap: 1rem; }
+.btn-logout {
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);
+    color: #fff; padding: .35rem .85rem; border-radius: 6px; cursor: pointer; font-size: .85rem;
+}
+.btn-logout:hover { background: rgba(255,255,255,.22); }

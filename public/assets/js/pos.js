@@ -364,6 +364,18 @@ input.addEventListener('keydown', async (e) => {
 // ================= ARRANQUE =================
 
 (async function iniciar() {
+    // Sin sesión activa → al login (protección del lado del cliente;
+    // la seguridad real está en el backend, que exige login en cada endpoint).
+    let sesion;
+    try { sesion = await api.get('/api/yo'); }
+    catch { window.location.href = '/login.html'; return; }
+    document.getElementById('vendedor-nombre').textContent = sesion.usuario.nombre;
+
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+        try { await api.post('/api/logout', {}); } catch {}
+        window.location.href = '/login.html';
+    });
+
     await cargarClientes();
     await cargarTiposPago();
     renderCarrito();

@@ -14,11 +14,10 @@ segura, con recuperación de contraseña. Reemplaza el vendedor fijo (`id=1`) de
 - **Recuperación de contraseña** ("olvidé mi contraseña", con PHPMailer).
 - El usuario logueado queda como **vendedor** de cada venta.
 
-⚠️ **Decisión pendiente — Registro:**
-- **Opción A (recomendada):** el **admin crea** los usuarios (vendedores). Al
-  crearlos, se les manda un correo para **verificar + definir su contraseña**.
-- **Opción B:** **auto-registro** público de usuarios del sistema.
-- (El registro de *clientes* de la tienda online es otra cosa, va en ese módulo.)
+✅ **Decisión — Registro (Opción A):** el **admin crea** los usuarios (vendedores).
+Al crearlos, se les manda un correo para **verificar + definir su contraseña**.
+No hay auto-registro de usuarios del sistema. (El registro de *clientes* de la
+tienda online es otra cosa, va en ese módulo.)
 
 ## 3. Actores
 - **Usuario no autenticado:** solo ve login / recuperar contraseña.
@@ -70,8 +69,11 @@ Se crea el usuario → se genera un TOKEN → se envía por email un link
 - Config en `.env`: `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASSWORD`, `MAIL_FROM`.
 
 ## 8. Sub-pasos de construcción
-- **B1 — Núcleo:** contraseña del admin, sesión, login, logout, middleware, proteger
-  POS/API, usar el usuario logueado como vendedor. *(No necesita SMTP.)*
-- **B2 — PHPMailer:** instalar, configurar SMTP (.env), enviar un correo de prueba.
-- **B3 — Verificación de correo:** tokens + link + verificar.
-- **B4 — Recuperación de contraseña:** olvidé → link → nueva contraseña.
+- ✅ **B1 — Núcleo** (2026-08-19): sesión (`App\Core\Session`), login/logout/yo
+  (`AuthService`, `AuthController`), middleware de auth en el `Router` (rutas con
+  `true` = requieren login), página `login.html`, POS protegido (redirige al login
+  si no hay sesión), y la venta usa el **usuario logueado** como vendedor.
+  Probado: login OK/erróneo, rutas protegidas (401), logout.
+- ⬜ **B2 — PHPMailer:** instalar, configurar SMTP (.env), enviar un correo de prueba.
+- ⬜ **B3 — Verificación de correo:** tokens + link + verificar.
+- ⬜ **B4 — Recuperación de contraseña:** olvidé → link → nueva contraseña.

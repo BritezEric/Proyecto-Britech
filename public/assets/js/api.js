@@ -1,24 +1,22 @@
 // ===== Capa AJAX =====
-// Centraliza TODAS las llamadas al backend en un solo lugar (patrón "Module").
-// Así no repetimos el código de fetch/errores en cada pantalla.
-// AJAX = pedir datos al servidor sin recargar la página.
+// Centraliza las llamadas al backend (patrón "Module").
+// AJAX = pedir/enviar datos al servidor sin recargar la página.
+
+async function pedir(url, opciones) {
+    const resp = await fetch(url, opciones);
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+        // Usamos el mensaje del backend si vino; si no, uno genérico.
+        throw new Error(json.error || ('Error HTTP ' + resp.status));
+    }
+    return json;
+}
 
 const api = {
-    // Pedir datos (GET). Ej: api.get('/api/clientes')
-    async get(url) {
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('Error HTTP ' + resp.status);
-        return resp.json();
-    },
-
-    // Enviar datos (POST). Se usará en el Paso 3 al confirmar la venta.
-    async post(url, datos) {
-        const resp = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos),
-        });
-        if (!resp.ok) throw new Error('Error HTTP ' + resp.status);
-        return resp.json();
-    },
+    get: (url) => pedir(url),
+    post: (url, datos) => pedir(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos),
+    }),
 };

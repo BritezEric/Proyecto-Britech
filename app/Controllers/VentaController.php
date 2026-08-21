@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Core\Request;
 use App\Core\Response;
+use App\Core\Session;
 use App\Services\VentaService;
 use App\Core\ValidacionException;
 
@@ -18,7 +19,8 @@ class VentaController
         $datos = Request::json();
 
         try {
-            $resultado = (new VentaService())->registrar($datos);
+            // El vendedor es el usuario logueado (la ruta está protegida).
+            $resultado = (new VentaService())->registrar($datos, (int) Session::usuarioId());
             Response::json(['ok' => true, 'venta' => $resultado], 201);
         } catch (ValidacionException $e) {
             // Errores de validación (stock, pago, cliente…): 422.

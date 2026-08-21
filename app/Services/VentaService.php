@@ -24,11 +24,8 @@ class VentaService
     // ponytail: dinero como float con round(2). Alcanza a esta escala;
     // si hiciera falta precisión exacta, pasar a centavos enteros o bcmath.
 
-    public function registrar(array $datos): array
+    public function registrar(array $datos, int $usuarioId): array
     {
-        // TODO: cuando exista login, este será el vendedor logueado.
-        $usuarioId = 1;
-
         $clienteId = (int) ($datos['cliente_id'] ?? 0);
         $items     = $datos['items'] ?? [];
         $pagos     = $datos['pagos'] ?? [];

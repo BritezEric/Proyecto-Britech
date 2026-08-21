@@ -7,6 +7,7 @@
 
 use App\Core\Router;
 use App\Core\Request;
+use App\Core\Session;
 
 // En el servidor de desarrollo (php -S), servir archivos estaticos (html/css/js)
 // tal cual, sin pasar por el router. En produccion esto lo hace el .htaccess.
@@ -20,7 +21,10 @@ if (php_sapi_name() === 'cli-server') {
 // 1. Carga autoload de Composer + variables de entorno (.env) y la config.
 require dirname(__DIR__) . '/config/config.php';
 
-// 2. Crea el router y carga las rutas de la API.
+// 2. Arranca la sesión (para saber si el usuario está logueado).
+Session::iniciar();
+
+// 3. Crea el router y carga las rutas de la API.
 $router = new Router();
 require dirname(__DIR__) . '/routes/api.php';
 
