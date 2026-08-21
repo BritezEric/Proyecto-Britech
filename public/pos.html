@@ -33,10 +33,16 @@
             <div id="carrito" class="carrito">
                 <p class="vacio-carrito">Carrito vacío.<br>Buscá o escaneá un producto para agregarlo.</p>
             </div>
-            <div class="venta-total">
-                <span>Total</span>
-                <span id="total">$ 0,00</span>
+
+            <div class="venta-resumen">
+                <div class="fila-resumen"><span>Subtotal</span><span id="subtotal">$ 0,00</span></div>
+                <div class="fila-resumen">
+                    <label for="desc-total">Descuento</label>
+                    <input id="desc-total" class="input-desc" type="number" min="0" step="0.01" value="0">
+                </div>
+                <div class="fila-resumen total"><span>Total</span><span id="total">$ 0,00</span></div>
             </div>
+
             <button id="btn-cobrar" class="btn-cobrar" disabled>Cobrar</button>
         </aside>
     </main>
@@ -45,21 +51,26 @@
     <div id="modal-cobro" class="modal oculto">
         <div class="modal-caja">
             <h2>Cobro</h2>
-            <div class="cobro-total">
-                <span>Total a cobrar</span>
-                <strong id="cobro-total">$ 0,00</strong>
+            <div class="cobro-total"><span>Total a cobrar</span><strong id="cobro-total">$ 0,00</strong></div>
+
+            <label class="etiqueta">Medios de pago</label>
+            <div id="pagos-lista" class="pagos-lista"></div>
+            <button id="btn-agregar-pago" class="btn-link" type="button">+ Agregar medio de pago</button>
+
+            <div class="cobro-estado">
+                <div><span>Pagado</span><span id="pagado">$ 0,00</span></div>
+                <div><span id="falta-label">Falta</span><span id="falta">$ 0,00</span></div>
             </div>
-            <label for="medio-pago" class="etiqueta">Medio de pago</label>
-            <select id="medio-pago" class="select-cliente"></select>
+
             <p id="cobro-error" class="cobro-error oculto"></p>
             <div class="modal-botones">
                 <button id="btn-cancelar" class="btn-secundario">Cancelar</button>
-                <button id="btn-confirmar" class="btn-cobrar">Confirmar venta</button>
+                <button id="btn-confirmar" class="btn-cobrar" disabled>Confirmar venta</button>
             </div>
         </div>
     </div>
 
-    <!-- TICKET (se muestra tras confirmar) -->
+    <!-- TICKET -->
     <div id="modal-ticket" class="modal oculto">
         <div class="modal-caja">
             <div id="ticket" class="ticket"></div>

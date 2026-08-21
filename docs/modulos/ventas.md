@@ -295,5 +295,12 @@ Todas las validaciones se hacen **en el backend** (aunque también haya ayudas e
 - ✅ **Paso 4 — Ticket** (2026-08-19).
   - Ticket interno con formato térmico + botón Imprimir (CSS `@media print` que
     imprime solo el ticket). Probado: venta V-000002 con su ticket.
-- ⬜ Paso 3b — Descuentos (línea + total) + pago mixto.
+- ✅ **Paso 3b — Descuentos + pago mixto** (2026-08-19).
+  - Backend: `VentaService` valida `descuento_linea` y `descuento` total; el
+    detalle guarda el descuento por línea. Probado con curl + navegador.
+  - Frontend: descuento por línea (input en cada línea), descuento total, y cobro
+    con **varios medios de pago** (indicador Pagado/Falta). Ticket muestra
+    subtotal, descuento y cada pago.
+- ⬜ **B — Login / autenticación** (siguiente).
+- ⬜ **C — Anulación de ventas** (solo admin).
 - ⬜ Ticket en PDF (Dompdf) — opcional, más adelante.

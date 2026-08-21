@@ -71,14 +71,22 @@ class VentaService
                 throw new ValidacionException("Stock insuficiente de {$p['nombre']} (hay {$p['stock']}).");
             }
 
-            $precio = (float) $p['precio'];
-            $sub    = round($precio * $cant, 2);
+            $precio    = (float) $p['precio'];
+            $descLinea = round((float) ($item['descuento_linea'] ?? 0), 2);
+            $bruto     = round($precio * $cant, 2);
+
+            if ($descLinea < 0 || $descLinea > $bruto) {
+                throw new ValidacionException("Descuento inválido en {$p['nombre']}.");
+            }
+
+            $sub = round($bruto - $descLinea, 2);
             $subtotal += $sub;
 
             $lineas[] = [
                 'producto_id'  => $pid,
                 'cantidad'     => $cant,
                 'precio'       => $precio,
+                'desc'         => $descLinea,
                 'sub'          => $sub,
                 'estado'       => $sobrePedido ? 'sobre_pedido' : 'normal',
                 'sobre_pedido' => $sobrePedido,
@@ -86,7 +94,10 @@ class VentaService
         }
 
         $subtotal  = round($subtotal, 2);
-        $descuento = 0.0;                       // (Paso 3b: descuentos)
+        $descuento = round((float) ($datos['descuento'] ?? 0), 2);   // descuento sobre el total
+        if ($descuento < 0 || $descuento > $subtotal) {
+            throw new ValidacionException('Descuento total inválido.');
+        }
         $total     = round($subtotal - $descuento, 2);
 
         // 4) Validar que los pagos sumen exactamente el total (RN6).
@@ -113,7 +124,7 @@ class VentaService
             foreach ($lineas as $l) {
                 $ventaRepo->agregarDetalle(
                     $ventaId, $l['producto_id'], $l['cantidad'],
-                    $l['precio'], 0.0, $l['estado'], $l['sub']
+                    $l['precio'], $l['desc'], $l['estado'], $l['sub']
                 );
 
                 // Solo descuenta stock si NO es sobre pedido.
