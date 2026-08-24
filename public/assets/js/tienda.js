@@ -265,8 +265,13 @@ function prepararEnvio() {
             `<option value="${e.id}" data-costo="${e.costo_base}" data-retiro="${Number(e.es_retiro) ? 1 : 0}">${esc(e.nombre)} — ${Number(e.costo_base) === 0 ? 'gratis' : money.format(e.costo_base)}</option>`).join('');
         sel.dataset.listo = '1';
     }
-    if (cliente && !$('envio-direccion').value && cliente.direccion) $('envio-direccion').value = cliente.direccion;
-    if (cliente && !$('envio-localidad').value && cliente.localidad) $('envio-localidad').value = cliente.localidad;
+    // Prefill con los datos que ya tenga el cliente (si están cargados).
+    if (cliente) {
+        if (!$('envio-destinatario').value && cliente.nombre) $('envio-destinatario').value = cliente.nombre;
+        if (!$('envio-telefono').value && cliente.telefono) $('envio-telefono').value = cliente.telefono;
+        if (!$('envio-direccion').value && cliente.direccion) $('envio-direccion').value = cliente.direccion;
+        if (!$('envio-localidad').value && cliente.localidad) $('envio-localidad').value = cliente.localidad;
+    }
     toggleEnvioCampos();
 }
 
@@ -275,11 +280,9 @@ function envioEsRetiro() {
     return opt ? opt.dataset.retiro === '1' : false;
 }
 
-// Si es "retiro en local", ocultamos los campos de dirección.
+// Si es "retiro en local", ocultamos todos los datos de entrega.
 function toggleEnvioCampos() {
-    const retiro = envioEsRetiro();
-    $('envio-direccion').classList.toggle('oculto', retiro);
-    $('envio-localidad').classList.toggle('oculto', retiro);
+    $('envio-campos').classList.toggle('oculto', envioEsRetiro());
 }
 
 function costoEnvioSel() {
@@ -299,19 +302,31 @@ async function confirmarPedido() {
     if (!cliente) { abrirAuth(true); return; }        // pide login/registro
     const err = $('cart-error'); err.classList.add('oculto');
     const retiro = envioEsRetiro();
-    const direccion = $('envio-direccion').value.trim();
-    if (!retiro && direccion.length < 4) { err.textContent = 'Ingresá una dirección de envío (o elegí "Retiro en local").'; err.classList.remove('oculto'); return; }
+    const envio = {
+        empresa_envio_id: Number($('envio-empresa').value) || null,
+        destinatario: $('envio-destinatario').value.trim(),
+        telefono: $('envio-telefono').value.trim(),
+        direccion: $('envio-direccion').value.trim(),
+        numero: $('envio-numero').value.trim(),
+        referencia: $('envio-referencia').value.trim(),
+        localidad: $('envio-localidad').value.trim(),
+        provincia: $('envio-provincia').value.trim(),
+        cp: $('envio-cp').value.trim(),
+    };
+    // Validación en el navegador (el backend igual re-valida). Referencia es opcional.
+    if (!retiro) {
+        const req = { destinatario: 'quién recibe', telefono: 'teléfono', direccion: 'calle',
+            numero: 'número', localidad: 'localidad', provincia: 'provincia', cp: 'código postal' };
+        const faltan = Object.keys(req).filter((k) => !envio[k]).map((k) => req[k]);
+        if (faltan.length) { err.textContent = 'Para el envío falta: ' + faltan.join(', ') + '.'; err.classList.remove('oculto'); return; }
+    }
 
     const btn = $('btn-confirmar-pedido'); btn.disabled = true;
     try {
         const payload = {
             items: carrito.map((i) => ({ producto_id: i.id, cantidad: i.cantidad })),
             observacion: $('obs').value,
-            envio: {
-                empresa_envio_id: Number($('envio-empresa').value) || null,
-                direccion,
-                localidad: $('envio-localidad').value.trim(),
-            },
+            envio,
         };
         const r = await api.post('/api/tienda/pedidos', payload);
         carrito = []; guardarCarrito();
@@ -530,6 +545,9 @@ async function verMisPedidos() {
         const envio = p.envio_estado
             ? `<span class="badge ${esc(p.envio_estado)}" title="Envío">📦 ${esc(p.envio_estado.replace('_', ' '))}</span>`
             : '';
+        const seg = p.seguimiento_url
+            ? `<a class="badge-link" href="${esc(p.seguimiento_url)}" target="_blank" rel="noopener">🔎 Seguir</a>`
+            : '';
         return `<div class="pedido-row">
             <div>
                 <div class="cart-nombre">${esc(p.numero)}</div>
@@ -539,6 +557,7 @@ async function verMisPedidos() {
                 <span class="cart-sub">${money.format(total)}</span>
                 <span class="badge ${esc(p.estado)}">${esc(p.estado)}</span>
                 ${envio}
+                ${seg}
             </div>
         </div>`;
     }).join('');

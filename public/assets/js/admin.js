@@ -212,6 +212,8 @@ const ENTIDADES = {
         campos: [
             { key: 'nombre', label: 'Nombre', tipo: 'text', req: true, ancho: true },
             { key: 'costo_base', label: 'Costo base', tipo: 'number', req: true, def: 0 },
+            { key: 'url_tracking', label: 'URL de seguimiento (usá {tracking} donde va el nº)', tipo: 'text', ancho: true },
+            { key: 'es_retiro', label: 'Es retiro en local (sin dirección)', tipo: 'check' },
             { key: 'activo', label: 'Activo', tipo: 'check', def: true },
         ],
     },
@@ -566,14 +568,23 @@ async function verPedido(id, numero) {
     if (e) {
         const costo = Number(e.costo) === 0 ? 'Gratis' : money.format(e.costo);
         total += Number(e.costo);
+        const seg = e.seguimiento_url
+            ? `<a class="envio-seg" href="${esc(e.seguimiento_url)}" target="_blank" rel="noopener">🔎 Seguir envío en ${esc(e.empresa || 'el correo')}</a>`
+            : '';
         envioHtml = `
             <h4 class="detalle-sub">Envío</h4>
             <div class="pedido-linea"><span>${esc(e.empresa || 'Sin empresa')}</span><span class="tabular">${costo}</span></div>
             <div class="envio-form">
-                <label>Dirección de entrega</label>
-                <input id="envio-dir" value="${esc(e.direccion || '')}" placeholder="Dirección del cliente">
-                <label>Localidad</label>
-                <input id="envio-loc" value="${esc(e.localidad || '')}" placeholder="Localidad">
+                <div class="envio-grid2">
+                    <div><label>Destinatario</label><input id="env-destinatario" value="${esc(e.destinatario || '')}" placeholder="Quién recibe"></div>
+                    <div><label>Teléfono</label><input id="env-telefono" value="${esc(e.telefono || '')}" placeholder="Teléfono"></div>
+                    <div><label>Calle</label><input id="env-direccion" value="${esc(e.direccion || '')}" placeholder="Calle"></div>
+                    <div><label>Número</label><input id="env-numero" value="${esc(e.numero || '')}" placeholder="Altura"></div>
+                    <div class="col-2"><label>Referencia</label><input id="env-referencia" value="${esc(e.referencia || '')}" placeholder="Entre calles / piso / depto"></div>
+                    <div><label>Localidad</label><input id="env-localidad" value="${esc(e.localidad || '')}" placeholder="Localidad"></div>
+                    <div><label>Provincia</label><input id="env-provincia" value="${esc(e.provincia || '')}" placeholder="Provincia"></div>
+                    <div><label>Código postal</label><input id="env-cp" value="${esc(e.cp || '')}" placeholder="CP"></div>
+                </div>
                 <div class="envio-fila">
                     <div>
                         <label>Estado del envío</label>
@@ -585,6 +596,7 @@ async function verPedido(id, numero) {
                         <input id="envio-tracking" placeholder="Nº de seguimiento" value="${esc(e.tracking || '')}">
                     </div>
                 </div>
+                ${seg}
                 <button class="btn-primary" id="envio-guardar" data-id="${id}">Guardar envío</button>
             </div>`;
     }
@@ -601,11 +613,20 @@ async function verPedido(id, numero) {
                 pedido_id: Number(id),
                 estado: $('envio-estado').value,
                 tracking: $('envio-tracking').value,
-                direccion: $('envio-dir').value,
-                localidad: $('envio-loc').value,
+                datos: {
+                    destinatario: $('env-destinatario').value,
+                    telefono: $('env-telefono').value,
+                    direccion: $('env-direccion').value,
+                    numero: $('env-numero').value,
+                    referencia: $('env-referencia').value,
+                    localidad: $('env-localidad').value,
+                    provincia: $('env-provincia').value,
+                    cp: $('env-cp').value,
+                },
             });
             btn.textContent = 'Guardado ✓';
-            setTimeout(() => { btn.textContent = 'Guardar envío'; btn.disabled = false; }, 1500);
+            // Recargar el detalle para refrescar el link de seguimiento con el nuevo tracking.
+            setTimeout(() => verPedido(id, numero), 700);
         } catch (ex) { alert(ex.message); btn.disabled = false; }
     });
 }

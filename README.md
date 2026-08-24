@@ -34,10 +34,11 @@ El primero crea la base `britech_v2`; el resto hace `USE britech_v2`.
 5.  database/schema_imagenes.sql        (imágenes de producto)
 6.  database/schema_tienda.sql          (pedidos online)
 7.  database/schema_envios.sql          (empresas de envío + envíos)
-8.  database/schema_favoritos.sql       (favoritos de clientes)
-9.  database/schema_mayorista.sql       (solicitudes mayoristas)
-10. database/schema_gastos.sql          (gastos / finanzas)
-11. database/schema_bloques.sql         (page builder de la home — independiente)
+8.  database/schema_envios_datos.sql    (datos de entrega completos + link de seguimiento)
+9.  database/schema_favoritos.sql       (favoritos de clientes)
+10. database/schema_mayorista.sql       (solicitudes mayoristas)
+11. database/schema_gastos.sql          (gastos / finanzas)
+12. database/schema_bloques.sql         (page builder de la home — independiente)
 ```
 
 Desde la terminal (uno por uno, o encadenados):
@@ -50,6 +51,7 @@ mysql -u root britech_v2 < database/schema_min_mayorista.sql
 mysql -u root britech_v2 < database/schema_imagenes.sql
 mysql -u root britech_v2 < database/schema_tienda.sql
 mysql -u root britech_v2 < database/schema_envios.sql
+mysql -u root britech_v2 < database/schema_envios_datos.sql
 mysql -u root britech_v2 < database/schema_favoritos.sql
 mysql -u root britech_v2 < database/schema_mayorista.sql
 mysql -u root britech_v2 < database/schema_gastos.sql

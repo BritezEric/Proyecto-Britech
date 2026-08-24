@@ -66,9 +66,7 @@ class PedidoService
         }
         $total = round($total, 2);
 
-        // --- Envío: empresa + (dirección salvo retiro en local); el costo lo pone el backend ---
-        $direccion = trim($envio['direccion'] ?? '');
-        $localidad = trim($envio['localidad'] ?? '') ?: null;
+        // --- Envío: empresa + datos de entrega (obligatorios salvo retiro en local) ---
         $empresaId = (int) ($envio['empresa_envio_id'] ?? 0) ?: null;
         $costoEnvio = 0.0;
         $esRetiro = false;
@@ -80,11 +78,7 @@ class PedidoService
             $esRetiro = (int) ($empresa['es_retiro'] ?? 0) === 1;
             $costoEnvio = round((float) $empresa['costo_base'], 2);
         }
-        // La dirección solo es obligatoria si NO es retiro en el local.
-        if (!$esRetiro && mb_strlen($direccion) < 4) {
-            throw new ValidacionException('Ingresá una dirección de envío.');
-        }
-        if ($esRetiro && $direccion === '') { $direccion = 'Retiro en local'; }
+        $datosEnvio = $this->datosEntrega($envio, $esRetiro);
         $totalFinal = round($total + $costoEnvio, 2);
 
         $obs = trim($observacion ?? '') ?: null;
@@ -97,7 +91,7 @@ class PedidoService
             foreach ($lineas as $l) {
                 $this->repo->agregarDetalle($pedidoId, $l['pid'], $l['cant'], $l['precio'], $l['sub']);
             }
-            (new EnvioRepository())->crear($pedidoId, $empresaId, $direccion, $localidad, $costoEnvio);
+            (new EnvioRepository())->crear($pedidoId, $empresaId, $datosEnvio, $costoEnvio);
             $pdo->commit();
         } catch (\Throwable $e) {
             $pdo->rollBack();
@@ -116,6 +110,53 @@ class PedidoService
             'envio_costo'  => $costoEnvio,
             'total_final'  => $totalFinal,     // productos + envío
         ];
+    }
+
+    /**
+     * Valida y normaliza los datos de entrega. Con envío (no retiro) son
+     * obligatorios: destinatario, teléfono, calle, número, localidad, provincia y CP.
+     * La referencia (entre calles / piso / depto) queda opcional.
+     */
+    private function datosEntrega(array $envio, bool $esRetiro): array
+    {
+        $g = fn($k) => trim($envio[$k] ?? '') ?: null;
+        $d = [
+            'destinatario' => $g('destinatario'),
+            'telefono'     => $g('telefono'),
+            'direccion'    => $g('direccion'),
+            'numero'       => $g('numero'),
+            'referencia'   => $g('referencia'),
+            'localidad'    => $g('localidad'),
+            'provincia'    => $g('provincia'),
+            'cp'           => $g('cp'),
+        ];
+
+        if ($esRetiro) {
+            $d['direccion'] = $d['direccion'] ?? 'Retiro en local';
+            return $d;
+        }
+
+        // Obligatorios para envío a domicilio.
+        $obligatorios = [
+            'destinatario' => 'el nombre de quién recibe',
+            'telefono'     => 'un teléfono de contacto',
+            'direccion'    => 'la calle',
+            'numero'       => 'la altura (número)',
+            'localidad'    => 'la localidad',
+            'provincia'    => 'la provincia',
+            'cp'           => 'el código postal',
+        ];
+        $faltan = [];
+        foreach ($obligatorios as $campo => $etiqueta) {
+            if ($d[$campo] === null) { $faltan[] = $etiqueta; }
+        }
+        if ($faltan) {
+            throw new ValidacionException('Para el envío falta completar: ' . implode(', ', $faltan) . '.');
+        }
+        if (!preg_match('/^\d{4}$/', $d['cp']) && !preg_match('/^[A-Za-z]\d{4}[A-Za-z]{0,3}$/', $d['cp'])) {
+            throw new ValidacionException('El código postal no es válido (ej: 3600 o A3600XYZ).');
+        }
+        return $d;
     }
 
     /** Manda al cliente un correo con el resumen del pedido. */
@@ -157,8 +198,8 @@ class PedidoService
         $this->repo->cambiarEstado($id, $estado);
     }
 
-    /** Actualiza el envío de un pedido (admin): estado, seguimiento y dirección. */
-    public function actualizarEnvio(int $pedidoId, string $estado, ?string $tracking, ?string $direccion = null, ?string $localidad = null): void
+    /** Actualiza el envío de un pedido (gestor admin): estado, seguimiento y datos de entrega. */
+    public function actualizarEnvio(int $pedidoId, string $estado, ?string $tracking, array $datos = []): void
     {
         if (!in_array($estado, self::ESTADOS_ENVIO, true)) {
             throw new ValidacionException('Estado de envío inválido.');
@@ -166,9 +207,14 @@ class PedidoService
         if ($this->repo->buscarPorId($pedidoId) === null) {
             throw new ValidacionException('El pedido no existe.');
         }
+        // Solo pisa los campos de entrega que vengan en la petición (los demás se conservan).
+        $campos = ['destinatario', 'telefono', 'direccion', 'numero', 'referencia', 'localidad', 'provincia', 'cp'];
+        $limpios = [];
+        foreach ($campos as $c) {
+            if (array_key_exists($c, $datos)) { $limpios[$c] = trim((string) $datos[$c]) ?: null; }
+        }
         (new EnvioRepository())->actualizarDatos(
-            $pedidoId, $estado, trim($tracking ?? '') ?: null,
-            trim($direccion ?? '') ?: null, trim($localidad ?? '') ?: null
+            $pedidoId, $estado, trim($tracking ?? '') ?: null, $limpios
         );
     }
 }

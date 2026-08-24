@@ -4,46 +4,58 @@ namespace App\Repositories;
 
 use App\Core\Database;
 
-/** Envío de un pedido (dirección, costo, estado, seguimiento). */
+/** Envío de un pedido: datos de entrega completos, costo, estado y seguimiento. */
 class EnvioRepository
 {
-    public function crear(int $pedidoId, ?int $empresaId, string $direccion, ?string $localidad, float $costo): void
+    /** Campos de entrega que se cargan en el checkout y edita el gestor. */
+    private const CAMPOS = ['destinatario', 'telefono', 'direccion', 'numero',
+        'referencia', 'localidad', 'provincia', 'cp'];
+
+    /** Crea el envío del pedido. $datos trae los campos de CAMPOS (los que falten van null). */
+    public function crear(int $pedidoId, ?int $empresaId, array $datos, float $costo): void
     {
+        $cols = array_merge(['pedido_id', 'empresa_envio_id'], self::CAMPOS, ['costo']);
+        $vals = array_merge(
+            [$pedidoId, $empresaId],
+            array_map(fn($c) => $datos[$c] ?? null, self::CAMPOS),
+            [$costo]
+        );
+        $ph = implode(', ', array_fill(0, count($cols), '?'));
         Database::conexion()
-            ->prepare("INSERT INTO envio (pedido_id, empresa_envio_id, direccion, localidad, costo)
-                       VALUES (?, ?, ?, ?, ?)")
-            ->execute([$pedidoId, $empresaId, $direccion, $localidad, $costo]);
+            ->prepare('INSERT INTO envio (' . implode(', ', $cols) . ") VALUES ($ph)")
+            ->execute($vals);
     }
 
-    /** Datos del envío de un pedido (con el nombre de la empresa). */
+    /** Datos del envío de un pedido: todo + nombre de empresa + link de seguimiento armado. */
     public function dePedido(int $pedidoId): ?array
     {
         $st = Database::conexion()->prepare(
-            "SELECT e.empresa_envio_id, e.direccion, e.localidad, e.costo, e.estado, e.tracking,
-                    em.nombre AS empresa
+            "SELECT e.*, em.nombre AS empresa, em.url_tracking
              FROM envio e
              LEFT JOIN empresa_envio em ON em.id = e.empresa_envio_id
              WHERE e.pedido_id = ?"
         );
         $st->execute([$pedidoId]);
-        return $st->fetch() ?: null;
+        $e = $st->fetch();
+        if (!$e) return null;
+        // Link público de seguimiento: reemplaza {tracking} por el nº de seguimiento.
+        $e['seguimiento_url'] = ($e['tracking'] && $e['url_tracking'])
+            ? str_replace('{tracking}', rawurlencode($e['tracking']), $e['url_tracking'])
+            : null;
+        return $e;
     }
 
-    public function actualizar(int $pedidoId, string $estado, ?string $tracking): void
+    /** Actualiza estado + seguimiento + todos los datos de entrega (gestor admin). */
+    public function actualizarDatos(int $pedidoId, string $estado, ?string $tracking, array $datos): void
     {
+        $sets = ['estado = ?', 'tracking = ?'];
+        $vals = [$estado, $tracking];
+        foreach (self::CAMPOS as $c) {
+            if (array_key_exists($c, $datos)) { $sets[] = "$c = ?"; $vals[] = $datos[$c]; }
+        }
+        $vals[] = $pedidoId;
         Database::conexion()
-            ->prepare("UPDATE envio SET estado = ?, tracking = ? WHERE pedido_id = ?")
-            ->execute([$estado, $tracking, $pedidoId]);
-    }
-
-    /** Actualiza estado + seguimiento + dirección/localidad. Si la dirección viene
-     *  vacía (null), conserva la actual (no la pisa). */
-    public function actualizarDatos(int $pedidoId, string $estado, ?string $tracking, ?string $direccion, ?string $localidad): void
-    {
-        Database::conexion()
-            ->prepare("UPDATE envio SET estado = ?, tracking = ?,
-                       direccion = COALESCE(?, direccion), localidad = ?
-                       WHERE pedido_id = ?")
-            ->execute([$estado, $tracking, $direccion, $localidad, $pedidoId]);
+            ->prepare('UPDATE envio SET ' . implode(', ', $sets) . ' WHERE pedido_id = ?')
+            ->execute($vals);
     }
 }

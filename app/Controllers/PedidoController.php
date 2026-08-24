@@ -94,7 +94,7 @@ class PedidoController
         try {
             (new PedidoService())->actualizarEnvio(
                 (int) ($d['pedido_id'] ?? 0), $d['estado'] ?? '', $d['tracking'] ?? null,
-                $d['direccion'] ?? null, $d['localidad'] ?? null
+                is_array($d['datos'] ?? null) ? $d['datos'] : []
             );
             Response::json(['ok' => true]);
         } catch (ValidacionException $e) {

@@ -197,6 +197,10 @@ body { min-height: 100vh; }
     border: 1.5px solid var(--line); border-radius: var(--r-md); background: var(--surface-sunk); color: var(--ink); outline: none;
 }
 .envio-box select:focus, .envio-box input:focus { border-color: var(--primary); background: var(--surface); box-shadow: var(--ring-primary); }
+.envio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
+.envio-grid.oculto { display: none; }
+.envio-grid .envio-ancho { grid-column: 1 / -1; }
+@media (max-width: 480px) { .envio-grid { grid-template-columns: 1fr; } }
 .cart-montos { margin-top: var(--sp-3); }
 .fila-monto { display: flex; justify-content: space-between; font-size: var(--text-sm); color: var(--ink-muted); padding: var(--sp-1) 0; }
 .fila-monto span:last-child { color: var(--ink); font-variant-numeric: tabular-nums; }
@@ -273,6 +277,9 @@ body { min-height: 100vh; }
 
 /* Estados de "mis pedidos" */
 .badge { font-size: var(--text-xs); font-weight: 600; padding: 2px var(--sp-2); border-radius: var(--r-full); }
+.badge-link { font-size: var(--text-xs); font-weight: 700; padding: 2px var(--sp-2); border-radius: var(--r-full);
+    background: var(--primary-tint); color: var(--primary); text-decoration: none; transition: background var(--dur-fast) var(--ease-out); }
+.badge-link:hover { background: var(--primary); color: #fff; }
 .badge.pendiente { background: var(--accent-tint); color: var(--accent-strong); }
 .badge.preparando { background: var(--primary-tint); color: var(--primary-strong); }
 .badge.entregado { background: var(--surface-sunk); color: var(--ink-muted); }

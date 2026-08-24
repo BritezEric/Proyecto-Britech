@@ -82,8 +82,16 @@
                 <div class="envio-box">
                     <label class="envio-label">Envío</label>
                     <select id="envio-empresa"></select>
-                    <input id="envio-direccion" type="text" placeholder="Dirección de envío *">
-                    <input id="envio-localidad" type="text" placeholder="Localidad">
+                    <div id="envio-campos" class="envio-grid">
+                        <input id="envio-destinatario" type="text" placeholder="Quién recibe *" autocomplete="name">
+                        <input id="envio-telefono" type="tel" placeholder="Teléfono *" autocomplete="tel">
+                        <input id="envio-direccion" type="text" placeholder="Calle *" autocomplete="address-line1">
+                        <input id="envio-numero" type="text" placeholder="Número *" autocomplete="address-line2">
+                        <input id="envio-referencia" type="text" placeholder="Referencia / piso / depto (opcional)" class="envio-ancho">
+                        <input id="envio-localidad" type="text" placeholder="Localidad *" autocomplete="address-level2">
+                        <input id="envio-provincia" type="text" placeholder="Provincia *" autocomplete="address-level1">
+                        <input id="envio-cp" type="text" placeholder="Código postal *" autocomplete="postal-code">
+                    </div>
                 </div>
                 <div class="cart-montos">
                     <div class="fila-monto"><span>Subtotal</span><span id="cart-subtotal">$ 0,00</span></div>

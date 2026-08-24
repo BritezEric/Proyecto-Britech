@@ -21,7 +21,7 @@ class EmpresaEnvioRepository
         $stC->execute($params);
         $total = (int) $stC->fetchColumn();
 
-        $st = $pdo->prepare("SELECT id, nombre, costo_base, activo, creado_en
+        $st = $pdo->prepare("SELECT id, nombre, costo_base, es_retiro, url_tracking, activo, creado_en
                              FROM empresa_envio $sqlWhere ORDER BY costo_base, nombre LIMIT ? OFFSET ?");
         $full = array_merge($params, [$limit, $offset]);
         foreach ($full as $i => $v) $st->bindValue($i + 1, $v, is_int($v) ? \PDO::PARAM_INT : \PDO::PARAM_STR);
@@ -44,19 +44,19 @@ class EmpresaEnvioRepository
         return $st->fetch() ?: null;
     }
 
-    public function crear(string $nombre, float $costo, int $activo): int
+    public function crear(string $nombre, float $costo, int $activo, int $esRetiro, ?string $urlTracking): int
     {
         $pdo = Database::conexion();
-        $pdo->prepare("INSERT INTO empresa_envio (nombre, costo_base, activo) VALUES (?, ?, ?)")
-            ->execute([$nombre, $costo, $activo]);
+        $pdo->prepare("INSERT INTO empresa_envio (nombre, costo_base, activo, es_retiro, url_tracking) VALUES (?, ?, ?, ?, ?)")
+            ->execute([$nombre, $costo, $activo, $esRetiro, $urlTracking]);
         return (int) $pdo->lastInsertId();
     }
 
-    public function actualizar(int $id, string $nombre, float $costo, int $activo): void
+    public function actualizar(int $id, string $nombre, float $costo, int $activo, int $esRetiro, ?string $urlTracking): void
     {
         Database::conexion()
-            ->prepare("UPDATE empresa_envio SET nombre = ?, costo_base = ?, activo = ? WHERE id = ?")
-            ->execute([$nombre, $costo, $activo, $id]);
+            ->prepare("UPDATE empresa_envio SET nombre = ?, costo_base = ?, activo = ?, es_retiro = ?, url_tracking = ? WHERE id = ?")
+            ->execute([$nombre, $costo, $activo, $esRetiro, $urlTracking, $id]);
     }
 
     public function cambiarEstado(int $id, int $activo): void

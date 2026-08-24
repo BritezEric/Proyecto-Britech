@@ -67,13 +67,23 @@ class PedidoRepository
     {
         $st = Database::conexion()->prepare(
             "SELECT p.id, p.numero, p.estado, p.total, p.creado_en,
-                    e.costo AS envio_costo, e.estado AS envio_estado
+                    e.costo AS envio_costo, e.estado AS envio_estado, e.tracking,
+                    em.nombre AS envio_empresa, em.url_tracking
              FROM pedido p
              LEFT JOIN envio e ON e.pedido_id = p.id
+             LEFT JOIN empresa_envio em ON em.id = e.empresa_envio_id
              WHERE p.cliente_id = ? ORDER BY p.id DESC"
         );
         $st->execute([$clienteId]);
-        return $st->fetchAll();
+        $rows = $st->fetchAll();
+        foreach ($rows as &$r) {
+            // Link público de seguimiento (si ya tiene nº cargado).
+            $r['seguimiento_url'] = ($r['tracking'] && $r['url_tracking'])
+                ? str_replace('{tracking}', rawurlencode($r['tracking']), $r['url_tracking'])
+                : null;
+            unset($r['url_tracking']);
+        }
+        return $rows;
     }
 
     public function detalle(int $pedidoId): array
