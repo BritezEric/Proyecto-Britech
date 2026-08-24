@@ -160,7 +160,7 @@ const ENTIDADES = {
     pedidos: {
         titulo: 'Gestor de envíos', sub: 'Pedidos de la tienda: hacete cargo de cada envío — estado, datos de entrega y seguimiento.',
         singular: 'pedido', endpoint: '/api/admin/pedidos', detalle: '/api/admin/pedidos/detalle',
-        noCrear: true, acciones: ['ver'],
+        noCrear: true, acciones: ['ver'], accionExtra: { label: '⚙ Empresas de envío', ent: 'envios' },
         columnas: [
             { key: 'numero', label: 'N°', clase: 'td-fuerte' },
             { key: 'cliente', label: 'Cliente' },
@@ -265,16 +265,23 @@ let imagenesForm = [];  // URLs de imágenes del producto en edición (widget de
 const $ = (id) => document.getElementById(id);
 const vistaAbm = $('vista-abm'), vistaInicio = $('vista-inicio');
 
-// Entidades maestras que viven dentro de la vista "Tablas" (cuadritos).
-const ENTS_TABLAS = ['clientes', 'productos', 'proveedores', 'categorias', 'marcas', 'solicitudes', 'envios'];
+// De qué vista "cuelga" cada entidad (para el sidebar activo y el link de volver).
+//  - las maestras cuelgan de "tablas"; "envios" (empresas) cuelga del gestor "pedidos".
+const PADRE = {
+    clientes: 'tablas', productos: 'tablas', proveedores: 'tablas',
+    categorias: 'tablas', marcas: 'tablas', solicitudes: 'tablas',
+    envios: 'pedidos',
+};
+const NOMBRE_VISTA = { tablas: 'Tablas', pedidos: 'Gestor de envíos' };
+
+// Cuadritos de la vista "Tablas" (Empresas de envío ya NO está acá: vive en el gestor).
 const TABLAS_CARDS = [
-    { ent: 'clientes',    icon: '👥', label: 'Clientes',           desc: 'Cuentas y datos de clientes' },
-    { ent: 'productos',   icon: '📦', label: 'Productos',          desc: 'Catálogo, precios y stock' },
-    { ent: 'proveedores', icon: '🏭', label: 'Proveedores',        desc: 'A quién le comprás' },
-    { ent: 'categorias',  icon: '🏷️', label: 'Categorías',         desc: 'Rubros del catálogo' },
-    { ent: 'marcas',      icon: '™️', label: 'Marcas',             desc: 'Marcas de los productos' },
-    { ent: 'solicitudes', icon: '📨', label: 'Solicitudes',        desc: 'Pedidos de cuenta mayorista' },
-    { ent: 'envios',      icon: '📮', label: 'Empresas de envío',  desc: 'Correos y su seguimiento' },
+    { ent: 'clientes',    icon: '👥', label: 'Clientes',    desc: 'Cuentas y datos de clientes' },
+    { ent: 'productos',   icon: '📦', label: 'Productos',   desc: 'Catálogo, precios y stock' },
+    { ent: 'proveedores', icon: '🏭', label: 'Proveedores', desc: 'A quién le comprás' },
+    { ent: 'categorias',  icon: '🏷️', label: 'Categorías',  desc: 'Rubros del catálogo' },
+    { ent: 'marcas',      icon: '™️', label: 'Marcas',      desc: 'Marcas de los productos' },
+    { ent: 'solicitudes', icon: '📨', label: 'Solicitudes', desc: 'Pedidos de cuenta mayorista' },
 ];
 
 function renderTablas() {
@@ -290,9 +297,9 @@ function renderTablas() {
 
 // ---- Navegación ----
 async function seleccionar(ent) {
-    // Las entidades maestras viven dentro de "Tablas": al abrir cualquiera, el
-    // ítem del sidebar que queda activo es "Tablas".
-    const navKey = ENTS_TABLAS.includes(ent) ? 'tablas' : ent;
+    // Las entidades "hijas" (maestras, o empresas de envío) marcan activo a su
+    // vista padre en el sidebar (Tablas o Gestor de envíos).
+    const navKey = PADRE[ent] || ent;
     document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('activo', b.dataset.ent === navKey));
     const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados'), vistaTablas = $('vista-tablas');
     const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas]
@@ -307,7 +314,17 @@ async function seleccionar(ent) {
     $('ent-title').textContent = cfg.titulo;
     $('ent-sub').textContent = cfg.sub;
     $('btn-nuevo').classList.toggle('oculto', !!cfg.noCrear);
-    $('btn-volver-tablas').classList.toggle('oculto', !ENTS_TABLAS.includes(ent));
+
+    // Link "‹ volver" a la vista padre (Tablas o Gestor de envíos).
+    const volver = $('btn-volver'), padre = PADRE[ent];
+    volver.classList.toggle('oculto', !padre);
+    if (padre) { volver.textContent = '‹ ' + NOMBRE_VISTA[padre]; volver.onclick = () => seleccionar(padre); }
+
+    // Botón de acción extra (ej: desde el gestor de envíos, ir a "Empresas de envío").
+    const accion = $('btn-ent-accion');
+    accion.classList.toggle('oculto', !cfg.accionExtra);
+    if (cfg.accionExtra) { accion.textContent = cfg.accionExtra.label; accion.onclick = () => seleccionar(cfg.accionExtra.ent); }
+
     ocultarTodo(); vistaAbm.classList.remove('oculto');
     await renderFiltros();
     renderThead();
