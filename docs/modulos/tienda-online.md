@@ -1,7 +1,10 @@
-# Módulo: Tienda Online (planificado — se construye DESPUÉS de Ventas)
+# Módulo: Tienda Online
 
-> Estado: **NOTA DE PLANIFICACIÓN.** No se desarrolla todavía.
-> Sirve para no perder el objetivo mientras trabajamos en Ventas.
+> Estado: **EN CONSTRUCCIÓN** (2026-08-21). Ya construido y probado: catálogo,
+> carrito, registro/login de cliente, checkout → Pedido, y **acceso mayorista B2B
+> con aprobación del admin + toggle minorista/mayorista**. Detalle y estado en
+> [entrada-datos.md](entrada-datos.md).
+> Lo de abajo es la nota de planificación original (referencia de alcance).
 
 ## Referencia de producto
 Modelo a seguir (con **otro diseño** y catálogo propio):
@@ -19,6 +22,20 @@ especificaciones, buscador, carrito, favoritos, precios mayoristas, cuentas B2B.
 | Imágenes de producto | `multimedia` |
 | Precios mayoristas | `precio`, `lista_precio` |
 | Cuentas B2B + aprobación mayorista | `cliente`, `solicitud_mayorista` |
+
+> **Tema por modo (2026-08-24):** en la tienda, el **modo minorista usa tema claro**
+> y el **mayorista tema oscuro**. Se cambia con el mismo switch Minorista/Mayorista
+> (`aplicarTemaModo` pone/saca `data-theme="dark"`, reusa el tema oscuro de
+> `tokens.css`). La transición usa la **View Transitions API** (crossfade en el
+> compositor: fluido y barato; fallback instantáneo si no está soportada o hay
+> `prefers-reduced-motion`). El modo se recuerda en `localStorage` y un script en el
+> `<head>` lo aplica antes de pintar para evitar parpadeo. Probado ida y vuelta.
+
+> **Aviso por correo (2026-08-24):** al **aprobar o rechazar** una solicitud
+> mayorista (`MayoristaService::resolver`), se le manda un correo al cliente
+> avisándole el resultado (con link a la tienda). El envío es tolerante a fallos:
+> si el correo no sale, la aprobación/rechazo igual se registra. Probado con
+> aprobación y rechazo reales.
 | Pedidos online + estados | `pedido`, `pedido_detalle`, `estado_pedido` |
 | Envíos | `envio`, `empresa_envio`, `estado_envio`, `pais`, `provincia`, `localidad` |
 | Medios de pago | `pago`, `tipo_pago` |

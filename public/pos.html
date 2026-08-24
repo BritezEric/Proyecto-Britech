@@ -4,13 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Britech — Punto de Venta</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/img/logo.svg">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="/assets/css/tokens.css">
     <link rel="stylesheet" href="/assets/css/pos.css">
 </head>
 <body>
     <header class="barra">
-        <span class="logo">Britech · POS</span>
+        <span class="logo brand-lockup">
+            <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="brand-sq" width="32" height="32" rx="8"/><path class="brand-play" d="M12 8.5L24 16L12 23.5Z"/></svg>
+            <span class="brand-word">Britech · POS</span></span>
         <div class="barra-derecha">
             <span class="vendedor">Vendedor: <span id="vendedor-nombre">…</span></span>
+            <a id="link-panel" class="btn-logout oculto" href="/admin.html">Panel</a>
+            <a id="link-ventas" class="btn-logout oculto" href="/ventas.html">Ventas</a>
             <a id="link-usuarios" class="btn-logout oculto" href="/usuarios.html">Usuarios</a>
             <button id="btn-logout" class="btn-logout">Salir</button>
         </div>
@@ -79,6 +86,7 @@
         <div class="modal-caja">
             <div id="ticket" class="ticket"></div>
             <div class="modal-botones no-imprimir">
+                <a id="btn-pdf" class="btn-secundario" target="_blank" rel="noopener">PDF</a>
                 <button id="btn-imprimir" class="btn-secundario">Imprimir</button>
                 <button id="btn-nueva-venta" class="btn-cobrar">Nueva venta</button>
             </div>

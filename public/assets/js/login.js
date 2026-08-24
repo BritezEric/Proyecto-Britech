@@ -14,7 +14,9 @@ form.addEventListener('submit', async (e) => {
             email:    document.getElementById('email').value,
             password: document.getElementById('password').value,
         });
-        window.location.href = '/pos.html';
+        // Según el rol: admin → panel, vendedor → POS.
+        const { usuario } = await api.get('/api/yo');
+        window.location.href = usuario.rol === 'admin' ? '/admin.html' : '/pos.html';
     } catch (err) {
         error.textContent = err.message;       // mensaje del backend
         error.classList.remove('oculto');

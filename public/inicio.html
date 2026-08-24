@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Britech</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/img/logo.svg">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="/assets/css/tokens.css">
+    <style>
+        body {
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; padding: var(--sp-5);
+            background:
+                radial-gradient(120% 90% at 15% 0%, oklch(0.34 0.06 160) 0%, transparent 55%),
+                radial-gradient(110% 80% at 100% 100%, oklch(0.44 0.10 70 / 0.35) 0%, transparent 50%),
+                oklch(0.21 0.03 165);
+            color: #fff;
+        }
+        .hero { text-align: center; max-width: 720px; margin-bottom: var(--sp-6); }
+        .marca { font-size: clamp(2.5rem, 8vw, 4rem); font-weight: 800; letter-spacing: -0.04em;
+            display: inline-flex; align-items: center; gap: var(--sp-3); }
+        .lema { margin: var(--sp-3) 0 0; font-size: var(--text-lg); color: oklch(0.88 0.02 160); font-weight: 500; }
+
+        .opciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: var(--sp-4); width: 100%; max-width: 760px; }
+        .op {
+            background: var(--surface); color: var(--ink); text-decoration: none;
+            border-radius: var(--r-xl); padding: var(--sp-5); box-shadow: var(--shadow-lg);
+            display: flex; flex-direction: column; gap: var(--sp-2);
+            transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+        }
+        .op:hover { transform: translateY(-4px); box-shadow: 0 20px 50px oklch(0.1 0.02 165 / 0.4); }
+        .op-ico { width: 46px; height: 46px; border-radius: var(--r-md); display: grid; place-items: center;
+            font-size: 24px; margin-bottom: var(--sp-2); }
+        .op-ico.tienda { background: var(--primary-tint); }
+        .op-ico.staff  { background: var(--accent-tint); }
+        .op h2 { margin: 0; font-size: var(--text-xl); letter-spacing: -0.02em; }
+        .op p { margin: 0; color: var(--ink-muted); font-size: var(--text-sm); line-height: 1.5; }
+        .op .flecha { margin-top: var(--sp-2); font-weight: 700; color: var(--primary-strong); font-size: var(--text-sm); }
+        .roles { margin-top: var(--sp-5); font-size: var(--text-sm); color: oklch(0.80 0.02 160); text-align: center; max-width: 620px; }
+        .roles strong { color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="marca brand-lockup">
+            <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="brand-sq" width="32" height="32" rx="8"/><path class="brand-play" d="M12 8.5L24 16L12 23.5Z"/></svg>
+            <span class="brand-word">Britech</span></div>
+        <p class="lema">Gestión de ventas y tienda mayorista</p>
+    </div>
+
+    <div class="opciones">
+        <a class="op" href="/tienda.html">
+            <div class="op-ico tienda">🛒</div>
+            <h2>Tienda online</h2>
+            <p>Navegá el catálogo, armá tu carrito y hacé tu pedido. Creá tu cuenta de cliente para comprar.</p>
+            <span class="flecha">Entrar a la tienda →</span>
+        </a>
+        <a class="op" href="/login.html">
+            <div class="op-ico staff">🔑</div>
+            <h2>Acceso staff</h2>
+            <p>Ingreso para el equipo: el administrador entra al panel de gestión y el vendedor al punto de venta (POS).</p>
+            <span class="flecha">Iniciar sesión →</span>
+        </a>
+    </div>
+
+    <p class="roles">
+        <strong>Admin:</strong> panel completo (ABM de clientes, productos, proveedores, categorías, marcas y pedidos). ·
+        <strong>Vendedor:</strong> solo el POS. · <strong>Cliente:</strong> la tienda online.
+    </p>
+</body>
+</html>

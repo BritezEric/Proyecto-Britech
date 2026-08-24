@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
+use App\Core\RateLimit;
 use App\Core\ValidacionException;
 use App\Services\AuthService;
 
@@ -12,11 +13,16 @@ class AuthController
 {
     public function login(): void
     {
+        if (RateLimit::excedido('login-staff')) {
+            Response::json(['ok' => false, 'error' => 'Demasiados intentos. Esperá unos minutos e intentá de nuevo.'], 429);
+            return;
+        }
         $datos = Request::json();
         try {
             $usuario = (new AuthService())->login($datos['email'] ?? '', $datos['password'] ?? '');
             Response::json(['ok' => true, 'usuario' => $usuario]);
         } catch (ValidacionException $e) {
+            RateLimit::registrar('login-staff');   // solo contamos los fallidos
             Response::json(['ok' => false, 'error' => $e->getMessage()], 401);
         }
     }

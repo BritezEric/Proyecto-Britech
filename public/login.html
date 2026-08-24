@@ -4,12 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Britech — Ingresar</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/img/logo.svg">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="/assets/css/tokens.css">
     <link rel="stylesheet" href="/assets/css/login.css">
 </head>
 <body>
     <main class="login-caja">
-        <h1 class="login-logo">Britech</h1>
-        <p class="login-sub">Ingresá para continuar</p>
+        <h1 class="login-logo brand-lockup">
+            <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="brand-sq" width="32" height="32" rx="8"/><path class="brand-play" d="M12 8.5L24 16L12 23.5Z"/></svg>
+            <span class="brand-word">Britech</span></h1>
+        <p class="login-sub">Acceso del equipo (admin y vendedores)</p>
 
         <form id="form-login">
             <label for="email">Email</label>
@@ -22,6 +27,10 @@
             <button type="submit">Ingresar</button>
         </form>
         <p class="login-link-fila"><a class="login-link" href="/olvide.html">¿Olvidaste tu contraseña?</a></p>
+
+        <div class="login-sep"><span>¿Sos cliente?</span></div>
+        <a class="login-registro" href="/tienda.html?registro=1">Crear cuenta en la tienda →</a>
+        <p class="login-link-fila"><a class="login-link" href="/tienda.html">Ver la tienda sin cuenta</a></p>
     </main>
 
     <script src="/assets/js/api.js"></script>

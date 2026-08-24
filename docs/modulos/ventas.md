@@ -301,6 +301,20 @@ Todas las validaciones se hacen **en el backend** (aunque también haya ayudas e
   - Frontend: descuento por línea (input en cada línea), descuento total, y cobro
     con **varios medios de pago** (indicador Pagado/Falta). Ticket muestra
     subtotal, descuento y cada pago.
-- ⬜ **B — Login / autenticación** (siguiente).
-- ⬜ **C — Anulación de ventas** (solo admin).
+- ✅ **B — Login / autenticación** (2026-08-19). Ver [autenticacion.md](autenticacion.md).
+- ✅ **C — Anulación de ventas** (2026-08-21) — **solo admin**.
+  - Backend: `VentaService::anular()` valida que la venta exista y esté
+    `registrada`, exige **motivo** (obligatorio) y corre en **transacción**:
+    marca `venta.estado='anulada'`, inserta en `venta_anulacion` (venta_id UNIQUE
+    → no se puede anular dos veces) y **reintegra el stock** de las líneas
+    `normal` (las `sobre_pedido` nunca descontaron), registrando un
+    `movimiento_inventario` tipo `ingreso`. `VentaController::anular` corta con
+    403 si el usuario no es admin; `listar` alimenta la pantalla.
+  - Frontend: `ventas.html` + `ventas.js` (lista de ventas recientes, botón
+    **Anular** que pide el motivo). Link "Ventas" en el POS, visible solo para admin.
+  - Probado con curl: motivo vacío → 422, anulación OK, re-anulación → 422,
+    sin sesión → 401, y en la base: `estado=anulada`, stock reintegrado (+1),
+    fila en `venta_anulacion` y movimiento `ingreso`.
+  - ⏳ *Diseño de `ventas.html` pendiente*: se construyó en versión funcional;
+    se pulirá en la pasada de diseño (impeccable / emilkowalski).
 - ⬜ Ticket en PDF (Dompdf) — opcional, más adelante.

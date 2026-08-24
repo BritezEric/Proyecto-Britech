@@ -4,12 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Britech — Nueva contraseña</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/img/logo.svg">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="/assets/css/tokens.css">
     <link rel="stylesheet" href="/assets/css/login.css">
 </head>
 <body>
     <main class="login-caja">
-        <h1 class="login-logo">Britech</h1>
-        <p class="login-sub">Elegí una nueva contraseña</p>
+        <div class="auth-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
+        </div>
+        <h1 class="login-logo brand-lockup">
+            <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="brand-sq" width="32" height="32" rx="8"/><path class="brand-play" d="M12 8.5L24 16L12 23.5Z"/></svg>
+            <span class="brand-word">Britech</span></h1>
+        <p class="login-sub">Elegí una nueva contraseña para tu cuenta.</p>
 
         <form id="form-restablecer">
             <label for="password">Nueva contraseña</label>

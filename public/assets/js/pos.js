@@ -295,6 +295,7 @@ btnConfirmar.addEventListener('click', async () => {
         }));
         renderTicket(resp.venta.numero, [...carrito], clienteActual.nombre,
                      calcularSubtotal(), descuentoAplicado(), calcularTotal(), pagosTicket);
+        document.getElementById('btn-pdf').href = '/api/ventas/ticket?id=' + resp.venta.venta_id;
         // reset
         carrito = []; descuentoTotal = 0; descTotalIn.value = 0;
         renderCarrito();
@@ -373,6 +374,8 @@ input.addEventListener('keydown', async (e) => {
 
     // El link a "Usuarios" solo lo ve el admin.
     if (sesion.usuario.rol === 'admin') {
+        document.getElementById('link-panel').classList.remove('oculto');
+        document.getElementById('link-ventas').classList.remove('oculto');
         document.getElementById('link-usuarios').classList.remove('oculto');
     }
 

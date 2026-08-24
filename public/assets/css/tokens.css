@@ -1,0 +1,169 @@
+/* ============================================================
+   Britech — Design System (tokens)
+   Única fuente de verdad: color, tipografía, espaciado, motion.
+   Todas las pantallas importan este archivo primero.
+   Mood: "mercado de barrio moderno al mediodía" — verde de feria,
+   calidez ámbar, luz limpia. Identidad propia, no plantilla.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap');
+
+:root {
+    /* --- Color (OKLCH) --- */
+    --bg:            oklch(0.968 0.006 160);   /* canvas de la app (susurro verde) */
+    --surface:       oklch(1 0 0);             /* tarjetas: blanco puro */
+    --surface-2:     oklch(0.975 0.005 165);   /* superficie sutil / hover */
+    --surface-sunk:  oklch(0.955 0.008 165);   /* hundido (inputs, tracks) */
+
+    --ink:           oklch(0.24 0.015 165);    /* texto principal (16:1) */
+    --ink-muted:     oklch(0.52 0.020 165);    /* texto secundario (5.4:1) */
+    --line:          oklch(0.905 0.008 165);   /* bordes / divisores */
+    --line-strong:   oklch(0.84 0.010 165);
+
+    --primary:       oklch(0.56 0.13 158);     /* verde marca (fills) */
+    --primary-strong:oklch(0.48 0.13 158);     /* hover / texto verde */
+    --primary-tint:  oklch(0.955 0.03 158);    /* fondo suave (badge ok) */
+    --on-primary:    oklch(1 0 0);
+
+    --accent:        oklch(0.70 0.16 65);      /* ámbar cálido (atención/oferta/foco) */
+    --accent-strong: oklch(0.62 0.15 60);
+    --accent-tint:   oklch(0.955 0.04 72);
+    --on-accent:     oklch(0.24 0.03 60);      /* texto oscuro sobre ámbar */
+
+    --danger:        oklch(0.58 0.19 25);
+    --danger-strong: oklch(0.50 0.19 25);
+    --danger-tint:   oklch(0.955 0.03 25);
+
+    --info-tint:     var(--accent-tint);       /* alias semántico */
+
+    /* --- Tipografía --- */
+    --font-sans: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "Courier New", ui-monospace, monospace; /* ticket térmico */
+
+    /* Escala tipográfica (ratio ~1.25, contraste real de tamaños) */
+    --text-xs:   0.75rem;
+    --text-sm:   0.875rem;
+    --text-base: 1rem;
+    --text-lg:   1.25rem;
+    --text-xl:   1.625rem;
+    --text-2xl:  2.125rem;
+
+    /* --- Espaciado (4pt) --- */
+    --sp-1: 0.25rem;  --sp-2: 0.5rem;   --sp-3: 0.75rem;  --sp-4: 1rem;
+    --sp-5: 1.5rem;   --sp-6: 2rem;     --sp-7: 3rem;     --sp-8: 4rem;
+
+    /* --- Radios --- */
+    --r-sm: 8px;  --r-md: 12px;  --r-lg: 16px;  --r-xl: 22px;  --r-full: 999px;
+
+    /* --- Sombras (suaves, tono verde-neutro, nunca duras) --- */
+    --shadow-sm: 0 1px 2px oklch(0.24 0.02 165 / 0.06),
+                 0 1px 3px oklch(0.24 0.02 165 / 0.05);
+    --shadow-md: 0 2px 6px oklch(0.24 0.02 165 / 0.07),
+                 0 8px 20px oklch(0.24 0.02 165 / 0.06);
+    --shadow-lg: 0 12px 40px oklch(0.24 0.02 165 / 0.16);
+    --ring: 0 0 0 3px oklch(0.70 0.16 65 / 0.35);        /* foco: halo ámbar */
+    --ring-primary: 0 0 0 3px oklch(0.56 0.13 158 / 0.30);
+
+    /* --- Z-index semántico --- */
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-modal-backdrop: 300;
+    --z-modal: 310;
+    --z-toast: 400;
+    --z-tooltip: 500;
+
+    /* --- Motion --- */
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);   /* ease-out-quint */
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --dur-fast: 120ms;
+    --dur: 200ms;
+    --dur-slow: 340ms;
+}
+
+/* ===== Base / reset suave ===== */
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "cv05" 1;   /* letras más legibles */
+}
+
+/* Números tabulares donde importa la plata */
+.tabular { font-variant-numeric: tabular-nums; }
+
+::selection { background: var(--accent-tint); color: var(--ink); }
+
+/* Foco visible consistente (accesibilidad) */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+    border-color: var(--accent);
+}
+
+.oculto { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ============================================================
+   Tema oscuro (se activa con <html data-theme="dark">, usado en el panel admin)
+   ============================================================ */
+:root[data-theme="dark"] {
+    --bg:            oklch(0.19 0.012 165);
+    --surface:       oklch(0.235 0.014 165);
+    --surface-2:     oklch(0.285 0.014 165);
+    --surface-sunk:  oklch(0.205 0.012 165);
+    --ink:           oklch(0.95 0.006 165);
+    --ink-muted:     oklch(0.74 0.012 165);
+    --line:          oklch(0.33 0.014 165);
+    --line-strong:   oklch(0.43 0.016 165);
+    --primary-tint:  oklch(0.33 0.06 158);
+    --accent-tint:   oklch(0.35 0.07 72);
+    --danger-tint:   oklch(0.33 0.07 25);
+    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.40);
+    --shadow-md: 0 4px 14px oklch(0 0 0 / 0.45);
+    --shadow-lg: 0 12px 40px oklch(0 0 0 / 0.55);
+}
+
+/* ===== Logo Britech (marca "play") — inline, se adapta al color y tema ===== */
+/* Todo en currentColor (el color del texto del logo, ya tematizado): la caja es
+   un borde y el triángulo va relleno, así SIEMPRE contrasta, sea el fondo claro
+   u oscuro (sidebar, hero, cards, etc.). */
+.brand-mark { width: 1.15em; height: 1.15em; flex: 0 0 auto; vertical-align: -0.22em;
+    box-sizing: border-box; padding: 0.12em; border: 0.14em solid currentColor; border-radius: 28%; }
+.brand-mark .brand-sq { display: none; }
+.brand-mark .brand-play { fill: currentColor; }
+.brand-lockup { display: inline-flex; align-items: center; gap: 0.5em; }
+
+/* ===== Toast (aviso breve, compartido tienda + admin) ===== */
+.toast-cont { position: fixed; left: 0; right: 0; bottom: var(--sp-5); z-index: var(--z-toast);
+    display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); pointer-events: none; }
+.toast { display: inline-flex; align-items: center; gap: 0.5rem; max-width: min(92vw, 420px);
+    background: var(--ink); color: var(--surface); padding: 0.7rem 1.1rem; border-radius: var(--r-full);
+    box-shadow: var(--shadow-lg); font-size: var(--text-sm); font-weight: 600; line-height: 1.2;
+    opacity: 0; transform: translateY(14px) scale(0.96);
+    transition: opacity 0.28s var(--ease-out), transform 0.28s var(--ease-out); }
+.toast.show { opacity: 1; transform: translateY(0) scale(1); }
+.toast .toast-ic { color: oklch(0.82 0.15 158); font-weight: 800; }   /* ✓ verde claro, contrasta en pill oscuro */
+@media (prefers-reduced-motion: reduce) {
+    .toast { transition: opacity 0.2s linear; transform: none; }
+    .toast.show { transform: none; }
+}
+
+/* Pulso del contador del carrito al agregar */
+@keyframes cart-bump { 0% { transform: scale(1); } 35% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.cart-bump { animation: cart-bump 0.34s var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .cart-bump { animation: none; } }

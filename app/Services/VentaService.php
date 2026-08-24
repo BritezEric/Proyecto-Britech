@@ -149,4 +149,55 @@ class VentaService
 
         return ['venta_id' => $ventaId, 'numero' => $numero, 'total' => $total];
     }
+
+    /**
+     * Anular una venta (solo admin, la ruta/controlador ya valida el rol).
+     * Marca la venta como anulada, guarda el motivo y REINTEGRA el stock de
+     * las líneas normales (las "sobre pedido" nunca descontaron stock).
+     * Todo dentro de una transacción: o se anula entero, o nada.
+     */
+    public function anular(int $ventaId, string $motivo, int $usuarioId): array
+    {
+        $motivo = trim($motivo);
+        if ($motivo === '') {
+            throw new ValidacionException('El motivo de anulación es obligatorio.');
+        }
+
+        $ventaRepo = new VentaRepository();
+        $venta = $ventaRepo->buscarPorId($ventaId);
+        if ($venta === null) {
+            throw new ValidacionException('La venta no existe.');
+        }
+        if ($venta['estado'] === 'anulada') {
+            throw new ValidacionException('La venta ya está anulada.');
+        }
+
+        $detalle = $ventaRepo->detalleDe($ventaId);
+        $pdo     = Database::conexion();
+        $invRepo = new InventarioRepository();
+
+        try {
+            $pdo->beginTransaction();
+
+            $ventaRepo->marcarAnulada($ventaId);
+            $ventaRepo->registrarAnulacion($ventaId, $usuarioId, $motivo);
+
+            foreach ($detalle as $l) {
+                if ($l['estado'] === 'normal') {   // sobre_pedido no había descontado
+                    $invRepo->reintegrar((int) $l['producto_id'], (int) $l['cantidad']);
+                    $invRepo->registrarMovimiento(
+                        (int) $l['producto_id'], 'ingreso', (int) $l['cantidad'],
+                        "Anulación venta {$venta['numero']}", $ventaId, $usuarioId
+                    );
+                }
+            }
+
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+
+        return ['venta_id' => $ventaId, 'numero' => $venta['numero']];
+    }
 }

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Britech — Tienda</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/img/logo.svg">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="/assets/css/tokens.css">
+    <link rel="stylesheet" href="/assets/css/tienda.css">
+    <script>
+        // Tema según el modo del cliente (mayorista = oscuro). Se aplica ANTES de
+        // pintar para que no haya parpadeo al recargar en modo mayorista.
+        try { if (localStorage.getItem('britech_modo') === 'mayorista') document.documentElement.dataset.theme = 'dark'; } catch (e) {}
+    </script>
+</head>
+<body>
+    <header class="t-header">
+        <button id="ir-inicio" class="t-logo brand-lockup" aria-label="Inicio">
+            <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="brand-sq" width="32" height="32" rx="8"/><path class="brand-play" d="M12 8.5L24 16L12 23.5Z"/></svg>
+            <span class="brand-word">Britech <span>Tienda</span></span></button>
+        <div class="t-search"><input id="buscar" type="search" placeholder="Buscar productos…" autocomplete="off"></div>
+        <div class="t-acciones">
+            <div id="mayorista-zona" class="mayorista-zona"></div>
+            <div id="staff-zona"></div>
+            <button id="btn-cuenta" class="t-btn">Ingresar</button>
+            <button id="btn-carrito" class="t-btn">🛒 Carrito
+                <span id="cart-count" class="t-cart-count oculto">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Menú de categorías -->
+    <nav id="cat-menu" class="cat-menu"></nav>
+
+    <!-- VISTA HOME (bloques) -->
+    <section id="vista-home">
+        <div id="home-bloques"></div>
+    </section>
+
+    <!-- VISTA CATÁLOGO (búsqueda / ver todos) -->
+    <section id="vista-catalogo" class="oculto">
+        <div class="t-filtros">
+            <button id="volver-inicio" class="volver-inicio">← Inicio</button>
+            <h1 id="catalogo-titulo">Catálogo</h1>
+            <span id="lista-info" class="cuenta-info"></span>
+            <select id="filtro-categoria">
+                <option value="">Todas las categorías</option>
+            </select>
+        </div>
+        <main id="catalogo" class="catalogo"></main>
+        <div id="paginacion" class="paginacion"></div>
+    </section>
+
+    <!-- VISTA PRODUCTO (ficha completa) -->
+    <section id="vista-producto" class="oculto">
+        <div id="producto-cont"></div>
+    </section>
+
+    <footer class="t-footer">
+        <div class="t-footer-cols">
+            <div><strong>Britech</strong><p>Tu tienda mayorista y minorista de tecnología.</p></div>
+            <div><strong>Ayuda</strong><p>Envíos · Devoluciones · Contacto</p></div>
+            <div><strong>Cuenta</strong><p>Ingresar · Mis pedidos · Favoritos</p></div>
+        </div>
+        <div class="t-footer-base">© 2026 Britech · Proyecto educativo</div>
+    </footer>
+
+    <!-- Menú de cuenta -->
+    <div id="cuenta-menu" class="cuenta-menu oculto">
+        <button id="menu-favoritos">❤️ Mis favoritos</button>
+        <button id="menu-pedidos">Mis pedidos</button>
+        <button id="menu-salir">Cerrar sesión</button>
+    </div>
+
+    <!-- Carrito -->
+    <div id="modal-carrito" class="modal oculto">
+        <div class="modal-caja">
+            <h2>Tu carrito</h2>
+            <div id="cart-items"></div>
+            <div id="cart-resumen" class="oculto">
+                <div class="envio-box">
+                    <label class="envio-label">Envío</label>
+                    <select id="envio-empresa"></select>
+                    <input id="envio-direccion" type="text" placeholder="Dirección de envío *">
+                    <input id="envio-localidad" type="text" placeholder="Localidad">
+                </div>
+                <div class="cart-montos">
+                    <div class="fila-monto"><span>Subtotal</span><span id="cart-subtotal">$ 0,00</span></div>
+                    <div class="fila-monto"><span>Envío</span><span id="cart-envio">$ 0,00</span></div>
+                    <div class="cart-total"><span>Total</span><strong id="cart-total">$ 0,00</strong></div>
+                </div>
+                <div class="campo">
+                    <label for="obs">Observación (opcional)</label>
+                    <input id="obs" type="text" placeholder="Ej: entregar por la tarde">
+                </div>
+                <p id="cart-error" class="form-error oculto"></p>
+                <button id="btn-confirmar-pedido" class="btn-primary">Confirmar pedido</button>
+            </div>
+            <button id="cart-cerrar" class="btn-secundario" style="margin-top:12px">Seguir comprando</button>
+        </div>
+    </div>
+
+    <!-- Auth (login / registro) -->
+    <div id="modal-auth" class="modal oculto">
+        <div class="modal-caja">
+            <h2 id="auth-titulo">Ingresá a tu cuenta</h2>
+            <p id="auth-nota" class="cuenta-info oculto" style="margin:-8px 0 16px">Necesitás una cuenta para confirmar el pedido.</p>
+            <div class="tabs">
+                <button class="tab activo" data-tab="login">Ingresar</button>
+                <button class="tab" data-tab="registro">Crear cuenta</button>
+            </div>
+
+            <form id="form-login">
+                <div class="campo"><label>Email</label><input name="email" type="email" required></div>
+                <div class="campo"><label>Contraseña</label><input name="password" type="password" required></div>
+                <p id="login-error" class="form-error oculto"></p>
+                <p id="login-msg" class="form-ok-msg oculto"></p>
+                <button type="submit" class="btn-primary">Ingresar</button>
+                <div class="login-extras">
+                    <button type="button" id="link-olvide" class="link-mini">¿Olvidaste tu contraseña?</button>
+                    <button type="button" id="link-reenviar" class="link-mini oculto">Reenviar correo de activación</button>
+                </div>
+            </form>
+
+            <form id="form-registro" class="oculto">
+                <div class="campo"><label>Nombre</label><input name="nombre" type="text" required></div>
+                <div class="campo"><label>Email</label><input name="email" type="email" required></div>
+                <div class="campo"><label>Teléfono (opcional)</label><input name="telefono" type="text"></div>
+                <p class="cuenta-info" style="margin:-4px 0 12px">Te vamos a enviar un correo para activar tu cuenta y elegir tu contraseña.</p>
+                <p id="registro-error" class="form-error oculto"></p>
+                <button type="submit" class="btn-primary">Crear cuenta</button>
+            </form>
+
+            <p id="registro-ok" class="form-ok-msg oculto"></p>
+            <button id="auth-cerrar" class="btn-secundario" style="margin-top:12px">Cancelar</button>
+            <p class="auth-staff-link">¿Sos del equipo? <a href="/login.html">Ingresá como staff →</a></p>
+        </div>
+    </div>
+
+    <!-- Confirmación de pedido -->
+    <div id="modal-ok" class="modal oculto">
+        <div class="modal-caja">
+            <div class="form-ok">
+                <div class="tick">✓</div>
+                <h2 id="ok-titulo">¡Pedido confirmado!</h2>
+                <p id="ok-texto" class="cuenta-info" style="margin-bottom:20px"></p>
+            </div>
+            <button id="ok-cerrar" class="btn-primary">Seguir comprando</button>
+        </div>
+    </div>
+
+    <!-- Solicitar cuenta mayorista -->
+    <div id="modal-mayorista" class="modal oculto">
+        <div class="modal-caja">
+            <h2>Cuenta mayorista</h2>
+            <p class="cuenta-info" style="margin:-8px 0 16px">
+                Pedí acceso a los precios mayoristas. Un administrador va a revisar tu solicitud.
+                Cuando te la aprueben, vas a poder elegir cómo navegar: minorista o mayorista.
+            </p>
+            <div class="campo">
+                <label for="may-mensaje">Contanos de tu comercio (opcional)</label>
+                <input id="may-mensaje" type="text" placeholder="Ej: tengo un kiosco en zona norte">
+            </div>
+            <p id="may-error" class="form-error oculto"></p>
+            <button id="may-enviar" class="btn-primary">Enviar solicitud</button>
+            <button id="may-cerrar" class="btn-secundario" style="margin-top:12px">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Mis favoritos -->
+    <div id="modal-favoritos" class="modal oculto">
+        <div class="modal-caja">
+            <h2>❤️ Mis favoritos</h2>
+            <div id="favoritos-lista"></div>
+            <button id="favoritos-cerrar" class="btn-secundario" style="margin-top:12px">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Mis pedidos -->
+    <div id="modal-pedidos" class="modal oculto">
+        <div class="modal-caja">
+            <h2>Mis pedidos</h2>
+            <div id="pedidos-lista"></div>
+            <button id="pedidos-cerrar" class="btn-secundario" style="margin-top:12px">Cerrar</button>
+        </div>
+    </div>
+
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/tienda-home.js"></script>
+    <script src="/assets/js/tienda.js"></script>
+</body>
+</html>

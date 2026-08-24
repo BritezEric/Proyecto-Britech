@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Britech — Panel admin</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/img/logo.svg">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="/assets/css/tokens.css">
+    <link rel="stylesheet" href="/assets/css/admin.css">
+    <script>try { var t = localStorage.getItem('britech_admin_theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+    <div class="admin">
+        <!-- Barra lateral -->
+        <aside class="side">
+            <div class="side-logo brand-lockup">
+                <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="brand-sq" width="32" height="32" rx="8"/><path class="brand-play" d="M12 8.5L24 16L12 23.5Z"/></svg>
+                <span class="brand-word">Britech <span>Admin</span></span></div>
+            <nav class="side-nav" id="nav">
+                <button data-ent="inicio"      class="nav-item">Inicio</button>
+                <button data-ent="clientes"    class="nav-item">Clientes</button>
+                <button data-ent="productos"   class="nav-item">Productos</button>
+                <button data-ent="proveedores" class="nav-item">Proveedores</button>
+                <button data-ent="categorias"  class="nav-item">Categorías</button>
+                <button data-ent="marcas"      class="nav-item">Marcas</button>
+                <button data-ent="pedidos"     class="nav-item">Pedidos</button>
+                <button data-ent="solicitudes" class="nav-item">Solicitudes</button>
+                <button data-ent="envios"      class="nav-item">Envíos</button>
+                <button data-ent="bloques"     class="nav-item">Inicio tienda</button>
+            </nav>
+            <div class="side-foot">
+                <button id="btn-tema" class="side-link">🌙 Tema oscuro</button>
+                <a href="/pos.html" class="side-link">← Ir al POS</a>
+                <button id="btn-salir" class="side-link side-salir">Salir</button>
+            </div>
+        </aside>
+
+        <!-- Contenido -->
+        <main class="content">
+            <!-- Vista de tabla (ABM) -->
+            <section id="vista-abm" class="oculto">
+                <header class="content-top">
+                    <div>
+                        <h1 id="ent-title">—</h1>
+                        <p id="ent-sub" class="sub"></p>
+                    </div>
+                    <button id="btn-nuevo" class="btn-primary">+ Nuevo</button>
+                </header>
+
+                <div class="toolbar">
+                    <div class="search-wrap">
+                        <input id="q" class="search" type="search" placeholder="Buscar…" autocomplete="off">
+                    </div>
+                    <div id="filtros" class="filtros"></div>
+                </div>
+
+                <div class="tabla-caja">
+                    <table>
+                        <thead id="thead"></thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                    <div id="vacio" class="tabla-vacia oculto">Sin resultados.</div>
+                </div>
+
+                <div class="paginacion" id="paginacion"></div>
+            </section>
+
+            <!-- Vista inicio (dashboard) -->
+            <section id="vista-inicio" class="oculto">
+                <header class="content-top">
+                    <div>
+                        <h1>Panel de administración</h1>
+                        <p class="sub">Datos para tomar decisiones: ventas, pedidos y reposición.</p>
+                    </div>
+                </header>
+                <div id="kpis" class="cards"></div>
+
+                <h2 class="dash-h">💰 Finanzas</h2>
+                <div id="totales" class="dash-totales"></div>
+                <div class="dash-grid">
+                    <div class="dash-panel dash-ancho" id="dash-finanzas"></div>
+                    <div class="dash-panel dash-ancho" id="dash-gastos"></div>
+                </div>
+
+                <h2 class="dash-h">📊 Ventas</h2>
+                <div class="dash-grid">
+                    <div class="dash-panel dash-ancho" id="dash-ventas7"></div>
+                    <div class="dash-panel" id="dash-categorias"></div>
+                    <div class="dash-panel" id="dash-acciones"></div>
+                    <div class="dash-panel" id="dash-vendedores"></div>
+                    <div class="dash-panel" id="dash-top"></div>
+                </div>
+
+                <h2 class="dash-h">📦 Inventario</h2>
+                <div class="dash-grid">
+                    <div class="dash-panel" id="dash-stock"></div>
+                    <div class="dash-panel" id="dash-sinmov"></div>
+                </div>
+            </section>
+
+            <!-- Vista: bloques de la home (page builder) -->
+            <section id="vista-bloques" class="oculto">
+                <header class="content-top">
+                    <div>
+                        <h1>Inicio de la tienda</h1>
+                        <p class="sub">Armá la home con bloques: ordenalos, activalos y editá su contenido.</p>
+                    </div>
+                    <button id="btn-nuevo-bloque" class="btn-primary">+ Nuevo bloque</button>
+                </header>
+                <p class="bloques-hint">💡 Arrastrá los bloques (icono ⠿) para reordenar la home, o usá las flechas ▲ ▼. Los cambios se guardan solos.</p>
+                <div id="bloques-lista" class="bloques-lista"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal de formulario (crear / editar) -->
+    <div id="modal" class="modal oculto">
+        <div class="modal-caja">
+            <h2 id="modal-title">Nuevo</h2>
+            <form id="form" novalidate>
+                <div id="form-campos" class="form-grid"></div>
+                <p id="form-error" class="form-error oculto"></p>
+                <div class="modal-botones">
+                    <button type="button" id="btn-cancelar" class="btn-secundario">Cancelar</button>
+                    <button type="submit" id="btn-guardar" class="btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de detalle de pedido (solo lectura) -->
+    <div id="modal-detalle" class="modal oculto">
+        <div class="modal-caja">
+            <h2 id="detalle-titulo">Pedido</h2>
+            <div id="detalle-items"></div>
+            <div class="modal-botones">
+                <button type="button" id="detalle-cerrar" class="btn-secundario">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: crear / editar bloque -->
+    <div id="modal-bloque" class="modal oculto">
+        <div class="modal-caja">
+            <h2 id="bloque-title">Nuevo bloque</h2>
+            <div id="bloque-campos"></div>
+            <p id="bloque-error" class="form-error oculto"></p>
+            <div class="modal-botones">
+                <button type="button" id="bloque-cancelar" class="btn-secundario">Cancelar</button>
+                <button type="button" id="bloque-guardar" class="btn-primary">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: slides del hero -->
+    <div id="modal-slides" class="modal oculto">
+        <div class="modal-caja">
+            <h2>Slides del hero</h2>
+            <div id="slides-lista"></div>
+            <hr class="sep">
+            <div id="slide-form"></div>
+            <div class="modal-botones">
+                <button type="button" id="slides-cerrar" class="btn-secundario">Cerrar</button>
+                <button type="button" id="slide-guardar" class="btn-primary">Guardar slide</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/admin.js"></script>
+    <script src="/assets/js/admin-bloques.js"></script>
+</body>
+</html>

@@ -83,3 +83,19 @@ Se crea el usuario → se genera un TOKEN → se envía por email un link
 - ✅ **B4 — Recuperación de contraseña** (2026-08-19): `olvide.html` → correo con
   link → `restablecer.html`. No revela si el email existe. Probado: la clave vieja
   deja de funcionar tras el reset.
+- ✅ **B6 — Invitación por correo al alta desde el admin** (2026-08-24): cuando el
+  admin crea un **cliente nuevo con email** desde el ABM, se le manda el correo de
+  activación (reusa `TiendaAuthService::invitarActivacion` → mismo token
+  `verificacion`), para que elija su contraseña y pueda entrar a la tienda. El fallo
+  del correo no rompe el alta (se avisa "creado, pero no se pudo enviar"). El panel
+  muestra un toast con el resultado. Probado: al crear, se genera el `cliente_token`
+  y llega el correo.
+- ✅ **B5 — Identidad única staff/cliente** (2026-08-23): staff (`usuario_id`) y
+  cliente (`cliente_id`) ya **no conviven** en la misma sesión. `Session::login()`
+  borra cualquier sesión de cliente y `Session::loginCliente()` borra la de staff.
+  Antes podían coexistir → un navegador logueado como cliente conservaba la sesión
+  de staff por detrás y podía volver al panel (fuga). Ahora entrar como uno **cierra
+  el otro**. Páginas de login separadas: `/login.html` (staff, `/api/login`) vs modal
+  de la tienda (`/api/tienda/login`). Probado con curl en ambos sentidos: tras
+  loguear cliente, `/api/yo` y `/api/admin/*` dan **401**; tras loguear staff,
+  `/api/tienda/yo` da **401**.
