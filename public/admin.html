@@ -18,17 +18,11 @@
                 <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="brand-sq" width="32" height="32" rx="8"/><path class="brand-play" d="M12 8.5L24 16L12 23.5Z"/></svg>
                 <span class="brand-word">Britech <span>Admin</span></span></div>
             <nav class="side-nav" id="nav">
-                <button data-ent="inicio"      class="nav-item">Inicio</button>
-                <button data-ent="clientes"    class="nav-item">Clientes</button>
-                <button data-ent="empleados"   class="nav-item">Empleados</button>
-                <button data-ent="productos"   class="nav-item">Productos</button>
-                <button data-ent="proveedores" class="nav-item">Proveedores</button>
-                <button data-ent="categorias"  class="nav-item">Categorías</button>
-                <button data-ent="marcas"      class="nav-item">Marcas</button>
-                <button data-ent="pedidos"     class="nav-item">Pedidos</button>
-                <button data-ent="solicitudes" class="nav-item">Solicitudes</button>
-                <button data-ent="envios"      class="nav-item">Envíos</button>
-                <button data-ent="bloques"     class="nav-item">Inicio tienda</button>
+                <button data-ent="inicio"    class="nav-item">Inicio</button>
+                <button data-ent="tablas"    class="nav-item">Tablas</button>
+                <button data-ent="empleados" class="nav-item">Empleados</button>
+                <button data-ent="pedidos"   class="nav-item">Envíos</button>
+                <button data-ent="bloques"   class="nav-item">Inicio tienda</button>
             </nav>
             <div class="side-foot">
                 <button id="btn-tema" class="side-link">🌙 Tema oscuro</button>
@@ -43,6 +37,7 @@
             <section id="vista-abm" class="oculto">
                 <header class="content-top">
                     <div>
+                        <button id="btn-volver-tablas" class="volver-link oculto" onclick="seleccionar('tablas')">‹ Tablas</button>
                         <h1 id="ent-title">—</h1>
                         <p id="ent-sub" class="sub"></p>
                     </div>
@@ -98,6 +93,17 @@
                     <div class="dash-panel" id="dash-stock"></div>
                     <div class="dash-panel" id="dash-sinmov"></div>
                 </div>
+            </section>
+
+            <!-- Vista: Tablas (datos maestros en cuadritos) -->
+            <section id="vista-tablas" class="oculto">
+                <header class="content-top">
+                    <div>
+                        <h1>Tablas</h1>
+                        <p class="sub">Datos maestros del sistema. Tocá una tabla para verla y editarla.</p>
+                    </div>
+                </header>
+                <div id="tablas-grid" class="tablas-grid"></div>
             </section>
 
             <!-- Vista: empleados (rendimiento + sueldos) -->

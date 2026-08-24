@@ -158,7 +158,7 @@ const ENTIDADES = {
     },
 
     pedidos: {
-        titulo: 'Pedidos', sub: 'Pedidos de la tienda online. Cambiá el estado a medida que los gestionás.',
+        titulo: 'Gestor de envíos', sub: 'Pedidos de la tienda: hacete cargo de cada envío — estado, datos de entrega y seguimiento.',
         singular: 'pedido', endpoint: '/api/admin/pedidos', detalle: '/api/admin/pedidos/detalle',
         noCrear: true, acciones: ['ver'],
         columnas: [
@@ -265,32 +265,50 @@ let imagenesForm = [];  // URLs de imágenes del producto en edición (widget de
 const $ = (id) => document.getElementById(id);
 const vistaAbm = $('vista-abm'), vistaInicio = $('vista-inicio');
 
+// Entidades maestras que viven dentro de la vista "Tablas" (cuadritos).
+const ENTS_TABLAS = ['clientes', 'productos', 'proveedores', 'categorias', 'marcas', 'solicitudes', 'envios'];
+const TABLAS_CARDS = [
+    { ent: 'clientes',    icon: '👥', label: 'Clientes',           desc: 'Cuentas y datos de clientes' },
+    { ent: 'productos',   icon: '📦', label: 'Productos',          desc: 'Catálogo, precios y stock' },
+    { ent: 'proveedores', icon: '🏭', label: 'Proveedores',        desc: 'A quién le comprás' },
+    { ent: 'categorias',  icon: '🏷️', label: 'Categorías',         desc: 'Rubros del catálogo' },
+    { ent: 'marcas',      icon: '™️', label: 'Marcas',             desc: 'Marcas de los productos' },
+    { ent: 'solicitudes', icon: '📨', label: 'Solicitudes',        desc: 'Pedidos de cuenta mayorista' },
+    { ent: 'envios',      icon: '📮', label: 'Empresas de envío',  desc: 'Correos y su seguimiento' },
+];
+
+function renderTablas() {
+    const cont = $('tablas-grid');
+    cont.innerHTML = TABLAS_CARDS.map((t) => `<button class="tabla-card" data-ir="${t.ent}">
+        <span class="tabla-ic">${t.icon}</span>
+        <span class="tabla-nom">${esc(t.label)}</span>
+        <span class="tabla-desc">${esc(t.desc)}</span>
+    </button>`).join('');
+    cont.querySelectorAll('[data-ir]').forEach((el) =>
+        el.addEventListener('click', () => seleccionar(el.dataset.ir)));
+}
+
 // ---- Navegación ----
 async function seleccionar(ent) {
-    document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('activo', b.dataset.ent === ent));
-    const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados');
-    const ocultarTodo = () => { vistaAbm.classList.add('oculto'); vistaInicio.classList.add('oculto');
-        vistaBloques.classList.add('oculto'); vistaEmpleados.classList.add('oculto'); };
-    if (ent === 'inicio') {
-        ocultarTodo(); vistaInicio.classList.remove('oculto');
-        return renderInicio();
-    }
-    if (ent === 'bloques') {
-        ocultarTodo(); vistaBloques.classList.remove('oculto');
-        return renderBloques();   // en admin-bloques.js
-    }
-    if (ent === 'empleados') {
-        ocultarTodo(); vistaEmpleados.classList.remove('oculto');
-        return renderEmpleados(); // en admin-empleados.js
-    }
+    // Las entidades maestras viven dentro de "Tablas": al abrir cualquiera, el
+    // ítem del sidebar que queda activo es "Tablas".
+    const navKey = ENTS_TABLAS.includes(ent) ? 'tablas' : ent;
+    document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('activo', b.dataset.ent === navKey));
+    const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados'), vistaTablas = $('vista-tablas');
+    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas]
+        .forEach((v) => v.classList.add('oculto'));
+    if (ent === 'inicio')   { ocultarTodo(); vistaInicio.classList.remove('oculto');   return renderInicio(); }
+    if (ent === 'tablas')   { ocultarTodo(); vistaTablas.classList.remove('oculto');   return renderTablas(); }
+    if (ent === 'bloques')  { ocultarTodo(); vistaBloques.classList.remove('oculto');  return renderBloques(); }
+    if (ent === 'empleados'){ ocultarTodo(); vistaEmpleados.classList.remove('oculto'); return renderEmpleados(); }
     entActual = ent; cfg = ENTIDADES[ent];
     page = 1; q = ''; filtros = {};
     $('q').value = '';
     $('ent-title').textContent = cfg.titulo;
     $('ent-sub').textContent = cfg.sub;
     $('btn-nuevo').classList.toggle('oculto', !!cfg.noCrear);
-    vistaInicio.classList.add('oculto'); vistaBloques.classList.add('oculto'); vistaEmpleados.classList.add('oculto');
-    vistaAbm.classList.remove('oculto');
+    $('btn-volver-tablas').classList.toggle('oculto', !ENTS_TABLAS.includes(ent));
+    ocultarTodo(); vistaAbm.classList.remove('oculto');
     await renderFiltros();
     renderThead();
     await cargar();
