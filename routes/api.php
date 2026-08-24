@@ -15,6 +15,7 @@ use App\Controllers\ProveedorController;
 use App\Controllers\CategoriaController;
 use App\Controllers\MarcaController;
 use App\Controllers\GastoController;
+use App\Controllers\EmpleadoController;
 use App\Controllers\TiendaAuthController;
 use App\Controllers\CatalogoController;
 use App\Controllers\PedidoController;
@@ -77,6 +78,12 @@ $router->post('/api/admin/marcas/baja',     [MarcaController::class, 'baja'],   
 $router->get('/api/admin/gastos',           [GastoController::class, 'admin'],   true);
 $router->post('/api/admin/gastos/guardar',  [GastoController::class, 'guardar'], true);
 $router->post('/api/admin/gastos/baja',     [GastoController::class, 'baja'],    true);
+
+// Empleados (rendimiento + pagos de sueldo + PDF) — solo admin
+$router->get('/api/admin/empleados',          [EmpleadoController::class, 'listar'],  true);
+$router->get('/api/admin/empleados/detalle',  [EmpleadoController::class, 'detalle'], true);
+$router->post('/api/admin/empleados/pagar',   [EmpleadoController::class, 'pagar'],   true);
+$router->get('/api/admin/empleados/pdf',      [EmpleadoController::class, 'pdf'],     true);
 
 // Pedidos (gestión admin)
 $router->get('/api/admin/pedidos',          [PedidoController::class, 'adminListar'],  true);

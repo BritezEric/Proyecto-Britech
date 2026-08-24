@@ -101,10 +101,17 @@ class GastoService
         }
         if ($productoId === null) { $cantidad = null; }   // sin producto no guardamos cantidad
 
+        // Sueldo de empleado (opcional): usuario_id + periodo 'YYYY-MM'.
+        $usuarioId = (int) ($in['usuario_id'] ?? 0) ?: null;
+        $periodo   = trim($in['periodo'] ?? '');
+        $periodo   = preg_match('/^\d{4}-\d{2}$/', $periodo) ? $periodo : null;
+
         return [
             'fecha'        => $fecha,
             'proveedor_id' => (int) ($in['proveedor_id'] ?? 0) ?: null,
             'producto_id'  => $productoId,
+            'usuario_id'   => $usuarioId,
+            'periodo'      => $periodo,
             'cantidad'     => $cantidad,
             'concepto'     => $concepto,
             'monto'        => round((float) $monto, 2),

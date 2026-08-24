@@ -268,16 +268,20 @@ const vistaAbm = $('vista-abm'), vistaInicio = $('vista-inicio');
 // ---- Navegación ----
 async function seleccionar(ent) {
     document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('activo', b.dataset.ent === ent));
-    const vistaBloques = $('vista-bloques');
+    const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados');
+    const ocultarTodo = () => { vistaAbm.classList.add('oculto'); vistaInicio.classList.add('oculto');
+        vistaBloques.classList.add('oculto'); vistaEmpleados.classList.add('oculto'); };
     if (ent === 'inicio') {
-        vistaAbm.classList.add('oculto'); vistaBloques.classList.add('oculto');
-        vistaInicio.classList.remove('oculto');
+        ocultarTodo(); vistaInicio.classList.remove('oculto');
         return renderInicio();
     }
     if (ent === 'bloques') {
-        vistaAbm.classList.add('oculto'); vistaInicio.classList.add('oculto');
-        vistaBloques.classList.remove('oculto');
+        ocultarTodo(); vistaBloques.classList.remove('oculto');
         return renderBloques();   // en admin-bloques.js
+    }
+    if (ent === 'empleados') {
+        ocultarTodo(); vistaEmpleados.classList.remove('oculto');
+        return renderEmpleados(); // en admin-empleados.js
     }
     entActual = ent; cfg = ENTIDADES[ent];
     page = 1; q = ''; filtros = {};
@@ -285,7 +289,7 @@ async function seleccionar(ent) {
     $('ent-title').textContent = cfg.titulo;
     $('ent-sub').textContent = cfg.sub;
     $('btn-nuevo').classList.toggle('oculto', !!cfg.noCrear);
-    vistaInicio.classList.add('oculto'); vistaBloques.classList.add('oculto');
+    vistaInicio.classList.add('oculto'); vistaBloques.classList.add('oculto'); vistaEmpleados.classList.add('oculto');
     vistaAbm.classList.remove('oculto');
     await renderFiltros();
     renderThead();

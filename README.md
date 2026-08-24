@@ -38,7 +38,8 @@ El primero crea la base `britech_v2`; el resto hace `USE britech_v2`.
 9.  database/schema_favoritos.sql       (favoritos de clientes)
 10. database/schema_mayorista.sql       (solicitudes mayoristas)
 11. database/schema_gastos.sql          (gastos / finanzas)
-12. database/schema_bloques.sql         (page builder de la home — independiente)
+12. database/schema_empleados.sql       (sueldos = gastos etiquetados al empleado)
+13. database/schema_bloques.sql         (page builder de la home — independiente)
 ```
 
 Desde la terminal (uno por uno, o encadenados):
@@ -55,6 +56,7 @@ mysql -u root britech_v2 < database/schema_envios_datos.sql
 mysql -u root britech_v2 < database/schema_favoritos.sql
 mysql -u root britech_v2 < database/schema_mayorista.sql
 mysql -u root britech_v2 < database/schema_gastos.sql
+mysql -u root britech_v2 < database/schema_empleados.sql
 mysql -u root britech_v2 < database/schema_bloques.sql
 ```
 

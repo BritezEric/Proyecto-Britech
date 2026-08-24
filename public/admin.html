@@ -20,6 +20,7 @@
             <nav class="side-nav" id="nav">
                 <button data-ent="inicio"      class="nav-item">Inicio</button>
                 <button data-ent="clientes"    class="nav-item">Clientes</button>
+                <button data-ent="empleados"   class="nav-item">Empleados</button>
                 <button data-ent="productos"   class="nav-item">Productos</button>
                 <button data-ent="proveedores" class="nav-item">Proveedores</button>
                 <button data-ent="categorias"  class="nav-item">Categorías</button>
@@ -99,6 +100,17 @@
                 </div>
             </section>
 
+            <!-- Vista: empleados (rendimiento + sueldos) -->
+            <section id="vista-empleados" class="oculto">
+                <header class="content-top">
+                    <div>
+                        <h1>Empleados</h1>
+                        <p class="sub">Rendimiento de tu equipo y gestión de sueldos. Tocá un empleado para ver el detalle y pagar.</p>
+                    </div>
+                </header>
+                <div id="empleados-lista" class="emp-grid"></div>
+            </section>
+
             <!-- Vista: bloques de la home (page builder) -->
             <section id="vista-bloques" class="oculto">
                 <header class="content-top">
@@ -167,8 +179,20 @@
         </div>
     </div>
 
+    <!-- Modal: detalle de empleado (rendimiento + sueldo) -->
+    <div id="modal-empleado" class="modal oculto">
+        <div class="modal-caja">
+            <h2 id="emp-title">Empleado</h2>
+            <div id="emp-detalle"></div>
+            <div class="modal-botones">
+                <button type="button" id="emp-cerrar" class="btn-secundario">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/admin.js"></script>
     <script src="/assets/js/admin-bloques.js"></script>
+    <script src="/assets/js/admin-empleados.js"></script>
 </body>
 </html>

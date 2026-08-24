@@ -64,20 +64,20 @@ class GastoRepository
     public function crear(array $d): int
     {
         $pdo = Database::conexion();
-        $pdo->prepare("INSERT INTO gasto (fecha, proveedor_id, producto_id, cantidad, concepto, monto, observacion, activo)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-            ->execute([$d['fecha'], $d['proveedor_id'], $d['producto_id'], $d['cantidad'],
-                       $d['concepto'], $d['monto'], $d['observacion'], $d['activo']]);
+        $pdo->prepare("INSERT INTO gasto (fecha, proveedor_id, producto_id, usuario_id, periodo, cantidad, concepto, monto, observacion, activo)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+            ->execute([$d['fecha'], $d['proveedor_id'], $d['producto_id'], $d['usuario_id'] ?? null, $d['periodo'] ?? null,
+                       $d['cantidad'], $d['concepto'], $d['monto'], $d['observacion'], $d['activo']]);
         return (int) $pdo->lastInsertId();
     }
 
     public function actualizar(int $id, array $d): void
     {
         Database::conexion()
-            ->prepare("UPDATE gasto SET fecha = ?, proveedor_id = ?, producto_id = ?, cantidad = ?,
+            ->prepare("UPDATE gasto SET fecha = ?, proveedor_id = ?, producto_id = ?, usuario_id = ?, periodo = ?, cantidad = ?,
                        concepto = ?, monto = ?, observacion = ?, activo = ? WHERE id = ?")
-            ->execute([$d['fecha'], $d['proveedor_id'], $d['producto_id'], $d['cantidad'],
-                       $d['concepto'], $d['monto'], $d['observacion'], $d['activo'], $id]);
+            ->execute([$d['fecha'], $d['proveedor_id'], $d['producto_id'], $d['usuario_id'] ?? null, $d['periodo'] ?? null,
+                       $d['cantidad'], $d['concepto'], $d['monto'], $d['observacion'], $d['activo'], $id]);
     }
 
     public function cambiarEstado(int $id, int $activo): void
