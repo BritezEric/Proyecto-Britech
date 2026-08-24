@@ -22,7 +22,7 @@ function empCard(e) {
     const inactivo = Number(e.activo) ? '' : '<span class="emp-rol rol-off">inactivo</span>';
     const pago = Number(e.pagado_mes) > 0
         ? `<span class="emp-pago ok">✔ sueldo pago</span>`
-        : `<span class="emp-pago pend">sueldo pendiente</span>`;
+        : '';
     return `<button class="emp-card" data-emp="${e.id}">
         <div class="emp-top">
             <span class="emp-avatar">${esc(inicial)}</span>
@@ -63,7 +63,7 @@ async function abrirEmpleado(id, periodo) {
 
     const pagoBloque = pago
         ? `<p class="emp-pago ok" style="margin:0">✔ Sueldo de ${esc(per)} pagado el ${esc(pago.fecha)} — ${money.format(pago.monto)}</p>`
-        : `<p class="emp-pago pend" style="margin:0">Sueldo de ${esc(per)}: pendiente</p>`;
+        : '';
 
     const listaPagos = r.pagos.length
         ? r.pagos.map((p) => `<div class="pedido-linea">
