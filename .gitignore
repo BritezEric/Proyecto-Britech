@@ -7,3 +7,7 @@
 # Logs y archivos temporales
 /storage/logs/*
 !/storage/logs/.gitkeep
+
+# Comprobantes de pago subidos por clientes: datos personales/financieros,
+# NUNCA se suben al repo.
+/public/uploads/comprobantes/
