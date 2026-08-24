@@ -354,13 +354,19 @@ async function mostrarPagoTransferencia(pedidoId, total) {
         const p = r.pago || {};
         if (!p.alias && !p.cbu) { box.classList.add('oculto'); return; }
         const filas = [];
-        if (p.alias)   filas.push(['Alias', p.alias]);
-        if (p.cbu)     filas.push(['CBU', p.cbu]);
+        if (p.alias)   filas.push(['Alias', p.alias, true]);
+        if (p.cbu)     filas.push(['CBU', p.cbu, true]);
         if (p.titular) filas.push(['Titular', p.titular]);
         if (p.banco)   filas.push(['Banco', p.banco]);
         filas.push(['Total a transferir', money.format(total)]);
-        $('pago-datos').innerHTML = filas.map(([k, v]) =>
-            `<div class="pago-fila"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('');
+        $('pago-datos').innerHTML = filas.map(([k, v, copiable]) =>
+            `<div class="pago-fila"><span>${esc(k)}</span><strong>${esc(v)}</strong>${
+                copiable ? `<button type="button" class="pago-copiar" data-copiar="${esc(v)}">copiar</button>` : ''
+            }</div>`).join('');
+        $('pago-datos').querySelectorAll('[data-copiar]').forEach((b) => b.addEventListener('click', async () => {
+            try { await navigator.clipboard.writeText(b.dataset.copiar); toast('✓ Copiado'); b.textContent = '✓'; setTimeout(() => { b.textContent = 'copiar'; }, 1200); }
+            catch (e) { toast('No se pudo copiar'); }
+        }));
         $('pago-estado').classList.add('oculto');
         $('pago-file-label').textContent = '📎 Subir comprobante';
         box.classList.remove('oculto');
