@@ -709,6 +709,7 @@ async function verPedido(id, numero) {
             await api.post('/api/admin/pedidos/pago', { pedido_id: Number(id), estado_pago: b.dataset.pago });
             toast(b.dataset.pago === 'pagado' ? '✓ Pago aprobado' : '✗ Pago rechazado');
             verPedido(id, numero);
+            cargar();   // refresca la columna "Pago" del listado de fondo
         } catch (ex) { alert(ex.message); }
     }));
 
@@ -732,6 +733,7 @@ async function verPedido(id, numero) {
                 },
             });
             btn.textContent = 'Guardado ✓';
+            cargar();   // refresca la columna "Envío" del listado de fondo
             // Recargar el detalle para refrescar el link de seguimiento con el nuevo tracking.
             setTimeout(() => verPedido(id, numero), 700);
         } catch (ex) { alert(ex.message); btn.disabled = false; }
