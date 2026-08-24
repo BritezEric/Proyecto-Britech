@@ -10,9 +10,9 @@ body {
     justify-content: center;
     padding: var(--sp-4);
     background:
-        radial-gradient(120% 90% at 15% 0%, oklch(0.34 0.06 160) 0%, transparent 55%),
-        radial-gradient(110% 80% at 100% 100%, oklch(0.44 0.10 70 / 0.35) 0%, transparent 50%),
-        oklch(0.21 0.03 165);
+        radial-gradient(120% 90% at 15% 0%, oklch(0.32 0.14 296) 0%, transparent 55%),
+        radial-gradient(110% 80% at 100% 100%, oklch(0.42 0.20 318 / 0.38) 0%, transparent 50%),
+        oklch(0.14 0 0);
 }
 
 .login-caja {
@@ -35,7 +35,7 @@ body {
     display: grid; place-items: center;
     border-radius: var(--r-full);
     background: var(--primary-tint); color: var(--primary-strong);
-    box-shadow: inset 0 0 0 1px oklch(0.56 0.13 158 / 0.18);
+    box-shadow: inset 0 0 0 1px oklch(0.52 0.24 296 / 0.18);
     animation: auth-icon-in var(--dur-slow) var(--ease-out) both;
 }
 .auth-icon svg { width: 27px; height: 27px; }
@@ -100,12 +100,12 @@ button {
     font-weight: 700;
     font-family: inherit;
     cursor: pointer;
-    box-shadow: 0 2px 8px oklch(0.56 0.13 158 / 0.30);
+    box-shadow: 0 2px 8px oklch(0.52 0.24 296 / 0.30);
     transition: background var(--dur-fast) var(--ease-out),
                 transform var(--dur-fast) var(--ease-out),
                 box-shadow var(--dur-fast) var(--ease-out);
 }
-button:not(:disabled):hover { background: var(--primary-strong); transform: translateY(-1px); box-shadow: 0 6px 16px oklch(0.56 0.13 158 / 0.34); }
+button:not(:disabled):hover { background: var(--primary-strong); transform: translateY(-1px); box-shadow: 0 6px 16px oklch(0.52 0.24 296 / 0.34); }
 button:not(:disabled):active { transform: translateY(0); }
 button:disabled { background: var(--surface-sunk); color: var(--ink-muted); box-shadow: none; cursor: not-allowed; }
 

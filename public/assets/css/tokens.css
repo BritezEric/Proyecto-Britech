@@ -2,37 +2,37 @@
    Britech — Design System (tokens)
    Única fuente de verdad: color, tipografía, espaciado, motion.
    Todas las pantallas importan este archivo primero.
-   Mood: "mercado de barrio moderno al mediodía" — verde de feria,
-   calidez ámbar, luz limpia. Identidad propia, no plantilla.
+   Mood: blanco y negro con morado eléctrico — minimal, alto contraste,
+   sombras suaves y movimiento fluido. Identidad propia, no plantilla.
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap');
 
 :root {
-    /* --- Color (OKLCH) --- */
-    --bg:            oklch(0.968 0.006 160);   /* canvas de la app (susurro verde) */
+    /* --- Color (OKLCH) — blanco/negro neutro + morado --- */
+    --bg:            oklch(0.984 0 0);          /* canvas casi blanco, neutro */
     --surface:       oklch(1 0 0);             /* tarjetas: blanco puro */
-    --surface-2:     oklch(0.975 0.005 165);   /* superficie sutil / hover */
-    --surface-sunk:  oklch(0.955 0.008 165);   /* hundido (inputs, tracks) */
+    --surface-2:     oklch(0.972 0 0);         /* superficie sutil / hover */
+    --surface-sunk:  oklch(0.952 0 0);         /* hundido (inputs, tracks) */
 
-    --ink:           oklch(0.24 0.015 165);    /* texto principal (16:1) */
-    --ink-muted:     oklch(0.52 0.020 165);    /* texto secundario (5.4:1) */
-    --line:          oklch(0.905 0.008 165);   /* bordes / divisores */
-    --line-strong:   oklch(0.84 0.010 165);
+    --ink:           oklch(0.18 0 0);          /* texto principal casi negro */
+    --ink-muted:     oklch(0.50 0 0);          /* texto secundario */
+    --line:          oklch(0.905 0 0);         /* bordes / divisores */
+    --line-strong:   oklch(0.82 0 0);
 
-    --primary:       oklch(0.56 0.13 158);     /* verde marca (fills) */
-    --primary-strong:oklch(0.48 0.13 158);     /* hover / texto verde */
-    --primary-tint:  oklch(0.955 0.03 158);    /* fondo suave (badge ok) */
+    --primary:       oklch(0.52 0.24 296);     /* morado eléctrico (fills) */
+    --primary-strong:oklch(0.44 0.24 296);     /* hover / texto morado */
+    --primary-tint:  oklch(0.965 0.03 296);    /* fondo suave (badge) */
     --on-primary:    oklch(1 0 0);
 
-    --accent:        oklch(0.70 0.16 65);      /* ámbar cálido (atención/oferta/foco) */
-    --accent-strong: oklch(0.62 0.15 60);
-    --accent-tint:   oklch(0.955 0.04 72);
-    --on-accent:     oklch(0.24 0.03 60);      /* texto oscuro sobre ámbar */
+    --accent:        oklch(0.58 0.26 318);     /* violeta-magenta (oferta/atención) */
+    --accent-strong: oklch(0.50 0.26 318);
+    --accent-tint:   oklch(0.965 0.035 318);
+    --on-accent:     oklch(1 0 0);             /* texto blanco sobre violeta */
 
     --danger:        oklch(0.58 0.19 25);
     --danger-strong: oklch(0.50 0.19 25);
-    --danger-tint:   oklch(0.955 0.03 25);
+    --danger-tint:   oklch(0.962 0.03 25);
 
     --info-tint:     var(--accent-tint);       /* alias semántico */
 
@@ -55,14 +55,15 @@
     /* --- Radios --- */
     --r-sm: 8px;  --r-md: 12px;  --r-lg: 16px;  --r-xl: 22px;  --r-full: 999px;
 
-    /* --- Sombras (suaves, tono verde-neutro, nunca duras) --- */
-    --shadow-sm: 0 1px 2px oklch(0.24 0.02 165 / 0.06),
-                 0 1px 3px oklch(0.24 0.02 165 / 0.05);
-    --shadow-md: 0 2px 6px oklch(0.24 0.02 165 / 0.07),
-                 0 8px 20px oklch(0.24 0.02 165 / 0.06);
-    --shadow-lg: 0 12px 40px oklch(0.24 0.02 165 / 0.16);
-    --ring: 0 0 0 3px oklch(0.70 0.16 65 / 0.35);        /* foco: halo ámbar */
-    --ring-primary: 0 0 0 3px oklch(0.56 0.13 158 / 0.30);
+    /* --- Sombras (negro neutro, con profundidad) --- */
+    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.07),
+                 0 1px 3px oklch(0 0 0 / 0.06);
+    --shadow-md: 0 2px 8px oklch(0 0 0 / 0.09),
+                 0 12px 28px oklch(0 0 0 / 0.08);
+    --shadow-lg: 0 20px 56px oklch(0 0 0 / 0.22);
+    --shadow-primary: 0 8px 22px oklch(0.52 0.24 296 / 0.35);   /* glow morado para CTA */
+    --ring: 0 0 0 3px oklch(0.52 0.24 296 / 0.35);       /* foco: halo morado */
+    --ring-primary: 0 0 0 3px oklch(0.52 0.24 296 / 0.30);
 
     /* --- Z-index semántico --- */
     --z-dropdown: 100;
@@ -107,6 +108,16 @@ body {
     border-color: var(--accent);
 }
 
+/* Movimiento base: todo lo interactivo transiciona suave (color, sombra, forma).
+   El compositor lo hace (transform/opacity), liviano. reduced-motion lo anula. */
+:where(button, a, input, select, textarea, .tabla-card, .emp-card, .card, .accion-card) {
+    transition: background-color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out),
+        color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out),
+        transform var(--dur-fast) var(--ease-out);
+}
+/* Press táctil en botones */
+:where(button, .btn-primary, .btn-secundario):active { transform: translateY(1px) scale(0.99); }
+
 .oculto { display: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -122,20 +133,24 @@ body {
    Tema oscuro (se activa con <html data-theme="dark">, usado en el panel admin)
    ============================================================ */
 :root[data-theme="dark"] {
-    --bg:            oklch(0.19 0.012 165);
-    --surface:       oklch(0.235 0.014 165);
-    --surface-2:     oklch(0.285 0.014 165);
-    --surface-sunk:  oklch(0.205 0.012 165);
-    --ink:           oklch(0.95 0.006 165);
-    --ink-muted:     oklch(0.74 0.012 165);
-    --line:          oklch(0.33 0.014 165);
-    --line-strong:   oklch(0.43 0.016 165);
-    --primary-tint:  oklch(0.33 0.06 158);
-    --accent-tint:   oklch(0.35 0.07 72);
-    --danger-tint:   oklch(0.33 0.07 25);
-    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.40);
-    --shadow-md: 0 4px 14px oklch(0 0 0 / 0.45);
-    --shadow-lg: 0 12px 40px oklch(0 0 0 / 0.55);
+    --bg:            oklch(0.15 0 0);          /* negro neutro */
+    --surface:       oklch(0.205 0 0);
+    --surface-2:     oklch(0.255 0 0);
+    --surface-sunk:  oklch(0.175 0 0);
+    --ink:           oklch(0.97 0 0);
+    --ink-muted:     oklch(0.72 0 0);
+    --line:          oklch(0.30 0 0);
+    --line-strong:   oklch(0.40 0 0);
+    --primary:       oklch(0.64 0.23 296);     /* morado más brillante sobre negro */
+    --primary-strong:oklch(0.56 0.23 296);
+    --primary-tint:  oklch(0.30 0.09 296);
+    --accent:        oklch(0.66 0.25 318);
+    --accent-tint:   oklch(0.30 0.10 318);
+    --danger-tint:   oklch(0.30 0.08 25);
+    --shadow-primary: 0 8px 24px oklch(0.64 0.23 296 / 0.45);
+    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.45);
+    --shadow-md: 0 4px 16px oklch(0 0 0 / 0.50);
+    --shadow-lg: 0 16px 48px oklch(0 0 0 / 0.62);
 }
 
 /* ===== Logo Britech (marca "play") — inline, se adapta al color y tema ===== */
@@ -157,7 +172,7 @@ body {
     opacity: 0; transform: translateY(14px) scale(0.96);
     transition: opacity 0.28s var(--ease-out), transform 0.28s var(--ease-out); }
 .toast.show { opacity: 1; transform: translateY(0) scale(1); }
-.toast .toast-ic { color: oklch(0.82 0.15 158); font-weight: 800; }   /* ✓ verde claro, contrasta en pill oscuro */
+.toast .toast-ic { color: oklch(0.80 0.18 300); font-weight: 800; }   /* ✓ morado claro, contrasta en pill negra */
 @media (prefers-reduced-motion: reduce) {
     .toast { transition: opacity 0.2s linear; transform: none; }
     .toast.show { transform: none; }
