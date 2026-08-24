@@ -92,21 +92,7 @@ async function abrirEmpleado(id, periodo) {
 
         <h4 class="detalle-sub">Sueldo</h4>
         ${pagoBloque}
-        <div class="emp-pago-form">
-            <div>
-                <label>Monto a pagar</label>
-                <input id="pago-monto" type="number" min="0" step="0.01" placeholder="0" value="${pago ? esc(pago.monto) : ''}">
-            </div>
-            <div>
-                <label>Fecha de pago</label>
-                <input id="pago-fecha" type="date" value="${new Date().toISOString().slice(0, 10)}">
-            </div>
-            <div class="col-2">
-                <label>Observación (opcional)</label>
-                <input id="pago-obs" type="text" placeholder="Ej: transferencia, adelanto, aguinaldo…">
-            </div>
-            <button class="btn-primary" id="pago-guardar" data-id="${id}" data-per="${esc(per)}">${pago ? 'Registrar otro pago' : 'Registrar pago'}</button>
-        </div>
+        <p class="emp-hint">Los sueldos se cargan desde <strong>Gastos</strong>: creá un gasto, elegí a este empleado y el mes. El estado y el historial se reflejan acá.</p>
 
         <h4 class="detalle-sub">Historial de pagos</h4>
         ${listaPagos}
@@ -116,26 +102,6 @@ async function abrirEmpleado(id, periodo) {
 
     // Cambiar de mes → recargar el detalle con ese período.
     $('emp-periodo').addEventListener('change', (ev) => abrirEmpleado(id, ev.target.value));
-
-    $('pago-guardar').addEventListener('click', () => registrarPago(id, $('emp-periodo').value));
-}
-
-async function registrarPago(id, periodo) {
-    const btn = $('pago-guardar');
-    const monto = $('pago-monto').value;
-    if (!monto || Number(monto) <= 0) { toast('⚠ Ingresá un monto mayor a 0'); return; }
-    btn.disabled = true;
-    try {
-        await api.post('/api/admin/empleados/pagar', {
-            usuario_id: id, periodo,
-            monto, fecha: $('pago-fecha').value, observacion: $('pago-obs').value,
-        });
-        toast('✓ Sueldo registrado en gastos');
-        await abrirEmpleado(id, periodo);   // refresca el detalle
-        renderEmpleados();                    // refresca la lista de fondo
-    } catch (e) {
-        toast('⚠ ' + e.message); btn.disabled = false;
-    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

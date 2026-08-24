@@ -82,7 +82,6 @@ $router->post('/api/admin/gastos/baja',     [GastoController::class, 'baja'],   
 // Empleados (rendimiento + pagos de sueldo + PDF) — solo admin
 $router->get('/api/admin/empleados',          [EmpleadoController::class, 'listar'],  true);
 $router->get('/api/admin/empleados/detalle',  [EmpleadoController::class, 'detalle'], true);
-$router->post('/api/admin/empleados/pagar',   [EmpleadoController::class, 'pagar'],   true);
 $router->get('/api/admin/empleados/pdf',      [EmpleadoController::class, 'pdf'],     true);
 
 // Pedidos (gestión admin)

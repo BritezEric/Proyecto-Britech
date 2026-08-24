@@ -37,11 +37,12 @@ class GastoRepository
         $tot = $stC->fetch();
 
         $sql = "SELECT g.id, g.fecha, g.concepto, g.monto, g.observacion, g.activo,
-                       g.producto_id, g.cantidad,
-                       pv.nombre AS proveedor, pr.nombre AS producto
+                       g.proveedor_id, g.producto_id, g.cantidad, g.usuario_id, g.periodo,
+                       pv.nombre AS proveedor, pr.nombre AS producto, us.nombre AS empleado
                 FROM gasto g
                 LEFT JOIN proveedor pv ON pv.id = g.proveedor_id
                 LEFT JOIN producto  pr ON pr.id = g.producto_id
+                LEFT JOIN usuario   us ON us.id = g.usuario_id
                 $sqlWhere
                 ORDER BY g.fecha DESC, g.id DESC
                 LIMIT ? OFFSET ?";

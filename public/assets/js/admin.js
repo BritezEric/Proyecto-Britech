@@ -29,7 +29,8 @@ const cacheOpciones = {};
 async function opcionesDe(entidad) {
     if (cacheOpciones[entidad]) return cacheOpciones[entidad];
     const r = await api.get(`/api/admin/${entidad}?per_page=200&activo=1`);
-    cacheOpciones[entidad] = r.data.map((x) => ({ v: x.id, t: x.nombre }));
+    const filas = r.data || r[entidad] || [];   // paginado (data) o { empleados: [...] }
+    cacheOpciones[entidad] = filas.map((x) => ({ v: x.id, t: x.nombre }));
     return cacheOpciones[entidad];
 }
 
@@ -138,6 +139,9 @@ const ENTIDADES = {
             { key: 'producto', label: 'Suma stock', render: (v, row) => row.producto
                 ? `${esc(row.producto)} <span class="chip">×${Number(row.cantidad)}</span>`
                 : '<span class="td-mute">—</span>' },
+            { key: 'empleado', label: 'Sueldo de', render: (v, row) => row.empleado
+                ? `${esc(row.empleado)}${row.periodo ? ` <span class="chip">${esc(row.periodo)}</span>` : ''}`
+                : '<span class="td-mute">—</span>' },
             { key: 'monto', label: 'Monto', num: true, render: (v) => money.format(v) },
             { key: 'activo', label: 'Estado', render: badgeEstado },
         ],
@@ -151,6 +155,8 @@ const ENTIDADES = {
             { key: 'proveedor_id', label: 'Proveedor', tipo: 'select', origen: 'proveedores', vacio: '(sin proveedor)' },
             { key: 'producto_id', label: 'Producto (opcional: compra de stock)', tipo: 'select', origen: 'productos', vacio: '(no suma stock)' },
             { key: 'cantidad', label: 'Cantidad comprada (suma al stock)', tipo: 'number' },
+            { key: 'usuario_id', label: 'Empleado (si es un sueldo)', tipo: 'select', origen: 'empleados', vacio: '(no es sueldo)' },
+            { key: 'periodo', label: 'Mes que cubre el sueldo', tipo: 'month' },
             { key: 'monto', label: 'Monto', tipo: 'number', req: true },
             { key: 'observacion', label: 'Observación', tipo: 'textarea', ancho: true },
             { key: 'activo', label: 'Activo', tipo: 'check', def: true },

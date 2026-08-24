@@ -5,8 +5,6 @@ namespace App\Controllers;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
-use App\Core\ValidacionException;
-use App\Services\EmpleadoService;
 use App\Repositories\EmpleadoRepository;
 use Dompdf\Dompdf;
 
@@ -58,18 +56,6 @@ class EmpleadoController
             'pagos'        => $repo->pagos($id),
             'pago_periodo' => $repo->pagoDePeriodo($id, $periodo),
         ]);
-    }
-
-    public function pagar(): void
-    {
-        if (!$this->guardAdmin()) return;
-        $d = Request::json();
-        try {
-            $gastoId = (new EmpleadoService())->pagarSueldo($d, (int) Session::usuarioId());
-            Response::json(['ok' => true, 'gasto_id' => $gastoId], 201);
-        } catch (ValidacionException $e) {
-            Response::json(['ok' => false, 'error' => $e->getMessage()], 422);
-        }
     }
 
     /** Salida de datos: PDF del desempeño del empleado en un mes. */
