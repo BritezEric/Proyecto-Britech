@@ -51,6 +51,51 @@ class PedidoController
         Response::json(['ok' => true, 'pedidos' => (new PedidoRepository())->deCliente((int) $c['id'])]);
     }
 
+    /** El cliente sube el comprobante de transferencia de un pedido propio. */
+    public function subirComprobante(): void
+    {
+        $c = Session::cliente();
+        if ($c === null) { Response::json(['ok' => false, 'error' => 'Iniciá sesión.'], 401); return; }
+
+        $repo = new PedidoRepository();
+        $pedidoId = (int) ($_POST['pedido_id'] ?? 0);
+        $pedido = $repo->buscarPorId($pedidoId);
+        if ($pedido === null || (int) $pedido['cliente_id'] !== (int) $c['id']) {
+            Response::json(['ok' => false, 'error' => 'El pedido no existe.'], 404); return;
+        }
+
+        $f = $_FILES['comprobante'] ?? null;
+        if (!$f || ($f['error'] ?? 1) !== UPLOAD_ERR_OK) {
+            Response::json(['ok' => false, 'error' => 'No se recibió el comprobante.'], 422); return;
+        }
+        if ($f['size'] > 6 * 1024 * 1024) {
+            Response::json(['ok' => false, 'error' => 'El archivo supera los 6 MB.'], 422); return;
+        }
+
+        // Aceptamos imágenes (screenshot) o PDF. El tipo se valida por contenido.
+        $ext = null;
+        $img = @getimagesize($f['tmp_name']);
+        $porImg = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        if ($img && isset($porImg[$img['mime'] ?? ''])) {
+            $ext = $porImg[$img['mime']];
+        } elseif (str_starts_with((string) @file_get_contents($f['tmp_name'], false, null, 0, 5), '%PDF-')) {
+            $ext = 'pdf';
+        }
+        if ($ext === null) {
+            Response::json(['ok' => false, 'error' => 'Subí una imagen (JPG/PNG/WEBP) o un PDF.'], 422); return;
+        }
+
+        $dir = dirname(__DIR__, 2) . '/public/uploads/comprobantes';
+        if (!is_dir($dir)) { @mkdir($dir, 0775, true); }
+        $nombre = bin2hex(random_bytes(16)) . '.' . $ext;
+        if (!move_uploaded_file($f['tmp_name'], $dir . '/' . $nombre)) {
+            Response::json(['ok' => false, 'error' => 'No se pudo guardar el comprobante.'], 500); return;
+        }
+
+        $repo->guardarComprobante($pedidoId, '/uploads/comprobantes/' . $nombre);
+        Response::json(['ok' => true, 'estado_pago' => 'en_revision']);
+    }
+
     // ---- Admin ----
 
     public function adminListar(): void
@@ -67,10 +112,15 @@ class PedidoController
     {
         if (!Session::esAdmin()) { Response::json(['ok' => false, 'error' => 'Solo admin.'], 403); return; }
         $id = (int) Request::query('id', '0');
+        $p = (new PedidoRepository())->buscarPorId($id);
         Response::json([
             'ok'    => true,
             'items' => (new PedidoRepository())->detalle($id),
             'envio' => (new EnvioRepository())->dePedido($id),
+            'pago'  => $p ? [
+                'estado_pago'     => $p['estado_pago'],
+                'comprobante_url' => $p['comprobante_url'],
+            ] : null,
         ]);
     }
 
@@ -84,6 +134,23 @@ class PedidoController
         } catch (ValidacionException $e) {
             Response::json(['ok' => false, 'error' => $e->getMessage()], 422);
         }
+    }
+
+    /** Aprueba o rechaza el pago de un pedido (revisión del comprobante). Solo admin. */
+    public function adminEstadoPago(): void
+    {
+        if (!Session::esAdmin()) { Response::json(['ok' => false, 'error' => 'Solo admin.'], 403); return; }
+        $d = Request::json();
+        $estado = $d['estado_pago'] ?? '';
+        if (!in_array($estado, ['pendiente', 'en_revision', 'pagado', 'rechazado'], true)) {
+            Response::json(['ok' => false, 'error' => 'Estado de pago inválido.'], 422); return;
+        }
+        $repo = new PedidoRepository();
+        if ($repo->buscarPorId((int) ($d['pedido_id'] ?? 0)) === null) {
+            Response::json(['ok' => false, 'error' => 'El pedido no existe.'], 404); return;
+        }
+        $repo->cambiarEstadoPago((int) $d['pedido_id'], $estado);
+        Response::json(['ok' => true]);
     }
 
     /** Actualiza el estado/seguimiento del envío de un pedido. Solo admin. */

@@ -33,13 +33,14 @@ El primero crea la base `britech_v2`; el resto hace `USE britech_v2`.
 4.  database/schema_min_mayorista.sql   (columna min_mayorista en producto)
 5.  database/schema_imagenes.sql        (imágenes de producto)
 6.  database/schema_tienda.sql          (pedidos online)
-7.  database/schema_envios.sql          (empresas de envío + envíos)
-8.  database/schema_envios_datos.sql    (datos de entrega completos + link de seguimiento)
-9.  database/schema_favoritos.sql       (favoritos de clientes)
-10. database/schema_mayorista.sql       (solicitudes mayoristas)
-11. database/schema_gastos.sql          (gastos / finanzas)
-12. database/schema_empleados.sql       (sueldos = gastos etiquetados al empleado)
-13. database/schema_bloques.sql         (page builder de la home — independiente)
+7.  database/schema_pagos.sql           (estado de pago + comprobante + config de la tienda)
+8.  database/schema_envios.sql          (empresas de envío + envíos)
+9.  database/schema_envios_datos.sql    (datos de entrega completos + link de seguimiento)
+10. database/schema_favoritos.sql       (favoritos de clientes)
+11. database/schema_mayorista.sql       (solicitudes mayoristas)
+12. database/schema_gastos.sql          (gastos / finanzas)
+13. database/schema_empleados.sql       (sueldos = gastos etiquetados al empleado)
+14. database/schema_bloques.sql         (page builder de la home — independiente)
 ```
 
 Desde la terminal (uno por uno, o encadenados):
@@ -51,6 +52,7 @@ mysql -u root britech_v2 < database/schema_datos_maestros.sql
 mysql -u root britech_v2 < database/schema_min_mayorista.sql
 mysql -u root britech_v2 < database/schema_imagenes.sql
 mysql -u root britech_v2 < database/schema_tienda.sql
+mysql -u root britech_v2 < database/schema_pagos.sql
 mysql -u root britech_v2 < database/schema_envios.sql
 mysql -u root britech_v2 < database/schema_envios_datos.sql
 mysql -u root britech_v2 < database/schema_favoritos.sql

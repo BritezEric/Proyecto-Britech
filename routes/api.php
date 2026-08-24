@@ -16,6 +16,7 @@ use App\Controllers\CategoriaController;
 use App\Controllers\MarcaController;
 use App\Controllers\GastoController;
 use App\Controllers\EmpleadoController;
+use App\Controllers\ConfigController;
 use App\Controllers\TiendaAuthController;
 use App\Controllers\CatalogoController;
 use App\Controllers\PedidoController;
@@ -88,7 +89,12 @@ $router->get('/api/admin/empleados/pdf',      [EmpleadoController::class, 'pdf']
 $router->get('/api/admin/pedidos',          [PedidoController::class, 'adminListar'],  true);
 $router->get('/api/admin/pedidos/detalle',  [PedidoController::class, 'adminDetalle'], true);
 $router->post('/api/admin/pedidos/estado',  [PedidoController::class, 'adminEstado'],  true);
+$router->post('/api/admin/pedidos/pago',    [PedidoController::class, 'adminEstadoPago'], true);
 $router->post('/api/admin/pedidos/envio',   [PedidoController::class, 'adminEnvio'],   true);
+
+// Config de la tienda (datos de transferencia) — solo admin
+$router->get('/api/admin/config',          [ConfigController::class, 'admin'],   true);
+$router->post('/api/admin/config/guardar', [ConfigController::class, 'guardar'], true);
 
 // Empresas de envío (ABM admin)
 $router->get('/api/admin/empresas-envio',          [EmpresaEnvioController::class, 'admin'],   true);
@@ -113,6 +119,9 @@ $router->get('/api/tienda/envios',     [EmpresaEnvioController::class, 'opciones
 // Pedidos del cliente
 $router->post('/api/tienda/pedidos',     [PedidoController::class, 'crear']);
 $router->get('/api/tienda/mis-pedidos',  [PedidoController::class, 'mis']);
+$router->post('/api/tienda/comprobante', [PedidoController::class, 'subirComprobante']);
+// Datos de transferencia que ve el cliente (público)
+$router->get('/api/tienda/pago-info',    [ConfigController::class, 'pagoInfo']);
 // Modo de navegación (minorista/mayorista) y solicitud de acceso mayorista
 $router->post('/api/tienda/modo',                [TiendaAuthController::class, 'modo']);
 $router->post('/api/tienda/solicitud-mayorista', [MayoristaController::class, 'solicitar']);

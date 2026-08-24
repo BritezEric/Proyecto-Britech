@@ -47,7 +47,7 @@ class PedidoRepository
         $stC->execute($params);
         $total = (int) $stC->fetchColumn();
 
-        $sql = "SELECT p.id, p.numero, p.estado, p.total, p.observacion, p.creado_en,
+        $sql = "SELECT p.id, p.numero, p.estado, p.estado_pago, p.comprobante_url, p.total, p.observacion, p.creado_en,
                        c.nombre AS cliente,
                        (SELECT COUNT(*) FROM pedido_detalle d WHERE d.pedido_id = p.id) AS items
                 FROM pedido p
@@ -66,7 +66,7 @@ class PedidoRepository
     public function deCliente(int $clienteId): array
     {
         $st = Database::conexion()->prepare(
-            "SELECT p.id, p.numero, p.estado, p.total, p.creado_en,
+            "SELECT p.id, p.numero, p.estado, p.estado_pago, p.comprobante_url, p.total, p.creado_en,
                     e.costo AS envio_costo, e.estado AS envio_estado, e.tracking,
                     em.nombre AS envio_empresa, em.url_tracking
              FROM pedido p
@@ -107,5 +107,19 @@ class PedidoRepository
     public function cambiarEstado(int $id, string $estado): void
     {
         Database::conexion()->prepare("UPDATE pedido SET estado = ? WHERE id = ?")->execute([$estado, $id]);
+    }
+
+    /** El cliente sube el comprobante: guarda la URL y deja el pago 'en_revision'. */
+    public function guardarComprobante(int $id, string $url): void
+    {
+        Database::conexion()
+            ->prepare("UPDATE pedido SET comprobante_url = ?, estado_pago = 'en_revision' WHERE id = ?")
+            ->execute([$url, $id]);
+    }
+
+    /** El admin aprueba/rechaza el pago. */
+    public function cambiarEstadoPago(int $id, string $estadoPago): void
+    {
+        Database::conexion()->prepare("UPDATE pedido SET estado_pago = ? WHERE id = ?")->execute([$estadoPago, $id]);
     }
 }

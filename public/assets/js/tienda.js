@@ -12,6 +12,7 @@ let page = 1, q = '', categoria = '';
 let carrito = cargarCarrito();      // [{id, nombre, precio, cantidad}]
 let empresasEnvio = [];             // medios de envío disponibles
 let favoritos = new Set();          // ids de productos favoritos del cliente
+let pedidoPagoId = null;            // pedido que espera comprobante de transferencia
 
 async function cargarFavoritos() {
     if (!cliente) { favoritos = new Set(); return; }
@@ -332,13 +333,59 @@ async function confirmarPedido() {
         carrito = []; guardarCarrito();
         cerrar('modal-carrito');
         const envTxt = r.pedido.envio_costo > 0 ? ` (incluye ${money.format(r.pedido.envio_costo)} de envío)` : '';
-        $('ok-texto').textContent = `Tu pedido ${r.pedido.numero} por ${money.format(r.pedido.total_final)}${envTxt} quedó registrado. Lo vas a poder seguir desde "Mis pedidos".`;
+        $('ok-texto').textContent = `Tu pedido ${r.pedido.numero} por ${money.format(r.pedido.total_final)}${envTxt} quedó registrado.`;
+        await mostrarPagoTransferencia(r.pedido.pedido_id, r.pedido.total_final);
         abrir('modal-ok');
     } catch (e) {
         err.textContent = e.message; err.classList.remove('oculto');
     } finally {
         btn.disabled = false;
     }
+}
+
+// ============ Pago por transferencia ============
+// Muestra los datos de transferencia (config del negocio) + el botón de subir
+// comprobante. Si el negocio no cargó alias/CBU, no muestra nada.
+async function mostrarPagoTransferencia(pedidoId, total) {
+    pedidoPagoId = pedidoId;
+    const box = $('ok-pago');
+    try {
+        const r = await api.get('/api/tienda/pago-info');
+        const p = r.pago || {};
+        if (!p.alias && !p.cbu) { box.classList.add('oculto'); return; }
+        const filas = [];
+        if (p.alias)   filas.push(['Alias', p.alias]);
+        if (p.cbu)     filas.push(['CBU', p.cbu]);
+        if (p.titular) filas.push(['Titular', p.titular]);
+        if (p.banco)   filas.push(['Banco', p.banco]);
+        filas.push(['Total a transferir', money.format(total)]);
+        $('pago-datos').innerHTML = filas.map(([k, v]) =>
+            `<div class="pago-fila"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join('');
+        $('pago-estado').classList.add('oculto');
+        $('pago-file-label').textContent = '📎 Subir comprobante';
+        box.classList.remove('oculto');
+    } catch (e) { box.classList.add('oculto'); }
+}
+
+async function subirComprobante(file, pedidoId, labelEl, estadoEl) {
+    if (!file || !pedidoId) return;
+    labelEl.textContent = 'Subiendo…';
+    const fd = new FormData();
+    fd.append('pedido_id', pedidoId);
+    fd.append('comprobante', file);
+    try {
+        const resp = await fetch('/api/tienda/comprobante', { method: 'POST', body: fd, credentials: 'same-origin' });
+        const data = await resp.json();
+        if (!data.ok) throw new Error(data.error || 'No se pudo subir.');
+        estadoEl.textContent = '✓ Comprobante recibido. Tu pago quedó en revisión.';
+        estadoEl.className = 'pago-estado ok';
+        labelEl.textContent = '✓ Comprobante enviado';
+    } catch (e) {
+        estadoEl.textContent = '⚠ ' + e.message;
+        estadoEl.className = 'pago-estado err';
+        labelEl.textContent = '📎 Reintentar';
+    }
+    estadoEl.classList.remove('oculto');
 }
 
 // ============ Cuenta (login / registro) ============
@@ -548,6 +595,11 @@ async function verMisPedidos() {
         const seg = p.seguimiento_url
             ? `<a class="badge-link" href="${esc(p.seguimiento_url)}" target="_blank" rel="noopener">🔎 Seguir</a>`
             : '';
+        const pago = pagoBadge(p.estado_pago);
+        // Si el pago está pendiente o fue rechazado, puede (re)subir el comprobante.
+        const subir = (p.estado_pago === 'pendiente' || p.estado_pago === 'rechazado')
+            ? `<label class="badge-link">📎 Comprobante<input type="file" accept="image/*,application/pdf" hidden data-pago="${p.id}"></label>`
+            : '';
         return `<div class="pedido-row">
             <div>
                 <div class="cart-nombre">${esc(p.numero)}</div>
@@ -556,11 +608,34 @@ async function verMisPedidos() {
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
                 <span class="cart-sub">${money.format(total)}</span>
                 <span class="badge ${esc(p.estado)}">${esc(p.estado)}</span>
+                ${pago}
                 ${envio}
                 ${seg}
+                ${subir}
             </div>
         </div>`;
     }).join('');
+}
+
+// Badge del estado de pago (texto legible + clase de color).
+function pagoBadge(estado) {
+    const t = { pendiente: '⏳ pago pendiente', en_revision: '🔎 pago en revisión',
+        pagado: '✓ pagado', rechazado: '✗ pago rechazado' };
+    return estado ? `<span class="badge pago-${esc(estado)}">${esc(t[estado] || estado)}</span>` : '';
+}
+
+async function subirComprobantePedido(file, pedidoId) {
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('pedido_id', pedidoId);
+    fd.append('comprobante', file);
+    try {
+        const resp = await fetch('/api/tienda/comprobante', { method: 'POST', body: fd, credentials: 'same-origin' });
+        const data = await resp.json();
+        if (!data.ok) throw new Error(data.error || 'No se pudo subir.');
+        toast('✓ Comprobante enviado, pago en revisión');
+        verMisPedidos();
+    } catch (e) { toast('⚠ ' + e.message); }
 }
 
 // ============ Utilidades de modal ============
@@ -643,6 +718,10 @@ async function iniciar() {
     $('menu-pedidos').addEventListener('click', verMisPedidos);
     $('menu-favoritos').addEventListener('click', verFavoritos);
     $('pedidos-cerrar').addEventListener('click', () => cerrar('modal-pedidos'));
+    $('pedidos-lista').addEventListener('change', (e) => {
+        const inp = e.target.closest('input[data-pago]');
+        if (inp) subirComprobantePedido(inp.files[0], Number(inp.dataset.pago));
+    });
     $('favoritos-cerrar').addEventListener('click', () => cerrar('modal-favoritos'));
 
     // Acciones dentro de "Mis favoritos": agregar al carrito o quitar de favoritos
@@ -659,6 +738,8 @@ async function iniciar() {
         if (quit) { await toggleFavorito(Number(quit.dataset.fav)); verFavoritos(); }
     });
     $('ok-cerrar').addEventListener('click', () => cerrar('modal-ok'));
+    $('pago-file').addEventListener('change', (e) =>
+        subirComprobante(e.target.files[0], pedidoPagoId, $('pago-file-label'), $('pago-estado')));
 
     // cerrar modales al clickear el fondo
     document.querySelectorAll('.modal').forEach((m) =>

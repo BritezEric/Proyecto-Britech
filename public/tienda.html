@@ -152,8 +152,21 @@
             <div class="form-ok">
                 <div class="tick">✓</div>
                 <h2 id="ok-titulo">¡Pedido confirmado!</h2>
-                <p id="ok-texto" class="cuenta-info" style="margin-bottom:20px"></p>
+                <p id="ok-texto" class="cuenta-info" style="margin-bottom:16px"></p>
             </div>
+
+            <!-- Pago por transferencia -->
+            <div id="ok-pago" class="pago-box oculto">
+                <h3 class="pago-titulo">💳 Pagá por transferencia</h3>
+                <div id="pago-datos" class="pago-datos"></div>
+                <p class="pago-sub">Transferí el total y subí el comprobante. Tu pago queda <strong>en revisión</strong> hasta que lo confirmemos.</p>
+                <label class="pago-subir">
+                    <span id="pago-file-label">📎 Subir comprobante</span>
+                    <input type="file" id="pago-file" accept="image/*,application/pdf" hidden>
+                </label>
+                <p id="pago-estado" class="pago-estado oculto"></p>
+            </div>
+
             <button id="ok-cerrar" class="btn-primary">Seguir comprando</button>
         </div>
     </div>

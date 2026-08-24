@@ -14,6 +14,14 @@ const badgeEstado = (v) => Number(v) === 1
     ? '<span class="badge ok">Activo</span>'
     : '<span class="badge off">Inactivo</span>';
 
+// Badge del estado de pago del pedido.
+const badgePago = (v) => {
+    const m = { pendiente: ['warn', '⏳ pendiente'], en_revision: ['info', '🔎 en revisión'],
+        pagado: ['ok', '✓ pagado'], rechazado: ['danger', '✗ rechazado'] };
+    const [cls, txt] = m[v] || ['off', v || '—'];
+    return `<span class="badge ${cls}">${esc(txt)}</span>`;
+};
+
 // Estado del cliente considerando la verificación de correo de la tienda:
 // - dado de baja → Inactivo
 // - registrado en la tienda pero sin verificar el correo → Sin verificar
@@ -173,7 +181,8 @@ const ENTIDADES = {
             { key: 'items', label: 'Ítems', num: true },
             { key: 'total', label: 'Total', num: true, render: (v) => money.format(v) },
             { key: 'creado_en', label: 'Fecha', render: (v) => `<span class="td-mute">${esc(v)}</span>` },
-            { key: 'estado', label: 'Estado', render: renderEstadoInline },
+            { key: 'estado_pago', label: 'Pago', render: (v) => badgePago(v) },
+            { key: 'estado', label: 'Envío', render: renderEstadoInline },
         ],
         filtros: [
             { key: 'estado', label: 'Estado', opciones: [
@@ -301,19 +310,50 @@ function renderTablas() {
         el.addEventListener('click', () => seleccionar(el.dataset.ir)));
 }
 
+// ---- Ajustes: datos de transferencia ----
+async function renderAjustes() {
+    const cont = $('ajustes-cont');
+    cont.innerHTML = '<p class="td-mute">Cargando…</p>';
+    const r = await api.get('/api/admin/config');
+    const c = r.config || {};
+    cont.innerHTML = `
+        <div class="ajustes-card">
+            <h3>💳 Datos de transferencia</h3>
+            <p class="sub">Se le muestran al cliente en el checkout para que transfiera y suba el comprobante.</p>
+            <div class="campo"><label for="cfg-alias">Alias</label><input id="cfg-alias" value="${esc(c.pago_alias || '')}" placeholder="mi.alias.mp"></div>
+            <div class="campo"><label for="cfg-titular">Titular</label><input id="cfg-titular" value="${esc(c.pago_titular || '')}" placeholder="Nombre y apellido"></div>
+            <div class="campo"><label for="cfg-cbu">CBU / CVU</label><input id="cfg-cbu" value="${esc(c.pago_cbu || '')}" placeholder="0000000000000000000000"></div>
+            <div class="campo"><label for="cfg-banco">Banco / Billetera</label><input id="cfg-banco" value="${esc(c.pago_banco || '')}" placeholder="Ej: Mercado Pago"></div>
+            <button class="btn-primary" id="cfg-guardar">Guardar</button>
+        </div>`;
+    $('cfg-guardar').addEventListener('click', async () => {
+        const btn = $('cfg-guardar'); btn.disabled = true;
+        try {
+            await api.post('/api/admin/config/guardar', {
+                pago_alias: $('cfg-alias').value, pago_titular: $('cfg-titular').value,
+                pago_cbu: $('cfg-cbu').value, pago_banco: $('cfg-banco').value,
+            });
+            toast('✓ Datos de pago guardados');
+        } catch (e) { toast('⚠ ' + e.message); }
+        btn.disabled = false;
+    });
+}
+
 // ---- Navegación ----
 async function seleccionar(ent) {
     // Las entidades "hijas" (maestras, o empresas de envío) marcan activo a su
     // vista padre en el sidebar (Tablas o Gestor de envíos).
     const navKey = PADRE[ent] || ent;
     document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('activo', b.dataset.ent === navKey));
-    const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados'), vistaTablas = $('vista-tablas');
-    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas]
+    const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados'),
+          vistaTablas = $('vista-tablas'), vistaAjustes = $('vista-ajustes');
+    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas, vistaAjustes]
         .forEach((v) => v.classList.add('oculto'));
     if (ent === 'inicio')   { ocultarTodo(); vistaInicio.classList.remove('oculto');   return renderInicio(); }
     if (ent === 'tablas')   { ocultarTodo(); vistaTablas.classList.remove('oculto');   return renderTablas(); }
     if (ent === 'bloques')  { ocultarTodo(); vistaBloques.classList.remove('oculto');  return renderBloques(); }
     if (ent === 'empleados'){ ocultarTodo(); vistaEmpleados.classList.remove('oculto'); return renderEmpleados(); }
+    if (ent === 'ajustes')  { ocultarTodo(); vistaAjustes.classList.remove('oculto');  return renderAjustes(); }
     entActual = ent; cfg = ENTIDADES[ent];
     page = 1; q = ''; filtros = {};
     $('q').value = '';
@@ -646,9 +686,31 @@ async function verPedido(id, numero) {
             </div>`;
     }
 
+    const pg = r.pago || {};
+    const compro = pg.comprobante_url
+        ? `<a class="envio-seg" href="${esc(pg.comprobante_url)}" target="_blank" rel="noopener">📄 Ver comprobante</a>`
+        : `<p class="td-mute">El cliente todavía no subió comprobante.</p>`;
+    const pagoHtml = `
+        <h4 class="detalle-sub">Pago</h4>
+        <div class="pedido-linea"><span>Estado del pago</span>${badgePago(pg.estado_pago)}</div>
+        ${compro}
+        <div class="pago-acciones">
+            <button class="btn-mini" data-pago="pagado" data-id="${id}">✓ Aprobar pago</button>
+            <button class="btn-mini ghost" data-pago="rechazado" data-id="${id}">✗ Rechazar</button>
+        </div>`;
+
     cont.innerHTML = filas +
         `<div class="pedido-linea total"><strong>Total ${e ? 'con envío' : ''}</strong><strong class="tabular">${money.format(total)}</strong></div>` +
+        pagoHtml +
         envioHtml;
+
+    cont.querySelectorAll('[data-pago]').forEach((b) => b.addEventListener('click', async () => {
+        try {
+            await api.post('/api/admin/pedidos/pago', { pedido_id: Number(id), estado_pago: b.dataset.pago });
+            toast(b.dataset.pago === 'pagado' ? '✓ Pago aprobado' : '✗ Pago rechazado');
+            verPedido(id, numero);
+        } catch (ex) { alert(ex.message); }
+    }));
 
     const btn = $('envio-guardar');
     if (btn) btn.addEventListener('click', async () => {

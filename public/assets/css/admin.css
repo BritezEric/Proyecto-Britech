@@ -116,6 +116,19 @@ td.acciones { text-align: right; white-space: nowrap; }
 .badge.ok  { background: var(--primary-tint); color: var(--primary-strong); }
 .badge.off { background: var(--danger-tint);  color: var(--danger-strong); }
 .badge.neutral { background: var(--surface-sunk); color: var(--ink-muted); }
+.badge.warn   { background: #fef3c7; color: #b4530a; }
+.badge.info   { background: #e0f2fe; color: #0369a1; }
+.badge.danger { background: #fee2e2; color: #b91c1c; }
+
+/* Acciones de pago en el detalle del pedido */
+.pago-acciones { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
+
+/* Ajustes */
+.ajustes-cont { max-width: 480px; }
+.ajustes-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-3); }
+.ajustes-card h3 { margin: 0; }
+.ajustes-card .sub { margin: 0 0 var(--sp-2); }
+.ajustes-card .btn-primary { align-self: flex-start; margin-top: var(--sp-2); }
 .badge.neutral::before { display: none; }
 .badge.pend { background: var(--accent-tint); color: var(--accent-strong); }
 .chip { font-size: var(--text-xs); background: var(--accent-tint); color: var(--accent-strong); padding: 1px var(--sp-2); border-radius: var(--r-full); font-weight: 600; }
