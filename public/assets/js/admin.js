@@ -275,6 +275,7 @@ let q = '';
 let filtros = {};       // {key: valor}
 let filasActuales = []; // filas de la última carga (para el botón Editar)
 let imagenesForm = [];  // URLs de imágenes del producto en edición (widget de subida)
+let pasteWired = false; // listener global de pegar imagen (Ctrl+V) armado una sola vez
 
 // ---- Elementos ----
 const $ = (id) => document.getElementById(id);
@@ -492,6 +493,17 @@ async function abrirModal(modo, row = null) {
             const b = e.target.closest('.img-quitar');
             if (b) { imagenesForm.splice(Number(b.dataset.i), 1); renderImagenesGrid(); }
         });
+        // Pegar imagen con Ctrl+V (mientras el modal con widget de imágenes está abierto).
+        if (!pasteWired) {
+            pasteWired = true;
+            document.addEventListener('paste', (e) => {
+                if (!document.getElementById('img-grid') || $('modal').classList.contains('oculto')) return;
+                const imgs = [...(e.clipboardData?.items || [])]
+                    .filter((it) => it.type.startsWith('image/'))
+                    .map((it) => it.getAsFile()).filter(Boolean);
+                if (imgs.length) { e.preventDefault(); subirArchivos(imgs); }
+            });
+        }
     }
 
     $('form').dataset.id = (modo === 'editar' && row) ? row.id : '';

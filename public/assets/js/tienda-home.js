@@ -130,12 +130,12 @@ function bloqueMarcas(b) {
     if (!marcas.length) return '';
     const logo = (m) => `<div class="marca-logo" title="${esc(m.nombre)}">
         <img src="${esc(m.imagen)}" alt="${esc(m.nombre)}" loading="lazy"></div>`;
-    const fila = marcas.map(logo).join('');
-    // Pausa el auto-scroll si hay pocas marcas (no hace falta loop).
+    const set = `<div class="marcas-set">${marcas.map(logo).join('')}</div>`;
+    // Con >=5 marcas anima en loop (dos sets idénticos → empalme sin corte).
     const animar = marcas.length >= 5 ? 'marcas-anima' : '';
     return `<section class="bloque">
         ${b.titulo ? `<div class="bloque-head"><h2>${esc(b.titulo)}</h2></div>` : ''}
-        <div class="marcas-strip"><div class="marcas-track ${animar}">${fila}${animar ? fila : ''}</div></div>
+        <div class="marcas-strip"><div class="marcas-track ${animar}">${set}${animar ? set : ''}</div></div>
     </section>`;
 }
 
