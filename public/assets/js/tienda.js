@@ -332,8 +332,7 @@ async function confirmarPedido() {
         const r = await api.post('/api/tienda/pedidos', payload);
         carrito = []; guardarCarrito();
         cerrar('modal-carrito');
-        const envTxt = r.pedido.envio_costo > 0 ? ` (incluye ${money.format(r.pedido.envio_costo)} de envío)` : '';
-        $('ok-texto').textContent = `Tu pedido ${r.pedido.numero} por ${money.format(r.pedido.total_final)}${envTxt} quedó registrado.`;
+        $('ok-texto').textContent = `Pedido ${r.pedido.numero} · ${money.format(r.pedido.total_final)}`;
         await mostrarPagoTransferencia(r.pedido.pedido_id, r.pedido.total_final);
         abrir('modal-ok');
     } catch (e) {
@@ -353,29 +352,37 @@ async function mostrarPagoTransferencia(pedidoId, total) {
         const r = await api.get('/api/tienda/pago-info');
         const p = r.pago || {};
         if (!p.alias && !p.cbu) { box.classList.add('oculto'); return; }
-        const filas = [];
-        if (p.alias)   filas.push(['Alias', p.alias, true]);
-        if (p.cbu)     filas.push(['CBU', p.cbu, true]);
-        if (p.titular) filas.push(['Titular', p.titular]);
-        if (p.banco)   filas.push(['Banco', p.banco]);
-        filas.push(['Total a transferir', money.format(total)]);
-        $('pago-datos').innerHTML = filas.map(([k, v, copiable]) =>
-            `<div class="pago-fila"><span>${esc(k)}</span><strong>${esc(v)}</strong>${
-                copiable ? `<button type="button" class="pago-copiar" data-copiar="${esc(v)}">copiar</button>` : ''
-            }</div>`).join('');
+        // Total protagonista + alias/CBU en una sola línea, tap para copiar.
+        const copiables = [];
+        if (p.alias) copiables.push(['Alias', p.alias]);
+        if (p.cbu)   copiables.push(['CBU', p.cbu]);
+        const pie = [p.titular, p.banco].filter(Boolean).map(esc).join(' · ');
+        $('pago-datos').innerHTML =
+            `<div class="pago-total"><span>Transferí</span><strong>${money.format(total)}</strong></div>` +
+            copiables.map(([k, v]) =>
+                `<button type="button" class="pago-copy" data-copiar="${esc(v)}">
+                    <span class="pago-copy-k">${esc(k)}</span>
+                    <span class="pago-copy-v">${esc(v)}</span>
+                    <span class="pago-copy-ic">copiar</span>
+                </button>`).join('') +
+            (pie ? `<p class="pago-pie">${pie}</p>` : '');
         $('pago-datos').querySelectorAll('[data-copiar]').forEach((b) => b.addEventListener('click', async () => {
-            try { await navigator.clipboard.writeText(b.dataset.copiar); toast('✓ Copiado'); b.textContent = '✓'; setTimeout(() => { b.textContent = 'copiar'; }, 1200); }
-            catch (e) { toast('No se pudo copiar'); }
+            try { await navigator.clipboard.writeText(b.dataset.copiar); toast('✓ Copiado');
+                const ic = b.querySelector('.pago-copy-ic'); ic.textContent = '✓ copiado';
+                setTimeout(() => { ic.textContent = 'copiar'; }, 1200);
+            } catch (e) { toast('No se pudo copiar'); }
         }));
         $('pago-estado').classList.add('oculto');
-        $('pago-file-label').textContent = '📎 Subir comprobante';
+        $('pago-drop').classList.remove('oculto', 'ok');
+        $('pago-file-label').textContent = 'Subí el comprobante';
         box.classList.remove('oculto');
     } catch (e) { box.classList.add('oculto'); }
 }
 
 async function subirComprobante(file, pedidoId, labelEl, estadoEl) {
     if (!file || !pedidoId) return;
-    labelEl.textContent = 'Subiendo…';
+    const drop = $('pago-drop');
+    labelEl.textContent = 'Subiendo…'; drop.classList.add('cargando');
     const fd = new FormData();
     fd.append('pedido_id', pedidoId);
     fd.append('comprobante', file);
@@ -383,13 +390,15 @@ async function subirComprobante(file, pedidoId, labelEl, estadoEl) {
         const resp = await fetch('/api/tienda/comprobante', { method: 'POST', body: fd, credentials: 'same-origin' });
         const data = await resp.json();
         if (!data.ok) throw new Error(data.error || 'No se pudo subir.');
-        estadoEl.textContent = '✓ Comprobante recibido. Tu pago quedó en revisión.';
+        drop.classList.remove('cargando'); drop.classList.add('ok');
+        labelEl.textContent = '✓ Comprobante recibido';
+        estadoEl.textContent = 'Tu pago quedó en revisión.';
         estadoEl.className = 'pago-estado ok';
-        labelEl.textContent = '✓ Comprobante enviado';
     } catch (e) {
+        drop.classList.remove('cargando');
+        labelEl.textContent = 'Reintentar';
         estadoEl.textContent = '⚠ ' + e.message;
         estadoEl.className = 'pago-estado err';
-        labelEl.textContent = '📎 Reintentar';
     }
     estadoEl.classList.remove('oculto');
 }
@@ -744,8 +753,13 @@ async function iniciar() {
         if (quit) { await toggleFavorito(Number(quit.dataset.fav)); verFavoritos(); }
     });
     $('ok-cerrar').addEventListener('click', () => cerrar('modal-ok'));
-    $('pago-file').addEventListener('change', (e) =>
-        subirComprobante(e.target.files[0], pedidoPagoId, $('pago-file-label'), $('pago-estado')));
+    const subir = (file) => subirComprobante(file, pedidoPagoId, $('pago-file-label'), $('pago-estado'));
+    $('pago-file').addEventListener('change', (e) => subir(e.target.files[0]));
+    // Drag & drop sobre el dropzone (0 clicks).
+    const drop = $('pago-drop');
+    ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('drag'); }));
+    ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('drag'); }));
+    drop.addEventListener('drop', (e) => { const f = e.dataTransfer.files[0]; if (f) subir(f); });
 
     // cerrar modales al clickear el fondo
     document.querySelectorAll('.modal').forEach((m) =>

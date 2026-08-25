@@ -157,17 +157,17 @@
 
             <!-- Pago por transferencia -->
             <div id="ok-pago" class="pago-box oculto">
-                <h3 class="pago-titulo">💳 Pagá por transferencia</h3>
                 <div id="pago-datos" class="pago-datos"></div>
-                <p class="pago-sub">Transferí el total y subí el comprobante. Tu pago queda <strong>en revisión</strong> hasta que lo confirmemos.</p>
-                <label class="pago-subir">
-                    <span id="pago-file-label">📎 Subir comprobante</span>
+                <label id="pago-drop" class="pago-drop">
                     <input type="file" id="pago-file" accept="image/*,application/pdf" hidden>
+                    <span class="pago-drop-ic">📎</span>
+                    <span id="pago-file-label" class="pago-drop-txt">Subí el comprobante</span>
+                    <span class="pago-drop-sub">Tocá o arrastrá — foto o PDF</span>
                 </label>
                 <p id="pago-estado" class="pago-estado oculto"></p>
             </div>
 
-            <button id="ok-cerrar" class="btn-primary">Seguir comprando</button>
+            <button id="ok-cerrar" class="btn-primary">Listo</button>
         </div>
     </div>
 

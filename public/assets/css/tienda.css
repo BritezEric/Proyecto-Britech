@@ -289,20 +289,35 @@ body { min-height: 100vh; }
 .badge.pago-rechazado   { background: #fee2e2; color: #b91c1c; }
 
 /* Bloque de pago por transferencia (modal de confirmación) */
-.pago-box { border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--sp-4); margin-bottom: var(--sp-4); text-align: left; }
-.pago-titulo { font-size: var(--text-base); margin: 0 0 var(--sp-3); }
-.pago-datos { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--sp-3); }
-.pago-fila { display: flex; justify-content: space-between; gap: var(--sp-3); font-size: var(--text-sm); padding: 6px 10px; background: var(--primary-tint); border-radius: var(--r-sm); }
-.pago-fila strong { user-select: all; margin-left: auto; }
-.pago-copiar { flex: none; border: none; cursor: pointer; background: var(--primary); color: #fff; font: inherit;
-    font-size: var(--text-xs); font-weight: 700; padding: 2px 8px; border-radius: var(--r-full); }
-.pago-copiar:hover { opacity: 0.85; }
-.pago-sub { font-size: var(--text-xs); color: var(--ink-muted); margin: 0 0 var(--sp-3); }
-.pago-subir { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; padding: var(--sp-2) var(--sp-4); border-radius: var(--r-md); background: var(--primary); color: #fff; font-weight: 600; font-size: var(--text-sm); transition: opacity var(--dur-fast) var(--ease-out); }
-.pago-subir:hover { opacity: 0.9; }
-.pago-estado { margin: var(--sp-3) 0 0; font-size: var(--text-sm); font-weight: 600; }
-.pago-estado.ok  { color: #16794c; }
-.pago-estado.err { color: #b91c1c; }
+.pago-box { text-align: left; margin-bottom: var(--sp-4); }
+.pago-datos { display: flex; flex-direction: column; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+/* Total protagonista */
+.pago-total { display: flex; align-items: baseline; justify-content: space-between; padding: var(--sp-2) 0; }
+.pago-total span { font-size: var(--text-sm); color: var(--ink-muted); }
+.pago-total strong { font-size: var(--text-2xl); font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+/* Alias / CBU: toda la fila es botón de copiar */
+.pago-copy { display: flex; align-items: center; gap: var(--sp-3); width: 100%; cursor: pointer; text-align: left;
+    border: 1px solid var(--line); background: var(--surface-2); border-radius: var(--r-md); padding: var(--sp-2) var(--sp-3);
+    font: inherit; transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out); }
+.pago-copy:hover { border-color: var(--primary); background: var(--primary-tint); }
+.pago-copy-k { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); flex: none; width: 42px; }
+.pago-copy-v { font-weight: 700; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pago-copy-ic { margin-left: auto; flex: none; font-size: var(--text-xs); font-weight: 700; color: var(--primary); }
+.pago-pie { margin: 2px 0 0; font-size: var(--text-xs); color: var(--ink-muted); text-align: center; }
+/* Dropzone del comprobante */
+.pago-drop { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;
+    padding: var(--sp-4); border: 2px dashed var(--line-strong); border-radius: var(--r-md); background: var(--surface-2);
+    transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out); }
+.pago-drop:hover, .pago-drop.drag { border-color: var(--primary); background: var(--primary-tint); }
+.pago-drop-ic { font-size: 22px; }
+.pago-drop-txt { font-weight: 700; font-size: var(--text-sm); }
+.pago-drop-sub { font-size: var(--text-xs); color: var(--ink-muted); }
+.pago-drop.cargando { opacity: 0.6; pointer-events: none; }
+.pago-drop.ok { border-style: solid; border-color: var(--primary); background: var(--primary-tint); }
+.pago-drop.ok .pago-drop-ic { color: var(--primary); }
+.pago-estado { margin: var(--sp-2) 0 0; font-size: var(--text-sm); font-weight: 600; text-align: center; }
+.pago-estado.ok  { color: var(--primary-strong); }
+.pago-estado.err { color: var(--danger-strong); }
 .badge.pendiente { background: var(--accent-tint); color: var(--accent-strong); }
 .badge.preparando { background: var(--primary-tint); color: var(--primary-strong); }
 .badge.entregado { background: var(--surface-sunk); color: var(--ink-muted); }
