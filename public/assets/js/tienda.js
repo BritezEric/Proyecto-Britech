@@ -9,6 +9,8 @@
 // ---- Estado ----
 let cliente = null;                 // {id, nombre, email, lista_precio_id} o null
 let page = 1, q = '', categoria = '';
+let precioMin = '', precioMax = '', orden = 'nombre';   // filtros de la vista catálogo
+let categoriasCache = [];
 let carrito = cargarCarrito();      // [{id, nombre, precio, cantidad}]
 let empresasEnvio = [];             // medios de envío disponibles
 let favoritos = new Set();          // ids de productos favoritos del cliente
@@ -34,10 +36,27 @@ async function cargarCatalogo() {
     const params = new URLSearchParams({ page, per_page: 12 });
     if (q) params.set('q', q);
     if (categoria) params.set('categoria_id', categoria);
+    if (precioMin !== '') params.set('precio_min', precioMin);
+    if (precioMax !== '') params.set('precio_max', precioMax);
+    if (orden) params.set('orden', orden);
     const r = await api.get(`/api/tienda/catalogo?${params}`);
     $('lista-info').textContent = r.lista_precio_id === 2 ? 'Precios mayoristas' : 'Precios minoristas';
+    $('catalogo-count').textContent = `${r.total} producto${r.total === 1 ? '' : 's'}`;
+    renderClasificacion();
     renderCatalogo(r.data);
     renderPaginacion(r);
+}
+
+// Lista de categorías en el sidebar (clasificación), resaltando la activa.
+function renderClasificacion() {
+    const cont = $('clasificacion');
+    if (!cont) return;
+    const items = [{ id: '', nombre: 'Todas las categorías' }, ...categoriasCache];
+    cont.innerHTML = items.map((c) =>
+        `<button class="clasif-item ${String(c.id) === String(categoria) ? 'activo' : ''}" data-ir-cat="${c.id}" data-titulo="${esc(c.nombre)}">${esc(c.nombre)}</button>`).join('');
+    // Marca la categoría activa también en la barra superior.
+    document.querySelectorAll('.cat-menu-item').forEach((b) =>
+        b.classList.toggle('activo', String(b.dataset.irCat) === String(categoria) && categoria !== ''));
 }
 
 // ============ Vistas: HOME (bloques) vs CATÁLOGO (búsqueda / ver todos) ============
@@ -65,6 +84,9 @@ async function refrescarVista() {
 // Muestra el grid filtrado por búsqueda o categoría.
 function mostrarCatalogo({ q: nq = '', categoria: ncat = '', titulo = 'Catálogo' } = {}) {
     q = nq; categoria = ncat; page = 1;
+    precioMin = ''; precioMax = ''; orden = 'nombre';   // filtros limpios al entrar
+    if ($('precio-min')) { $('precio-min').value = ''; $('precio-max').value = ''; }
+    if ($('orden')) $('orden').value = 'nombre';
     $('catalogo-titulo').textContent = titulo;
     $('filtro-categoria').value = ncat || '';
     $('vista-home').classList.add('oculto');
@@ -78,6 +100,7 @@ function mostrarCatalogo({ q: nq = '', categoria: ncat = '', titulo = 'Catálogo
 async function cargarCategorias() {
     let cats = [];
     try { cats = (await api.get('/api/tienda/categorias')).categorias; } catch {}
+    categoriasCache = cats;
     $('cat-menu').innerHTML = cats.map((c) =>
         `<button class="cat-menu-item" data-ir-cat="${c.id}" data-titulo="${esc(c.nombre)}">${esc(c.nombre)}</button>`).join('');
     $('filtro-categoria').insertAdjacentHTML('beforeend',
@@ -696,6 +719,17 @@ async function iniciar() {
     $('filtro-categoria').addEventListener('change', (e) => {
         categoria = e.target.value; page = 1; cargarCatalogo();
     });
+    // Orden
+    $('orden').addEventListener('change', (e) => { orden = e.target.value; page = 1; cargarCatalogo(); });
+    // Rango de precio
+    const aplicarPrecio = () => {
+        precioMin = $('precio-min').value.trim();
+        precioMax = $('precio-max').value.trim();
+        page = 1; cargarCatalogo();
+    };
+    $('precio-aplicar').addEventListener('click', aplicarPrecio);
+    [$('precio-min'), $('precio-max')].forEach((el) =>
+        el.addEventListener('keydown', (e) => { if (e.key === 'Enter') aplicarPrecio(); }));
 
     // carrito
     $('btn-carrito').addEventListener('click', () => { renderCarrito(); abrir('modal-carrito'); });

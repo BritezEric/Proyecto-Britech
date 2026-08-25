@@ -21,11 +21,16 @@ class CatalogoController
         [$page, $perPage, $offset] = Paginacion::desde(12, 48);
         $q   = Request::query('q');
         $cat = Request::query('categoria_id');
+        $min = Request::query('precio_min');
+        $max = Request::query('precio_max');
 
         $r = (new ProductoRepository())->catalogo(
             $q,
             $cat === null || $cat === '' ? null : (int) $cat,
-            $lista, $perPage, $offset
+            $lista, $perPage, $offset,
+            ($min === null || $min === '') ? null : (float) $min,
+            ($max === null || $max === '') ? null : (float) $max,
+            Request::query('orden')
         );
         $resp = Paginacion::respuesta($r['rows'], $r['total'], $page, $perPage);
         $resp['lista_precio_id'] = $lista;

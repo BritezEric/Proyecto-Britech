@@ -62,6 +62,44 @@ body { min-height: 100vh; }
 }
 .t-filtros select:focus { outline: none; border-color: var(--primary); box-shadow: var(--ring-primary); }
 
+/* ===== Vista catálogo / categoría (sidebar de filtros + grid) ===== */
+.cat-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap;
+    max-width: 1200px; margin: 0 auto; width: 100%; padding: var(--sp-4) var(--sp-5) 0; }
+.cat-top-info { display: flex; align-items: baseline; gap: var(--sp-3); flex-wrap: wrap; }
+.cat-top-info h1 { margin: 0; font-size: var(--text-xl); font-weight: 800; letter-spacing: -0.02em; }
+.cat-count { font-size: var(--text-sm); font-weight: 700; color: var(--primary); }
+.cat-top-info .cuenta-info { color: var(--ink-muted); font-size: var(--text-xs); }
+.volver-inicio { border: none; background: none; color: var(--ink-muted); font: inherit; font-size: var(--text-sm);
+    font-weight: 600; cursor: pointer; padding: 0; }
+.volver-inicio:hover { color: var(--primary); }
+.cat-orden { font-size: var(--text-sm); color: var(--ink-muted); display: inline-flex; align-items: center; gap: var(--sp-2); }
+.cat-orden select { font-family: inherit; font-size: var(--text-sm); padding: var(--sp-2) var(--sp-3);
+    border: 1.5px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); cursor: pointer; }
+.cat-orden select:focus { outline: none; border-color: var(--primary); box-shadow: var(--ring-primary); }
+
+.cat-layout { max-width: 1200px; margin: 0 auto; width: 100%; padding: var(--sp-4) var(--sp-5) var(--sp-7);
+    display: grid; grid-template-columns: 240px 1fr; gap: var(--sp-5); align-items: start; }
+.cat-side { display: flex; flex-direction: column; gap: var(--sp-4); position: sticky; top: 120px; }
+.cat-filtro { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+    padding: var(--sp-4); }
+.cat-filtro h3 { margin: 0 0 var(--sp-3); font-size: var(--text-sm); font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--ink-muted); }
+.precio-inputs { display: flex; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+.precio-inputs input { width: 100%; min-width: 0; font-family: inherit; font-size: var(--text-sm);
+    padding: var(--sp-2) var(--sp-3); border: 1.5px solid var(--line); border-radius: var(--r-md);
+    background: var(--surface-sunk); color: var(--ink); outline: none; }
+.precio-inputs input:focus { border-color: var(--primary); box-shadow: var(--ring-primary); background: var(--surface); }
+.cat-filtro .btn-primary { width: 100%; }
+.clasif-list { display: flex; flex-direction: column; gap: 2px; max-height: 320px; overflow-y: auto; }
+.clasif-item { text-align: left; border: none; background: none; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm);
+    font-family: inherit; font-size: var(--text-sm); font-weight: 600; color: var(--ink); cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+.clasif-item:hover { background: var(--surface-2); }
+.clasif-item.activo { background: var(--primary-tint); color: var(--primary-strong); }
+.cat-main { min-width: 0; }
+.cat-main .catalogo { max-width: none; margin: 0; padding: 0; }
+@media (max-width: 760px) { .cat-layout { grid-template-columns: 1fr; } .cat-side { position: static; } }
+
 /* ===== Zona mayorista (toggle / CTA) ===== */
 .mayorista-zona { display: flex; align-items: center; gap: var(--sp-2); }
 .modo-toggle {
@@ -340,12 +378,14 @@ body { min-height: 100vh; }
 
 /* Menú de categorías */
 .cat-menu { display: flex; gap: 4px; overflow-x: auto; padding: 10px 20px; background: var(--surface);
-    border-bottom: 1px solid var(--line); scrollbar-width: none; }
+    border-bottom: 1px solid var(--line); scrollbar-width: none;
+    position: sticky; top: 60px; z-index: calc(var(--z-sticky) - 1); box-shadow: var(--shadow-sm); }
 .cat-menu::-webkit-scrollbar { display: none; }
 .cat-menu-item { flex: 0 0 auto; border: none; background: none; padding: 6px 14px; border-radius: var(--r-full);
     font-family: inherit; font-size: var(--text-sm); font-weight: 600; color: var(--ink-muted); cursor: pointer; white-space: nowrap;
     transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
 .cat-menu-item:hover { background: var(--surface-2); color: var(--ink); }
+.cat-menu-item.activo { background: var(--primary); color: #fff; }
 
 /* Contenedores */
 #vista-home { max-width: 1200px; margin: 0 auto; width: 100%; padding: 16px; }

@@ -40,16 +40,42 @@
 
     <!-- VISTA CATÁLOGO (búsqueda / ver todos) -->
     <section id="vista-catalogo" class="oculto">
-        <div class="t-filtros">
-            <button id="volver-inicio" class="volver-inicio">← Inicio</button>
-            <h1 id="catalogo-titulo">Catálogo</h1>
-            <span id="lista-info" class="cuenta-info"></span>
-            <select id="filtro-categoria">
-                <option value="">Todas las categorías</option>
-            </select>
+        <div class="cat-top">
+            <div class="cat-top-info">
+                <button id="volver-inicio" class="volver-inicio">← Inicio</button>
+                <h1 id="catalogo-titulo">Catálogo</h1>
+                <span id="catalogo-count" class="cat-count"></span>
+                <span id="lista-info" class="cuenta-info"></span>
+            </div>
+            <label class="cat-orden">Ordenar por
+                <select id="orden">
+                    <option value="nombre">Nombre</option>
+                    <option value="precio_asc">Precio: menor a mayor</option>
+                    <option value="precio_desc">Precio: mayor a menor</option>
+                </select>
+            </label>
         </div>
-        <main id="catalogo" class="catalogo"></main>
-        <div id="paginacion" class="paginacion"></div>
+        <div class="cat-layout">
+            <aside class="cat-side">
+                <div class="cat-filtro">
+                    <h3>Precio</h3>
+                    <div class="precio-inputs">
+                        <input id="precio-min" type="number" min="0" placeholder="Mínimo" inputmode="numeric">
+                        <input id="precio-max" type="number" min="0" placeholder="Máximo" inputmode="numeric">
+                    </div>
+                    <button id="precio-aplicar" class="btn-primary">Aplicar</button>
+                </div>
+                <div class="cat-filtro">
+                    <h3>Clasificación</h3>
+                    <div id="clasificacion" class="clasif-list"></div>
+                </div>
+                <select id="filtro-categoria" class="oculto"><option value="">Todas</option></select>
+            </aside>
+            <div class="cat-main">
+                <main id="catalogo" class="catalogo"></main>
+                <div id="paginacion" class="paginacion"></div>
+            </div>
+        </div>
     </section>
 
     <!-- VISTA PRODUCTO (ficha completa) -->

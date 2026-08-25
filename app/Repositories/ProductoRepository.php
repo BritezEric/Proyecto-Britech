@@ -250,7 +250,8 @@ class ProductoRepository
      * Solo muestra productos con precio cargado. Paginado + búsqueda + filtro por categoría.
      * @return array{rows: array, total: int}
      */
-    public function catalogo(?string $q, ?int $categoriaId, int $listaId, int $limit, int $offset): array
+    public function catalogo(?string $q, ?int $categoriaId, int $listaId, int $limit, int $offset,
+        ?float $precioMin = null, ?float $precioMax = null, ?string $orden = null): array
     {
         $pdo = Database::conexion();
         $where  = ['p.activo = 1', 'pr.precio IS NOT NULL'];
@@ -260,7 +261,16 @@ class ProductoRepository
             $like = "%{$q}%"; array_push($params, $like, $like);
         }
         if ($categoriaId !== null) { $where[] = "p.categoria_id = ?"; $params[] = $categoriaId; }
+        if ($precioMin !== null) { $where[] = "pr.precio >= ?"; $params[] = $precioMin; }
+        if ($precioMax !== null) { $where[] = "pr.precio <= ?"; $params[] = $precioMax; }
         $sqlWhere = 'WHERE ' . implode(' AND ', $where);
+
+        // Orden (lista blanca: nunca interpolar entrada del usuario en el SQL).
+        $orderBy = [
+            'precio_asc'  => 'pr.precio ASC',
+            'precio_desc' => 'pr.precio DESC',
+            'nombre'      => 'p.nombre ASC',
+        ][$orden] ?? 'p.nombre ASC';
 
         $baseFrom = "FROM producto p
                      LEFT JOIN precio pr ON pr.producto_id = p.id AND pr.lista_precio_id = ?
@@ -280,7 +290,7 @@ class ProductoRepository
                        (SELECT url FROM producto_imagen pi WHERE pi.producto_id = p.id
                         ORDER BY pi.orden, pi.id LIMIT 1) AS imagen
                 $baseFrom $sqlWhere
-                ORDER BY p.nombre
+                ORDER BY $orderBy
                 LIMIT ? OFFSET ?";
         $st = $pdo->prepare($sql);
         $full = array_merge($params, [$limit, $offset]);
