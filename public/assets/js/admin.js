@@ -653,37 +653,45 @@ async function verPedido(id, numero) {
     if (e) {
         const costo = Number(e.costo) === 0 ? 'Gratis' : money.format(e.costo);
         total += Number(e.costo);
-        const seg = e.seguimiento_url
-            ? `<a class="envio-seg" href="${esc(e.seguimiento_url)}" target="_blank" rel="noopener">🔎 Seguir envío en ${esc(e.empresa || 'el correo')}</a>`
-            : '';
-        envioHtml = `
-            <h4 class="detalle-sub">Envío</h4>
-            <div class="pedido-linea"><span>${esc(e.empresa || 'Sin empresa')}</span><span class="tabular">${costo}</span></div>
-            <div class="envio-form">
-                <div class="envio-grid2">
-                    <div><label>Destinatario</label><input id="env-destinatario" value="${esc(e.destinatario || '')}" placeholder="Quién recibe"></div>
-                    <div><label>Teléfono</label><input id="env-telefono" value="${esc(e.telefono || '')}" placeholder="Teléfono"></div>
-                    <div><label>Calle</label><input id="env-direccion" value="${esc(e.direccion || '')}" placeholder="Calle"></div>
-                    <div><label>Número</label><input id="env-numero" value="${esc(e.numero || '')}" placeholder="Altura"></div>
-                    <div class="col-2"><label>Referencia</label><input id="env-referencia" value="${esc(e.referencia || '')}" placeholder="Entre calles / piso / depto"></div>
-                    <div><label>Localidad</label><input id="env-localidad" value="${esc(e.localidad || '')}" placeholder="Localidad"></div>
-                    <div><label>Provincia</label><input id="env-provincia" value="${esc(e.provincia || '')}" placeholder="Provincia"></div>
-                    <div><label>Código postal</label><input id="env-cp" value="${esc(e.cp || '')}" placeholder="CP"></div>
-                </div>
-                <div class="envio-fila">
-                    <div>
-                        <label>Estado del envío</label>
-                        <select id="envio-estado">${ESTADOS_ENVIO_ADMIN.map((s) =>
-                            `<option value="${s}" ${s === e.estado ? 'selected' : ''}>${s.replace('_', ' ')}</option>`).join('')}</select>
+        const esRetiro = Number(e.es_retiro) === 1;
+        const selEstado = `<select id="envio-estado">${ESTADOS_ENVIO_ADMIN.map((s) =>
+            `<option value="${s}" ${s === e.estado ? 'selected' : ''}>${s.replace('_', ' ')}</option>`).join('')}</select>`;
+
+        if (esRetiro) {
+            // Retiro en el local: no hay envío → sin datos de dirección ni seguimiento.
+            envioHtml = `
+                <h4 class="detalle-sub">Entrega</h4>
+                <div class="pedido-linea"><span>🏠 ${esc(e.empresa || 'Retiro en el local')}</span><span class="tabular">${costo}</span></div>
+                <div class="envio-form">
+                    <label>Estado</label>${selEstado}
+                    <button class="btn-primary" id="envio-guardar" data-id="${id}">Guardar</button>
+                </div>`;
+        } else {
+            const seg = e.seguimiento_url
+                ? `<a class="envio-seg" href="${esc(e.seguimiento_url)}" target="_blank" rel="noopener">🔎 Seguir envío en ${esc(e.empresa || 'el correo')}</a>`
+                : '';
+            envioHtml = `
+                <h4 class="detalle-sub">Envío</h4>
+                <div class="pedido-linea"><span>${esc(e.empresa || 'Sin empresa')}</span><span class="tabular">${costo}</span></div>
+                <div class="envio-form">
+                    <div class="envio-grid2">
+                        <div><label>Destinatario</label><input id="env-destinatario" value="${esc(e.destinatario || '')}" placeholder="Quién recibe"></div>
+                        <div><label>Teléfono</label><input id="env-telefono" value="${esc(e.telefono || '')}" placeholder="Teléfono"></div>
+                        <div><label>Calle</label><input id="env-direccion" value="${esc(e.direccion || '')}" placeholder="Calle"></div>
+                        <div><label>Número</label><input id="env-numero" value="${esc(e.numero || '')}" placeholder="Altura"></div>
+                        <div class="col-2"><label>Referencia</label><input id="env-referencia" value="${esc(e.referencia || '')}" placeholder="Entre calles / piso / depto"></div>
+                        <div><label>Localidad</label><input id="env-localidad" value="${esc(e.localidad || '')}" placeholder="Localidad"></div>
+                        <div><label>Provincia</label><input id="env-provincia" value="${esc(e.provincia || '')}" placeholder="Provincia"></div>
+                        <div><label>Código postal</label><input id="env-cp" value="${esc(e.cp || '')}" placeholder="CP"></div>
                     </div>
-                    <div>
-                        <label>Seguimiento (tracking)</label>
-                        <input id="envio-tracking" placeholder="Nº de seguimiento" value="${esc(e.tracking || '')}">
+                    <div class="envio-fila">
+                        <div><label>Estado del envío</label>${selEstado}</div>
+                        <div><label>Seguimiento (tracking)</label><input id="envio-tracking" placeholder="Nº de seguimiento" value="${esc(e.tracking || '')}"></div>
                     </div>
-                </div>
-                ${seg}
-                <button class="btn-primary" id="envio-guardar" data-id="${id}">Guardar envío</button>
-            </div>`;
+                    ${seg}
+                    <button class="btn-primary" id="envio-guardar" data-id="${id}">Guardar envío</button>
+                </div>`;
+        }
     }
 
     const pg = r.pago || {};
@@ -724,20 +732,15 @@ async function verPedido(id, numero) {
     if (btn) btn.addEventListener('click', async () => {
         btn.disabled = true;
         try {
+            const val = (elId) => { const el = document.getElementById(elId); return el ? el.value : undefined; };
+            const datos = {};
+            ['destinatario', 'telefono', 'direccion', 'numero', 'referencia', 'localidad', 'provincia', 'cp']
+                .forEach((k) => { const v = val('env-' + k); if (v !== undefined) datos[k] = v; });
             await api.post('/api/admin/pedidos/envio', {
                 pedido_id: Number(id),
                 estado: $('envio-estado').value,
-                tracking: $('envio-tracking').value,
-                datos: {
-                    destinatario: $('env-destinatario').value,
-                    telefono: $('env-telefono').value,
-                    direccion: $('env-direccion').value,
-                    numero: $('env-numero').value,
-                    referencia: $('env-referencia').value,
-                    localidad: $('env-localidad').value,
-                    provincia: $('env-provincia').value,
-                    cp: $('env-cp').value,
-                },
+                tracking: val('envio-tracking') || '',
+                datos,
             });
             btn.textContent = 'Guardado ✓';
             cargar();   // refresca la columna "Envío" del listado de fondo

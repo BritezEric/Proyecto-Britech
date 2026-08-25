@@ -30,7 +30,7 @@ class EnvioRepository
     public function dePedido(int $pedidoId): ?array
     {
         $st = Database::conexion()->prepare(
-            "SELECT e.*, em.nombre AS empresa, em.url_tracking
+            "SELECT e.*, em.nombre AS empresa, em.url_tracking, em.es_retiro
              FROM envio e
              LEFT JOIN empresa_envio em ON em.id = e.empresa_envio_id
              WHERE e.pedido_id = ?"
