@@ -699,10 +699,17 @@ async function verPedido(id, numero) {
             <button class="btn-mini ghost" data-pago="rechazado" data-id="${id}">✗ Rechazar</button>
         </div>`;
 
-    cont.innerHTML = filas +
-        `<div class="pedido-linea total"><strong>Total ${e ? 'con envío' : ''}</strong><strong class="tabular">${money.format(total)}</strong></div>` +
-        pagoHtml +
-        envioHtml;
+    cont.innerHTML = `<div class="pedido-cols">
+        <div class="pedido-col">
+            <h4 class="detalle-sub">Productos</h4>
+            ${filas}
+            <div class="pedido-linea total"><strong>Total ${e ? 'con envío' : ''}</strong><strong class="tabular">${money.format(total)}</strong></div>
+            ${pagoHtml}
+        </div>
+        <div class="pedido-col">
+            ${envioHtml || '<p class="td-mute">Este pedido no tiene envío asociado.</p>'}
+        </div>
+    </div>`;
 
     cont.querySelectorAll('[data-pago]').forEach((b) => b.addEventListener('click', async () => {
         try {

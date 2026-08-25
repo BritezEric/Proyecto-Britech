@@ -122,6 +122,19 @@ td.acciones { text-align: right; white-space: nowrap; }
 
 /* Acciones de pago en el detalle del pedido */
 .pago-acciones { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
+.pago-acciones .btn-mini { flex: 1; justify-content: center; }
+
+/* Detalle del pedido: 2 columnas (productos+pago | envío) */
+#modal-detalle .modal-caja { max-width: 800px; width: 94vw; }
+.pedido-cols { display: grid; grid-template-columns: 1.05fr 1fr; gap: var(--sp-6); align-items: start; }
+.pedido-col { min-width: 0; }
+.pedido-col .detalle-sub:first-child { margin-top: 0; }
+.pedido-col .envio-form { margin-top: 0; }
+@media (max-width: 680px) {
+    #modal-detalle .modal-caja { max-width: 480px; }
+    .pedido-cols { grid-template-columns: 1fr; gap: var(--sp-4); }
+    .envio-grid2 { grid-template-columns: 1fr; }
+}
 
 /* Ajustes */
 .ajustes-cont { max-width: 480px; }
