@@ -17,7 +17,7 @@ class MaestraSimpleRepository
 {
     private const TABLAS = ['categoria', 'marca'];
     // Tablas que además tienen columna `imagen` (para el carrusel de la tienda).
-    private const CON_IMAGEN = ['categoria'];
+    private const CON_IMAGEN = ['categoria', 'marca'];
 
     private string $tabla;
 

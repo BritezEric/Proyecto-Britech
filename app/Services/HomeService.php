@@ -30,6 +30,9 @@ class HomeService
                 case 'carrusel_categorias':
                     $data['categorias'] = $this->categorias();
                     break;
+                case 'carrusel_marcas':
+                    $data['marcas'] = $this->marcas();
+                    break;
                 case 'carrusel_productos':
                 case 'grid_productos':
                     $data['productos'] = $prod->porCategoria(
@@ -60,6 +63,16 @@ class HomeService
             "SELECT id, nombre, imagen FROM categoria
              WHERE activo = 1 AND imagen IS NOT NULL
              ORDER BY orden, nombre"
+        )->fetchAll();
+    }
+
+    /** Marcas activas con logo (para el carrusel de marcas). */
+    private function marcas(): array
+    {
+        return Database::conexion()->query(
+            "SELECT id, nombre, imagen FROM marca
+             WHERE activo = 1 AND imagen IS NOT NULL
+             ORDER BY nombre"
         )->fetchAll();
     }
 }

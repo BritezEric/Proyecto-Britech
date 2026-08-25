@@ -41,6 +41,7 @@ El primero crea la base `britech_v2`; el resto hace `USE britech_v2`.
 12. database/schema_gastos.sql          (gastos / finanzas)
 13. database/schema_empleados.sql       (sueldos = gastos etiquetados al empleado)
 14. database/schema_bloques.sql         (page builder de la home — independiente)
+15. database/schema_marca_logo.sql       (logo de marca para el carrusel de marcas)
 ```
 
 Desde la terminal (uno por uno, o encadenados):
@@ -60,6 +61,7 @@ mysql -u root britech_v2 < database/schema_mayorista.sql
 mysql -u root britech_v2 < database/schema_gastos.sql
 mysql -u root britech_v2 < database/schema_empleados.sql
 mysql -u root britech_v2 < database/schema_bloques.sql
+mysql -u root britech_v2 < database/schema_marca_logo.sql
 ```
 
 **3. Variables de entorno** — copiar la plantilla y completar:

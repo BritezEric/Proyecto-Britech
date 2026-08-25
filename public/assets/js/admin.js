@@ -135,7 +135,7 @@ const ENTIDADES = {
     },
 
     categorias: { ...maestraSimple('categorias', 'Categorías', 'categoría', 'Clasificación de los productos. La imagen se usa en el carrusel de categorías de la tienda.', { imagen: true }) },
-    marcas: { ...maestraSimple('marcas', 'Marcas', 'marca', 'Marcas de los productos.') },
+    marcas: { ...maestraSimple('marcas', 'Marcas', 'marca', 'Marcas de los productos. El logo se usa en el carrusel de marcas de la tienda.', { imagen: true }) },
 
     gastos: {
         titulo: 'Gastos', sub: 'Finanzas del negocio. Si cargás producto + cantidad, esa compra SUMA stock al inventario (al crear el gasto).',

@@ -10,6 +10,7 @@ const TIPOS_BLOQUE = [
     ['banner', 'Banner horizontal'],
     ['video', 'Video / banner lateral'],
     ['carrusel_categorias', 'Carrusel de categorías'],
+    ['carrusel_marcas', 'Carrusel de marcas'],
     ['carrusel_productos', 'Carrusel de productos'],
     ['grid_productos', 'Grid de productos / ofertas'],
 ];
@@ -32,6 +33,7 @@ const CAMPOS_BLOQUE = {
         { k: 'url', label: 'Enlace', tipo: 'text' },
     ],
     carrusel_categorias: [],
+    carrusel_marcas: [],
     carrusel_productos: [
         { k: 'categoria_id', label: 'Categoría', tipo: 'cat' },
         { k: 'limite', label: 'Máx. productos', tipo: 'number', def: 10 },
@@ -124,6 +126,10 @@ async function renderConfig(b) {
     }
     if (bloqueTipo === 'carrusel_categorias') {
         cont.innerHTML = `<p class="dash-vacio" style="text-align:left">Muestra automáticamente las categorías activas que tengan imagen (se cargan en Categorías).</p>`;
+        return;
+    }
+    if (bloqueTipo === 'carrusel_marcas') {
+        cont.innerHTML = `<p class="dash-vacio" style="text-align:left">Muestra automáticamente las marcas activas que tengan logo (se cargan en Tablas → Marcas). Los logos van pasando solos.</p>`;
         return;
     }
     cont.innerHTML = `<div class="form-grid">${(await Promise.all(campos.map((c) => campoBloque(c, b)))).join('')}</div>`;

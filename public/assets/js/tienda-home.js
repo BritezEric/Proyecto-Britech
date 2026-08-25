@@ -73,6 +73,7 @@ function renderBloque(b) {
         case 'video':
         case 'banner':              return bloqueBanner(b);
         case 'carrusel_categorias': return bloqueCategorias(b);
+        case 'carrusel_marcas':     return bloqueMarcas(b);
         case 'carrusel_productos':  return bloqueProductos(b, false);
         case 'grid_productos':      return bloqueProductos(b, true);
         default:                    return '';
@@ -120,6 +121,21 @@ function bloqueCategorias(b) {
     return `<section class="bloque">
         ${b.titulo ? `<div class="bloque-head"><h2>${esc(b.titulo)}</h2>${flechas()}</div>` : ''}
         <div class="carrusel"><div class="carrusel-track cats">${cats}</div></div>
+    </section>`;
+}
+
+// Tira de marcas que pasa sola (marquee). Duplicamos los logos para loop continuo.
+function bloqueMarcas(b) {
+    const marcas = (b.data.marcas || []);
+    if (!marcas.length) return '';
+    const logo = (m) => `<div class="marca-logo" title="${esc(m.nombre)}">
+        <img src="${esc(m.imagen)}" alt="${esc(m.nombre)}" loading="lazy"></div>`;
+    const fila = marcas.map(logo).join('');
+    // Pausa el auto-scroll si hay pocas marcas (no hace falta loop).
+    const animar = marcas.length >= 5 ? 'marcas-anima' : '';
+    return `<section class="bloque">
+        ${b.titulo ? `<div class="bloque-head"><h2>${esc(b.titulo)}</h2></div>` : ''}
+        <div class="marcas-strip"><div class="marcas-track ${animar}">${fila}${animar ? fila : ''}</div></div>
     </section>`;
 }
 
