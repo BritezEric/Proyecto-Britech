@@ -451,9 +451,24 @@ body { min-height: 100vh; }
 .cat-img { width: 100%; aspect-ratio: 3 / 4; border-radius: var(--r-lg);
     background-size: cover; background-repeat: no-repeat; background-position: center;
     background-color: var(--surface-2);
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out); }
+    box-shadow: var(--shadow-sm); transform-origin: bottom center;
+    transition: transform var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow) var(--ease-out); }
 .cat-card:hover .cat-img { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+/* Fila de categorías bajo el hero: a ras (sin recuadro) y con efecto de
+   "elevación hacia el hero" al pasar el mouse — simple, limpio, profesional. */
+.bloque:has(.carrusel-track.cats) { background: none; border: none; box-shadow: none; padding: 0; margin-bottom: var(--sp-4); }
+.carrusel-track.cats { overflow: visible; padding: 44px 4px 6px; gap: 12px; }
+.carrusel-track.cats > * { flex: 1 1 0; min-width: 96px; }
+.carrusel-track.cats .cat-img { aspect-ratio: 1 / 1; }
+.carrusel-track.cats .cat-card { z-index: 1; transition: z-index 0s; }
+.carrusel-track.cats .cat-card:hover { z-index: 3; }
+/* El tile crece y sube (anclado abajo) hasta acercarse al hero */
+.carrusel-track.cats .cat-card:hover .cat-img { transform: translateY(-40px) scale(1.14); box-shadow: var(--shadow-lg); }
+.carrusel-track.cats .cat-card:hover span { color: var(--primary); }
+@media (prefers-reduced-motion: reduce) {
+    .carrusel-track.cats .cat-card:hover .cat-img { transform: translateY(-6px); }
+}
 
 /* Entrada sutil escalonada SOLO en la home de la tienda (superficie de vitrina).
    No se usa en el catálogo/búsqueda ni en el admin: ahí el usuario está en una
