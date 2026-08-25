@@ -395,9 +395,9 @@ body { min-height: 100vh; }
     box-shadow: var(--shadow-sm); padding: var(--sp-3) var(--sp-5) var(--sp-5); margin-bottom: var(--sp-5); }
 .bloque-head { display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: var(--sp-2) 0 var(--sp-3); margin-bottom: var(--sp-4); border-bottom: 1px solid var(--line); }
-.bloque-head h2 { margin: 0; font-size: var(--text-lg); font-weight: 800; letter-spacing: -0.02em;
-    display: flex; align-items: center; gap: var(--sp-3); }
-.bloque-head h2::before { content: ""; width: 24px; height: 24px; border-radius: var(--r-sm); flex: none;
+.bloque-head h2 { margin: 0; font-size: var(--text-base); font-weight: 700; letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: var(--sp-2); }
+.bloque-head h2::before { content: ""; width: 18px; height: 18px; border-radius: 5px; flex: none;
     background: linear-gradient(135deg, var(--primary), var(--primary-strong)); box-shadow: var(--shadow-primary); }
 .bloque-nav, .carrusel-nav { display: flex; align-items: center; gap: 8px; }
 .ver-todos { border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-muted);
@@ -440,7 +440,9 @@ body { min-height: 100vh; }
 .carrusel { position: relative; }
 .carrusel-track { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 4px; }
 .carrusel-track::-webkit-scrollbar { display: none; }
-.carrusel-track > * { scroll-snap-align: start; flex: 0 0 200px; }
+/* 6 productos por fila (una sola fila; el resto rota). */
+.carrusel-track > * { scroll-snap-align: start; flex: 0 0 calc((100% - 5 * 14px) / 6); min-width: 150px; }
+.carrusel-track.cats > * { flex: 1 1 0; }   /* categorías: se reparten el ancho */
 .carrusel-track.cats > * { flex: 0 0 140px; }
 
 /* Categoría card */
@@ -482,7 +484,7 @@ body { min-height: 100vh; }
 .bloque .carrusel-track > *:nth-child(4) { animation-delay: 120ms; }
 .bloque .carrusel-track > *:nth-child(5) { animation-delay: 160ms; }
 .bloque .carrusel-track > *:nth-child(n+6) { animation-delay: 200ms; }
-.cat-card span { font-size: var(--text-sm); font-weight: 600; text-align: center; }
+.cat-card span { font-size: var(--text-xs); font-weight: 600; text-align: center; }
 
 /* Ajustes de la tarjeta de producto (altura consistente + ofertas) */
 .prod { height: 100%; }

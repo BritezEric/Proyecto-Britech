@@ -150,11 +150,9 @@ function bloqueProductos(b, esGrid) {
     if (cards.length === 0) return '';
     const verTodos = cfg.categoria_id
         ? `<button class="ver-todos" data-ir-cat="${cfg.categoria_id}" data-titulo="${esc(b.titulo || '')}">Ver todos</button>` : '';
+    // Siempre una sola fila (carrusel): 6 por fila, el resto rota cada 5s.
     const head = `<div class="bloque-head"><h2>${esc(b.titulo || '')}</h2>
-        <div class="bloque-nav">${verTodos}${esGrid ? '' : flechas()}</div></div>`;
-    if (esGrid) {
-        return `<section class="bloque">${head}<div class="grid-productos">${cards.join('')}</div></section>`;
-    }
+        <div class="bloque-nav">${verTodos}${flechas()}</div></div>`;
     return `<section class="bloque">${head}
         <div class="carrusel"><div class="carrusel-track">${cards.join('')}</div></div></section>`;
 }
@@ -167,19 +165,21 @@ function flechas() {
 function montarCarrusel(carrusel) {
     const track = carrusel.querySelector('.carrusel-track');
     const nav = carrusel.parentElement.querySelector('.carrusel-nav, .bloque-nav');
-    const paso = () => Math.round(track.clientWidth * 0.8);
+    const paso = () => Math.round(track.clientWidth);   // una página = 6 productos
     if (nav) nav.querySelectorAll('.car-arrow').forEach((btn) => btn.addEventListener('click', () => {
         track.scrollBy({ left: Number(btn.dataset.dir) * paso(), behavior: 'smooth' });
     }));
 
-    // Auto-rotación cada 5s: avanza una página; al llegar al final vuelve al inicio.
-    // Movimiento suave (scroll-behavior) y limpio; pausa al pasar el mouse.
+    // Auto-rotación cada 5s, movimiento fluido tipo vaivén (ping-pong): avanza
+    // una página hasta el final y luego vuelve suave; nunca un salto brusco.
     if (track.scrollWidth <= track.clientWidth + 8) return;   // no hay overflow → no rota
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    let timer;
+    let timer, dir = 1;
     const avanzar = () => {
-        const fin = track.scrollLeft >= track.scrollWidth - track.clientWidth - 8;
-        track.scrollTo({ left: fin ? 0 : track.scrollLeft + paso(), behavior: 'smooth' });
+        const max = track.scrollWidth - track.clientWidth;
+        if (dir === 1 && track.scrollLeft >= max - 8) dir = -1;
+        else if (dir === -1 && track.scrollLeft <= 8) dir = 1;
+        track.scrollBy({ left: dir * paso(), behavior: 'smooth' });
     };
     const arrancar = () => { timer = setInterval(avanzar, 5000); };
     const parar = () => clearInterval(timer);
