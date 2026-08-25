@@ -446,12 +446,14 @@ body { min-height: 100vh; }
 /* ===== Carrusel de marcas (tira que pasa sola) ===== */
 .marcas-strip { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
     mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
-.marcas-track { display: flex; align-items: center; gap: var(--sp-7); width: max-content; }
-.marcas-track.marcas-anima { animation: marcas-scroll 32s linear infinite; }
+.marcas-track { display: flex; align-items: center; gap: var(--sp-4); width: max-content; }
+.marcas-track.marcas-anima { animation: marcas-scroll 30s linear infinite; }
 .marcas-strip:hover .marcas-track.marcas-anima { animation-play-state: paused; }
-.marca-logo { flex: 0 0 auto; width: 120px; height: 56px; display: grid; place-items: center; }
+/* Tile de tamaño ÚNICO: todos los logos ocupan la misma caja; contain nunca recorta */
+.marca-logo { flex: 0 0 auto; width: 150px; height: 72px; display: grid; place-items: center;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--sp-3); }
 .marca-logo img { max-width: 100%; max-height: 100%; object-fit: contain;
-    filter: grayscale(1); opacity: 0.65; transition: filter var(--dur) var(--ease-out), opacity var(--dur) var(--ease-out); }
+    filter: grayscale(1); opacity: 0.7; transition: filter var(--dur) var(--ease-out), opacity var(--dur) var(--ease-out); }
 .marca-logo:hover img { filter: grayscale(0); opacity: 1; }
 @keyframes marcas-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { .marcas-track.marcas-anima { animation: none; } }

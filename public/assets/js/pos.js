@@ -41,9 +41,25 @@ async function cargarClientes() {
     const { datos } = await api.get('/api/clientes');
     clientes = datos;
     clienteActual = clientes[0];
-    selCliente.innerHTML = clientes.map(c =>
-        `<option value="${c.id}">${c.nombre} — ${c.lista}</option>`).join('');
+    pintarOpcionesCliente(clientes);
 }
+
+// Rellena el select con una lista de clientes (respeta la selección actual si sigue visible).
+function pintarOpcionesCliente(lista) {
+    const prev = selCliente.value;
+    selCliente.innerHTML = lista.map(c =>
+        `<option value="${c.id}">${c.nombre} — ${c.lista}</option>`).join('');
+    if (lista.some(c => String(c.id) === prev)) selCliente.value = prev;
+}
+
+// Busca el cliente por nombre o documento (para cuando NO es consumidor final).
+const inpBuscarCli = document.getElementById('cliente-buscar');
+if (inpBuscarCli) inpBuscarCli.addEventListener('input', () => {
+    const t = inpBuscarCli.value.trim().toLowerCase();
+    const lista = t === '' ? clientes : clientes.filter(c =>
+        (c.nombre || '').toLowerCase().includes(t) || String(c.documento || '').toLowerCase().includes(t));
+    pintarOpcionesCliente(lista);
+});
 async function cargarTiposPago() {
     const { datos } = await api.get('/api/tipos-pago');
     tiposPago = datos;

@@ -166,12 +166,26 @@ function flechas() {
 // ---------- Carrusel: flechas + scroll (touch/swipe es nativo por overflow) ----------
 function montarCarrusel(carrusel) {
     const track = carrusel.querySelector('.carrusel-track');
-    // Las flechas están en el head del bloque (hermano anterior del .carrusel).
     const nav = carrusel.parentElement.querySelector('.carrusel-nav, .bloque-nav');
-    if (!nav) return;
-    nav.querySelectorAll('.car-arrow').forEach((btn) => btn.addEventListener('click', () => {
-        track.scrollBy({ left: Number(btn.dataset.dir) * Math.round(track.clientWidth * 0.8), behavior: 'smooth' });
+    const paso = () => Math.round(track.clientWidth * 0.8);
+    if (nav) nav.querySelectorAll('.car-arrow').forEach((btn) => btn.addEventListener('click', () => {
+        track.scrollBy({ left: Number(btn.dataset.dir) * paso(), behavior: 'smooth' });
     }));
+
+    // Auto-rotación cada 5s: avanza una página; al llegar al final vuelve al inicio.
+    // Movimiento suave (scroll-behavior) y limpio; pausa al pasar el mouse.
+    if (track.scrollWidth <= track.clientWidth + 8) return;   // no hay overflow → no rota
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let timer;
+    const avanzar = () => {
+        const fin = track.scrollLeft >= track.scrollWidth - track.clientWidth - 8;
+        track.scrollTo({ left: fin ? 0 : track.scrollLeft + paso(), behavior: 'smooth' });
+    };
+    const arrancar = () => { timer = setInterval(avanzar, 5000); };
+    const parar = () => clearInterval(timer);
+    carrusel.addEventListener('mouseenter', parar);
+    carrusel.addEventListener('mouseleave', arrancar);
+    arrancar();
 }
 
 // ---------- Hero: autoplay + flechas + dots ----------
