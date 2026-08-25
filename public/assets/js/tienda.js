@@ -278,6 +278,11 @@ function renderCarrito() {
         </div>`).join('');
     prepararEnvio();
     actualizarMontos();
+    // Siempre arranca en el paso 1 (entrega).
+    $('paso-pago').classList.add('oculto');
+    $('paso-entrega').classList.remove('oculto');
+    $('cart-error').classList.add('oculto');
+    $('cart-error2').classList.add('oculto');
     $('cart-resumen').classList.remove('oculto');
 }
 
@@ -322,11 +327,9 @@ function actualizarMontos() {
     $('cart-total').textContent = money.format(sub + env);
 }
 
-async function confirmarPedido() {
-    if (!cliente) { abrirAuth(true); return; }        // pide login/registro
-    const err = $('cart-error'); err.classList.add('oculto');
-    const retiro = envioEsRetiro();
-    const envio = {
+// Datos de entrega tal como están en el formulario.
+function datosEnvioForm() {
+    return {
         empresa_envio_id: Number($('envio-empresa').value) || null,
         destinatario: $('envio-destinatario').value.trim(),
         telefono: $('envio-telefono').value.trim(),
@@ -337,32 +340,74 @@ async function confirmarPedido() {
         provincia: $('envio-provincia').value.trim(),
         cp: $('envio-cp').value.trim(),
     };
-    // Validación en el navegador (el backend igual re-valida). Referencia es opcional.
-    if (!retiro) {
-        const req = { destinatario: 'quién recibe', telefono: 'teléfono', direccion: 'calle',
-            numero: 'número', localidad: 'localidad', provincia: 'provincia', cp: 'código postal' };
-        const faltan = Object.keys(req).filter((k) => !envio[k]).map((k) => req[k]);
-        if (faltan.length) { err.textContent = 'Para el envío falta: ' + faltan.join(', ') + '.'; err.classList.remove('oculto'); return; }
-    }
+}
 
+// Valida el paso de entrega. Referencia es opcional; retiro no pide dirección.
+function validarEntrega() {
+    const err = $('cart-error'); err.classList.add('oculto');
+    if (envioEsRetiro()) return true;
+    const e = datosEnvioForm();
+    const req = { destinatario: 'quién recibe', telefono: 'teléfono', direccion: 'calle',
+        numero: 'número', localidad: 'localidad', provincia: 'provincia', cp: 'código postal' };
+    const faltan = Object.keys(req).filter((k) => !e[k]).map((k) => req[k]);
+    if (faltan.length) { err.textContent = 'Para el envío falta: ' + faltan.join(', ') + '.'; err.classList.remove('oculto'); return false; }
+    return true;
+}
+
+// Paso 1 → Paso 2: exige login y entrega válida antes de mostrar el pago.
+function irAPago() {
+    if (!cliente) { abrirAuth(true); return; }
+    if (!validarEntrega()) return;
+    $('paso-entrega').classList.add('oculto');
+    $('paso-pago').classList.remove('oculto');
+}
+
+function volverEntrega() {
+    $('paso-pago').classList.add('oculto');
+    $('paso-entrega').classList.remove('oculto');
+}
+
+function metodoSel() {
+    const r = document.querySelector('input[name="metodo"]:checked');
+    return r ? r.value : 'transferencia';
+}
+
+async function confirmarPedido() {
+    if (!cliente) { abrirAuth(true); return; }
+    const err = $('cart-error2'); err.classList.add('oculto');
+    if (!validarEntrega()) { volverEntrega(); return; }   // por las dudas
+    const metodo = metodoSel();
     const btn = $('btn-confirmar-pedido'); btn.disabled = true;
     try {
         const payload = {
             items: carrito.map((i) => ({ producto_id: i.id, cantidad: i.cantidad })),
-            observacion: $('obs').value,
-            envio,
+            envio: datosEnvioForm(),
+            metodo_pago: metodo,
         };
         const r = await api.post('/api/tienda/pedidos', payload);
         carrito = []; guardarCarrito();
         cerrar('modal-carrito');
         $('ok-texto').textContent = `Pedido ${r.pedido.numero} · ${money.format(r.pedido.total_final)}`;
-        await mostrarPagoTransferencia(r.pedido.pedido_id, r.pedido.total_final);
+        await mostrarPago(metodo, r.pedido.pedido_id, r.pedido.total_final);
         abrir('modal-ok');
     } catch (e) {
         err.textContent = e.message; err.classList.remove('oculto');
     } finally {
         btn.disabled = false;
     }
+}
+
+// Según el método: transferencia muestra alias/CBU + comprobante; el resto, un aviso.
+async function mostrarPago(metodo, pedidoId, total) {
+    if (metodo === 'transferencia') { await mostrarPagoTransferencia(pedidoId, total); return; }
+    pedidoPagoId = null;
+    const nombre = metodo === 'mercadopago' ? 'Mercado Pago' : 'tarjeta';
+    $('pago-datos').innerHTML =
+        `<div class="pago-total"><span>Total</span><strong>${money.format(total)}</strong></div>
+         <p class="pago-pie">Elegiste pagar con <strong>${esc(nombre)}</strong>. Te vamos a contactar para coordinar el pago.</p>`;
+    $('pago-drop').classList.add('oculto');
+    $('pago-estado').classList.add('oculto');
+    $('ok-pago').classList.remove('oculto');
 }
 
 // ============ Pago por transferencia ============
@@ -740,7 +785,12 @@ async function iniciar() {
         if (b.dataset.quitar) cambiarCantidad(Number(b.dataset.id), -1e9);
         else if (b.dataset.d) cambiarCantidad(Number(b.dataset.id), Number(b.dataset.d));
     });
+    $('btn-a-pago').addEventListener('click', irAPago);
+    $('btn-volver-entrega').addEventListener('click', volverEntrega);
     $('btn-confirmar-pedido').addEventListener('click', confirmarPedido);
+    document.querySelectorAll('input[name="metodo"]').forEach((r) => r.addEventListener('change', () => {
+        document.querySelectorAll('.metodo').forEach((l) => l.classList.toggle('activo', l.querySelector('input').checked));
+    }));
     $('envio-empresa').addEventListener('change', () => { toggleEnvioCampos(); actualizarMontos(); });
 
     // acceso mayorista (toggle modo / solicitar)

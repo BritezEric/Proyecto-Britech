@@ -34,7 +34,7 @@ class PedidoController
             $r = (new PedidoService())->crear(
                 (int) $c['id'], $lista,
                 $d['items'] ?? [], $d['observacion'] ?? null,
-                $d['envio'] ?? []
+                $d['envio'] ?? [], $d['metodo_pago'] ?? 'transferencia'
             );
             Response::json(['ok' => true, 'pedido' => $r], 201);
         } catch (ValidacionException $e) {
@@ -119,6 +119,7 @@ class PedidoController
             'envio' => (new EnvioRepository())->dePedido($id),
             'pago'  => $p ? [
                 'estado_pago'     => $p['estado_pago'],
+                'metodo_pago'     => $p['metodo_pago'],
                 'comprobante_url' => $p['comprobante_url'],
             ] : null,
         ]);

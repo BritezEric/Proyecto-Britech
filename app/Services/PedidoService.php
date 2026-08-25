@@ -28,8 +28,12 @@ class PedidoService
     }
 
     /** Crea un pedido (con su envío) a partir del carrito del cliente. */
-    public function crear(int $clienteId, int $listaId, array $items, ?string $observacion, array $envio): array
+    public function crear(int $clienteId, int $listaId, array $items, ?string $observacion, array $envio, string $metodoPago = 'transferencia'): array
     {
+        $metodosOk = ['transferencia', 'mercadopago', 'tarjeta'];
+        if (!in_array($metodoPago, $metodosOk, true)) {
+            $metodoPago = 'transferencia';
+        }
         if (!is_array($items) || count($items) === 0) {
             throw new ValidacionException('Tu carrito está vacío.');
         }
@@ -85,7 +89,7 @@ class PedidoService
         $pdo = Database::conexion();
         try {
             $pdo->beginTransaction();
-            $pedidoId = $this->repo->crear($clienteId, $total, $obs);
+            $pedidoId = $this->repo->crear($clienteId, $total, $obs, $metodoPago);
             $numero   = 'P-' . str_pad((string) $pedidoId, 6, '0', STR_PAD_LEFT);
             $this->repo->actualizarNumero($pedidoId, $numero);
             foreach ($lineas as $l) {

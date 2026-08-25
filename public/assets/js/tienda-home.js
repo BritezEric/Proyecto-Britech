@@ -135,12 +135,10 @@ function bloqueMarcas(b) {
     if (!marcas.length) return '';
     const logo = (m) => `<div class="marca-logo" title="${esc(m.nombre)}">
         <img src="${esc(m.imagen)}" alt="${esc(m.nombre)}" loading="lazy"></div>`;
-    const set = `<div class="marcas-set">${marcas.map(logo).join('')}</div>`;
-    // Con >=5 marcas anima en loop (dos sets idénticos → empalme sin corte).
-    const animar = marcas.length >= 5 ? 'marcas-anima' : '';
+    // Carrusel por pasos igual que productos: avanza 1 logo cada 5s (data-paso="item").
     return `<section class="bloque">
-        ${b.titulo ? `<div class="bloque-head"><h2>${esc(b.titulo)}</h2></div>` : ''}
-        <div class="marcas-strip"><div class="marcas-track ${animar}">${set}${animar ? set : ''}</div></div>
+        <div class="bloque-head"><h2>${esc(b.titulo || 'Marcas')}</h2>${flechas()}</div>
+        <div class="carrusel"><div class="carrusel-track marcas-track" data-paso="item">${marcas.map(logo).join('')}</div></div>
     </section>`;
 }
 
@@ -170,7 +168,14 @@ function flechas() {
 function montarCarrusel(carrusel) {
     const track = carrusel.querySelector('.carrusel-track');
     const nav = carrusel.parentElement.querySelector('.carrusel-nav, .bloque-nav');
-    const paso = () => Math.round(track.clientWidth);   // una página = 6 productos
+    // Paso: una página (6 productos) por defecto, o 1 ítem si data-paso="item" (marcas).
+    const paso = () => {
+        if (track.dataset.paso === 'item') {
+            const it = track.firstElementChild;
+            if (it) { const g = parseFloat(getComputedStyle(track).columnGap) || 0; return Math.round(it.getBoundingClientRect().width + g); }
+        }
+        return Math.round(track.clientWidth);
+    };
     if (nav) nav.querySelectorAll('.car-arrow').forEach((btn) => btn.addEventListener('click', () => {
         track.scrollBy({ left: Number(btn.dataset.dir) * paso(), behavior: 'smooth' });
     }));

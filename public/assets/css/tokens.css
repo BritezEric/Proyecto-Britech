@@ -73,12 +73,13 @@
     --z-toast: 400;
     --z-tooltip: 500;
 
-    /* --- Motion --- */
-    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);   /* ease-out-quint */
+    /* --- Motion (curvas estilo Emil Kowalski: entrada suave, "glide") --- */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);      /* easeOutExpo: arranca rápido, aterriza suave */
     --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-    --dur-fast: 120ms;
-    --dur: 200ms;
-    --dur-slow: 340ms;
+    --ease-spring: cubic-bezier(0.34, 1.5, 0.5, 1); /* rebote sutil para pops (botones, agregar) */
+    --dur-fast: 140ms;
+    --dur: 220ms;
+    --dur-slow: 360ms;
 }
 
 /* ===== Base / reset suave ===== */
@@ -120,13 +121,11 @@ body {
 
 .oculto { display: none !important; }
 
+/* reduced-motion: NO exterminar. Mantener micro-interacciones (hover, fades) y solo
+   calmar el scroll suave. La marcha del marquee es lenta y lineal → se conserva.
+   ponytail: decisión del dueño (motion es parte de la marca); sube la barrera a11y. */
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-    }
+    html { scroll-behavior: auto; }
 }
 
 /* ============================================================

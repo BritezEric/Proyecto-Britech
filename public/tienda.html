@@ -105,31 +105,58 @@
             <h2>Tu carrito</h2>
             <div id="cart-items"></div>
             <div id="cart-resumen" class="oculto">
-                <div class="envio-box">
-                    <label class="envio-label">Envío</label>
-                    <select id="envio-empresa"></select>
-                    <div id="envio-campos" class="envio-grid">
-                        <input id="envio-destinatario" type="text" placeholder="Quién recibe *" autocomplete="name">
-                        <input id="envio-telefono" type="tel" placeholder="Teléfono *" autocomplete="tel">
-                        <input id="envio-direccion" type="text" placeholder="Calle *" autocomplete="address-line1">
-                        <input id="envio-numero" type="text" placeholder="Número *" autocomplete="address-line2">
-                        <input id="envio-referencia" type="text" placeholder="Referencia / piso / depto (opcional)" class="envio-ancho">
-                        <input id="envio-localidad" type="text" placeholder="Localidad *" autocomplete="address-level2">
-                        <input id="envio-provincia" type="text" placeholder="Provincia *" autocomplete="address-level1">
-                        <input id="envio-cp" type="text" placeholder="Código postal *" autocomplete="postal-code">
+                <!-- Paso 1: entrega (retiro / envío) -->
+                <div id="paso-entrega" class="checkout-paso">
+                    <div class="paso-head"><span class="paso-num">1</span> Entrega</div>
+                    <div class="envio-box">
+                        <select id="envio-empresa"></select>
+                        <div id="envio-campos" class="envio-grid">
+                            <input id="envio-destinatario" type="text" placeholder="Quién recibe *" autocomplete="name">
+                            <input id="envio-telefono" type="tel" placeholder="Teléfono *" autocomplete="tel">
+                            <input id="envio-direccion" type="text" placeholder="Calle *" autocomplete="address-line1">
+                            <input id="envio-numero" type="text" placeholder="Número *" autocomplete="address-line2">
+                            <input id="envio-referencia" type="text" placeholder="Referencia / piso / depto (opcional)" class="envio-ancho">
+                            <input id="envio-localidad" type="text" placeholder="Localidad *" autocomplete="address-level2">
+                            <input id="envio-provincia" type="text" placeholder="Provincia *" autocomplete="address-level1">
+                            <input id="envio-cp" type="text" placeholder="Código postal *" autocomplete="postal-code">
+                        </div>
+                    </div>
+                    <p id="cart-error" class="form-error oculto"></p>
+                    <button id="btn-a-pago" class="btn-primary">Continuar al pago →</button>
+                </div>
+
+                <!-- Paso 2: método de pago -->
+                <div id="paso-pago" class="checkout-paso oculto">
+                    <div class="paso-head"><span class="paso-num">2</span> Método de pago</div>
+                    <div class="metodos">
+                        <label class="metodo activo">
+                            <input type="radio" name="metodo" value="transferencia" checked>
+                            <span class="metodo-ic">🏦</span>
+                            <span class="metodo-txt"><strong>Transferencia</strong><small>Alias / CBU · subís el comprobante</small></span>
+                        </label>
+                        <label class="metodo">
+                            <input type="radio" name="metodo" value="mercadopago">
+                            <span class="metodo-ic">🔵</span>
+                            <span class="metodo-txt"><strong>Mercado Pago</strong><small>Coordinamos el link de pago</small></span>
+                        </label>
+                        <label class="metodo">
+                            <input type="radio" name="metodo" value="tarjeta">
+                            <span class="metodo-ic">💳</span>
+                            <span class="metodo-txt"><strong>Tarjeta</strong><small>Débito o crédito</small></span>
+                        </label>
+                    </div>
+                    <p id="cart-error2" class="form-error oculto"></p>
+                    <div class="paso-acciones">
+                        <button id="btn-volver-entrega" class="btn-secundario">← Volver</button>
+                        <button id="btn-confirmar-pedido" class="btn-primary">Confirmar pedido</button>
                     </div>
                 </div>
+
                 <div class="cart-montos">
                     <div class="fila-monto"><span>Subtotal</span><span id="cart-subtotal">$ 0,00</span></div>
                     <div class="fila-monto"><span>Envío</span><span id="cart-envio">$ 0,00</span></div>
                     <div class="cart-total"><span>Total</span><strong id="cart-total">$ 0,00</strong></div>
                 </div>
-                <div class="campo">
-                    <label for="obs">Observación (opcional)</label>
-                    <input id="obs" type="text" placeholder="Ej: entregar por la tarde">
-                </div>
-                <p id="cart-error" class="form-error oculto"></p>
-                <button id="btn-confirmar-pedido" class="btn-primary">Confirmar pedido</button>
             </div>
             <button id="cart-cerrar" class="btn-secundario" style="margin-top:12px">Seguir comprando</button>
         </div>

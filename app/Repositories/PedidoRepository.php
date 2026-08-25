@@ -7,13 +7,13 @@ use App\Core\Database;
 /** Repositorio de pedidos (tienda online). Único lugar con su SQL. */
 class PedidoRepository
 {
-    public function crear(int $clienteId, float $total, ?string $observacion): int
+    public function crear(int $clienteId, float $total, ?string $observacion, string $metodoPago = 'transferencia'): int
     {
         $pdo = Database::conexion();
         $temporal = 'T' . bin2hex(random_bytes(6));
-        $pdo->prepare("INSERT INTO pedido (numero, cliente_id, total, observacion)
-                       VALUES (?, ?, ?, ?)")
-            ->execute([$temporal, $clienteId, $total, $observacion]);
+        $pdo->prepare("INSERT INTO pedido (numero, cliente_id, total, observacion, metodo_pago)
+                       VALUES (?, ?, ?, ?, ?)")
+            ->execute([$temporal, $clienteId, $total, $observacion, $metodoPago]);
         return (int) $pdo->lastInsertId();
     }
 
@@ -47,7 +47,7 @@ class PedidoRepository
         $stC->execute($params);
         $total = (int) $stC->fetchColumn();
 
-        $sql = "SELECT p.id, p.numero, p.estado, p.estado_pago, p.comprobante_url, p.total, p.observacion, p.creado_en,
+        $sql = "SELECT p.id, p.numero, p.estado, p.estado_pago, p.metodo_pago, p.comprobante_url, p.total, p.observacion, p.creado_en,
                        c.nombre AS cliente,
                        (SELECT COUNT(*) FROM pedido_detalle d WHERE d.pedido_id = p.id) AS items
                 FROM pedido p

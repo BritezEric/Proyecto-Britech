@@ -149,8 +149,9 @@ body { min-height: 100vh; }
     border: none; cursor: pointer; font-size: 16px; line-height: 1;
     background: oklch(1 0 0 / 0.9); box-shadow: var(--shadow-sm);
     display: grid; place-items: center;
-    transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+    opacity: 0; transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
 }
+.prod:hover .fav-btn, .fav-btn.activo { opacity: 1; }   /* corazón solo al hover (o si ya es favorito) */
 .fav-btn:hover { transform: scale(1.12); background: #fff; }
 .fav-btn:active { transform: scale(0.9); }
 .fav-btn.activo { background: var(--danger-tint); }
@@ -162,7 +163,7 @@ body { min-height: 100vh; }
 .fav-quitar { border: none; background: none; cursor: pointer; font-size: 18px; line-height: 1;
     transition: transform var(--dur-fast) var(--ease-out); }
 .fav-quitar:hover { transform: scale(1.15); }
-.prod:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--line-strong); }
+.prod:hover { transform: translateY(-6px); box-shadow: 0 10px 28px oklch(0.52 0.24 296 / 0.22); border-color: var(--primary); }
 .prod-thumb {
     aspect-ratio: 4 / 3; border-radius: var(--r-md);
     background: linear-gradient(135deg, var(--primary-tint), var(--accent-tint));
@@ -177,7 +178,8 @@ body { min-height: 100vh; }
 /* Tarjeta de producto compacta (nombre negrita arriba · marca en color · precio · código + bolsa) */
 .prod-nombre { font-weight: 700; font-size: 13px; line-height: 1.3; margin: 2px 0 0;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.5em; }
-.prod-meta { display: flex; flex-direction: column; line-height: 1.35; }
+/* Reserva espacio fijo para categoría + marca: card misma altura aunque falte una */
+.prod-meta { display: flex; flex-direction: column; justify-content: center; line-height: 1.35; min-height: 2.9em; }
 .prod-cat { font-size: 11px; color: var(--ink-muted); font-weight: 600; }
 .prod-marca { font-size: 11px; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
 .prod-precio { font-weight: 800; font-size: var(--text-lg); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
@@ -185,11 +187,12 @@ body { min-height: 100vh; }
     padding-top: var(--sp-2); border-top: 1px solid var(--line); }
 .prod-cod { font-size: 11px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
 .prod-add {
-    flex: none; border: none; background: var(--primary); color: #fff; border-radius: var(--r-md);
+    flex: none; border: 1.5px solid var(--primary); background: transparent; color: var(--primary); border-radius: var(--r-md);
     width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer; font-size: 15px; line-height: 1;
-    transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+    transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
-.prod-add:hover { background: var(--primary-strong); transform: translateY(-1px); }
+.prod:hover .prod-add:not(:disabled) { background: var(--primary); color: #fff; }   /* bolsa: contorno morado → relleno al hover */
+.prod-add:hover { background: var(--primary-strong); border-color: var(--primary-strong); transform: translateY(-1px); }
 .prod-add:active { transform: scale(0.92); }
 .prod-add:disabled { background: var(--surface-sunk); color: var(--ink-muted); cursor: not-allowed; }
 .prod-desc, .prod-stock { display: none; }   /* detalle en la ficha, no en la card */
@@ -244,6 +247,30 @@ body { min-height: 100vh; }
 .envio-grid.oculto { display: none; }
 .envio-grid .envio-ancho { grid-column: 1 / -1; }
 @media (max-width: 480px) { .envio-grid { grid-template-columns: 1fr; } }
+/* ===== Checkout por pasos (1 entrega · 2 pago) ===== */
+.checkout-paso { animation: paso-in var(--dur) var(--ease-out) both; }
+.checkout-paso.oculto { display: none; }
+@keyframes paso-in { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
+.paso-head { display: flex; align-items: center; gap: var(--sp-2); font-weight: 700; font-size: var(--text-sm);
+    margin: var(--sp-4) 0 var(--sp-1); }
+.paso-num { display: grid; place-items: center; width: 22px; height: 22px; border-radius: var(--r-full);
+    background: var(--primary); color: #fff; font-size: 12px; font-weight: 800; }
+.paso-acciones { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
+.paso-acciones .btn-primary { flex: 1; }
+.paso-acciones .btn-secundario { flex: 0 0 auto; }
+
+.metodos { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-2); }
+.metodo { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3);
+    border: 1.5px solid var(--line); border-radius: var(--r-md); cursor: pointer; background: var(--surface);
+    transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
+.metodo:hover { border-color: var(--primary); transform: translateY(-1px); }
+.metodo.activo { border-color: var(--primary); background: var(--primary-tint); box-shadow: var(--ring-primary); }
+.metodo input { accent-color: var(--primary); width: 18px; height: 18px; flex: none; }
+.metodo-ic { font-size: 22px; line-height: 1; }
+.metodo-txt { display: flex; flex-direction: column; }
+.metodo-txt strong { font-size: var(--text-sm); }
+.metodo-txt small { font-size: var(--text-xs); color: var(--ink-muted); }
+
 .cart-montos { margin-top: var(--sp-3); }
 .fila-monto { display: flex; justify-content: space-between; font-size: var(--text-sm); color: var(--ink-muted); padding: var(--sp-1) 0; }
 .fila-monto span:last-child { color: var(--ink); font-variant-numeric: tabular-nums; }
@@ -503,25 +530,13 @@ body { min-height: 100vh; }
 /* Grid de productos (bloque grid / ofertas) */
 .grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
 
-/* ===== Carrusel de marcas (tira que pasa sola) ===== */
-.marcas-strip { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
-.marcas-track { display: flex; align-items: center; width: max-content; }
-.marcas-track.marcas-anima { animation: marcas-scroll 30s linear infinite; }
-.marcas-strip:hover .marcas-track.marcas-anima { animation-play-state: paused; }
-/* Dos sets idénticos: -50% = ancho de un set exacto → empalme sin salto */
-.marcas-set { display: flex; align-items: center; gap: var(--sp-4); padding: 0 calc(var(--sp-4) / 2); }
-/* Tile de tamaño ÚNICO. FLEX (no grid) para que la altura sea definida y el
-   contain funcione: la imagen nunca se sale ni se corta. */
-.marca-logo { flex: 0 0 auto; width: 150px; height: 72px; display: flex; align-items: center; justify-content: center;
-    overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--sp-3); }
+/* ===== Carrusel de marcas: por pasos, 1 logo cada 5s (como productos) ===== */
+/* Logo a su tamaño fijo (anula el flex 6-por-fila del carrusel genérico). Sin cuadro. */
+.marcas-track > .marca-logo { flex: 0 0 auto; min-width: 0; }
+.marca-logo { width: 150px; height: 72px; display: flex; align-items: center; justify-content: center; }
 .marca-logo img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;
-    filter: grayscale(1); opacity: 0.7; transition: filter var(--dur) var(--ease-out), opacity var(--dur) var(--ease-out); }
-.marca-logo:hover img { filter: grayscale(0); opacity: 1; }
-@keyframes marcas-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce) { .marcas-track.marcas-anima { animation: none; } }
-:root[data-theme="dark"] .marca-logo img { filter: grayscale(1) invert(0.9) brightness(1.1); }
-:root[data-theme="dark"] .marca-logo:hover img { filter: none; }
+    transition: transform var(--dur) var(--ease-out); }
+.marca-logo:hover img { transform: scale(1.12); }   /* crece suave al hover */
 
 /* Vista catálogo: volver */
 .volver-inicio { border: none; background: none; color: var(--primary-strong); font-weight: 700; font-family: inherit; cursor: pointer; font-size: var(--text-sm); }

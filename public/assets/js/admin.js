@@ -710,8 +710,10 @@ async function verPedido(id, numero) {
     const compro = pg.comprobante_url
         ? `<a class="envio-seg" href="${esc(pg.comprobante_url)}" target="_blank" rel="noopener">📄 Ver comprobante</a>`
         : `<p class="td-mute">El cliente todavía no subió comprobante.</p>`;
+    const metodoLbl = { transferencia: 'Transferencia', mercadopago: 'Mercado Pago', tarjeta: 'Tarjeta' }[pg.metodo_pago] || pg.metodo_pago || '—';
     const pagoHtml = `
         <h4 class="detalle-sub">Pago</h4>
+        <div class="pedido-linea"><span>Método</span><strong>${esc(metodoLbl)}</strong></div>
         <div class="pedido-linea"><span>Estado del pago</span>${badgePago(pg.estado_pago)}</div>
         ${compro}
         <div class="pago-acciones">
