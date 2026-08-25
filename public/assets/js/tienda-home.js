@@ -28,14 +28,19 @@ function cardProducto(p) {
         ${hayAnt ? `<span class="oferta-badge">-${off}%</span>` : ''}
         <button class="fav-btn ${favOn ? 'activo' : ''}" data-fav="${p.id}" aria-label="Favorito">${favOn ? '❤️' : '🤍'}</button>
         ${thumb}
-        <div class="prod-cat">${esc(p.categoria || 'General')}</div>
-        <div class="prod-nombre">${esc(p.nombre)}</div>
+        <h3 class="prod-nombre">${esc(p.nombre)}</h3>
+        <div class="prod-meta">
+            <span class="prod-cat">${esc(p.categoria || 'General')}</span>
+            ${p.marca ? `<span class="prod-marca">${esc(p.marca)}</span>` : ''}
+        </div>
         <div class="prod-precios">
             <span class="prod-precio">${money.format(p.precio)}</span>
             ${hayAnt ? `<span class="prod-precio-ant">${money.format(p.precio_anterior)}</span>` : ''}
         </div>
-        <div class="prod-stock ${agotado ? 'agotado' : ''}">${stockTxt}${esMay && min > 1 ? ` · mín ${min} u` : ''}</div>
-        <button class="prod-add" data-id="${p.id}" data-nombre="${esc(p.nombre)}" data-precio="${p.precio}" data-min="${min}" ${agotado ? 'disabled' : ''}>Agregar</button>
+        <div class="prod-foot">
+            <span class="prod-cod">${esc(p.sku || ('#' + p.id))}</span>
+            <button class="prod-add" data-id="${p.id}" data-nombre="${esc(p.nombre)}" data-precio="${p.precio}" data-min="${min}" ${agotado ? 'disabled' : ''} aria-label="Agregar al carrito" title="${agotado ? esc(stockTxt) : 'Agregar al carrito'}">🛍️</button>
+        </div>
     </article>`;
 }
 

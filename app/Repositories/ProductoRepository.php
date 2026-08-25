@@ -284,7 +284,7 @@ class ProductoRepository
         $stC->execute();
         $total = (int) $stC->fetchColumn();
 
-        $sql = "SELECT p.id, p.nombre, p.descripcion, p.es_sobre_pedido, p.min_mayorista,
+        $sql = "SELECT p.id, p.sku, p.nombre, p.descripcion, p.es_sobre_pedido, p.min_mayorista,
                        c.nombre AS categoria, m.nombre AS marca,
                        pr.precio, COALESCE(i.cantidad, 0) AS stock,
                        (SELECT url FROM producto_imagen pi WHERE pi.producto_id = p.id
@@ -314,12 +314,13 @@ class ProductoRepository
         if ($soloOfertas)          { $where[] = 'p.precio_anterior IS NOT NULL AND p.precio_anterior > pr.precio'; }
         $sqlWhere = 'WHERE ' . implode(' AND ', $where);
 
-        $sql = "SELECT p.id, p.nombre, p.descripcion, p.es_sobre_pedido, p.min_mayorista, p.precio_anterior,
-                       c.nombre AS categoria, pr.precio, COALESCE(i.cantidad,0) AS stock,
+        $sql = "SELECT p.id, p.sku, p.nombre, p.descripcion, p.es_sobre_pedido, p.min_mayorista, p.precio_anterior,
+                       c.nombre AS categoria, m.nombre AS marca, pr.precio, COALESCE(i.cantidad,0) AS stock,
                        (SELECT url FROM producto_imagen pi WHERE pi.producto_id = p.id ORDER BY pi.orden, pi.id LIMIT 1) AS imagen
                 FROM producto p
                 LEFT JOIN precio pr    ON pr.producto_id = p.id AND pr.lista_precio_id = ?
                 LEFT JOIN categoria c  ON c.id = p.categoria_id
+                LEFT JOIN marca m      ON m.id = p.marca_id
                 LEFT JOIN inventario i ON i.producto_id = p.id
                 $sqlWhere
                 ORDER BY p.id DESC
