@@ -198,7 +198,7 @@ function actualizarCorazones() {
 }
 
 async function verFavoritos() {
-    cerrar2('cuenta-menu');
+    cerrar('cuenta-menu');
     const cont = $('favoritos-lista');
     cont.innerHTML = '<p class="cart-vacio">Cargando…</p>';
     abrir('modal-favoritos');
@@ -658,13 +658,13 @@ async function salir() {
     cliente = null; favoritos = new Set();
     aplicarTemaModo('minorista');          // al salir, vuelve al tema claro
     pintarCuenta(); pintarMayorista();
-    cerrar2('cuenta-menu');
+    cerrar('cuenta-menu');
     await pintarStaff();                   // si además hay sesión de staff, vuelve a mostrarse
     await refrescarVista();
 }
 
 async function verMisPedidos() {
-    cerrar2('cuenta-menu');
+    cerrar('cuenta-menu');
     const cont = $('pedidos-lista');
     cont.innerHTML = '<p class="cart-vacio">Cargando…</p>';
     abrir('modal-pedidos');
@@ -724,7 +724,6 @@ async function subirComprobantePedido(file, pedidoId) {
 // ============ Utilidades de modal ============
 function abrir(id) { $(id).classList.remove('oculto'); }
 function cerrar(id) { $(id).classList.add('oculto'); }
-function cerrar2(id) { $(id).classList.add('oculto'); }
 
 // ============ Init / eventos ============
 let debounce;

@@ -16,7 +16,6 @@ const inicial = (nombre) => nombre.split(' ').slice(0, 2).map((p) => p[0]).join(
 function cardProducto(p) {
     const agotado = Number(p.es_sobre_pedido) !== 1 && Number(p.stock) <= 0;
     const favOn = favoritos.has(Number(p.id));
-    const esMay = cliente && cliente.modo === 'mayorista';
     const min = Number(p.min_mayorista) || 1;
     const hayAnt = Number(p.precio_anterior) > Number(p.precio);
     const off = hayAnt ? Math.round((1 - p.precio / p.precio_anterior) * 100) : 0;
@@ -129,13 +128,12 @@ function bloqueCategorias(b) {
     </section>`;
 }
 
-// Tira de marcas que pasa sola (marquee). Duplicamos los logos para loop continuo.
+// Carrusel de marcas por pasos: avanza 1 logo cada 5s (data-paso="item"), igual que productos.
 function bloqueMarcas(b) {
     const marcas = (b.data.marcas || []);
     if (!marcas.length) return '';
     const logo = (m) => `<div class="marca-logo" title="${esc(m.nombre)}">
         <img src="${esc(m.imagen)}" alt="${esc(m.nombre)}" loading="lazy"></div>`;
-    // Carrusel por pasos igual que productos: avanza 1 logo cada 5s (data-paso="item").
     return `<section class="bloque">
         <div class="bloque-head"><h2>${esc(b.titulo || 'Marcas')}</h2>${flechas()}</div>
         <div class="carrusel"><div class="carrusel-track marcas-track" data-paso="item">${marcas.map(logo).join('')}</div></div>

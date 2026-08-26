@@ -48,20 +48,6 @@ body { min-height: 100vh; }
     display: inline-grid; place-items: center; font-size: var(--text-xs);
 }
 
-/* ===== Sub-barra de filtros ===== */
-.t-filtros {
-    display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap;
-    padding: var(--sp-4) var(--sp-5) 0;
-    max-width: 1200px; margin: 0 auto; width: 100%;
-}
-.t-filtros h1 { margin: 0; font-size: var(--text-xl); font-weight: 800; letter-spacing: -0.02em; }
-.t-filtros .cuenta-info { color: var(--ink-muted); font-size: var(--text-sm); }
-.t-filtros select {
-    margin-left: auto; font-family: inherit; font-size: var(--text-sm); padding: var(--sp-2) var(--sp-3);
-    border: 1.5px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); cursor: pointer;
-}
-.t-filtros select:focus { outline: none; border-color: var(--primary); box-shadow: var(--ring-primary); }
-
 /* ===== Vista catálogo / categoría (sidebar de filtros + grid) ===== */
 .cat-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap;
     max-width: 1200px; margin: 0 auto; width: 100%; padding: var(--sp-4) var(--sp-5) 0; }
@@ -195,7 +181,6 @@ body { min-height: 100vh; }
 .prod-add:hover { background: var(--primary-strong); border-color: var(--primary-strong); transform: translateY(-1px); }
 .prod-add:active { transform: scale(0.92); }
 .prod-add:disabled { background: var(--surface-sunk); color: var(--ink-muted); cursor: not-allowed; }
-.prod-desc, .prod-stock { display: none; }   /* detalle en la ficha, no en la card */
 
 .t-vacio { text-align: center; color: var(--ink-muted); padding: var(--sp-8); grid-column: 1 / -1; }
 
@@ -237,7 +222,6 @@ body { min-height: 100vh; }
 .cart-quitar { border: none; background: none; color: var(--ink-muted); cursor: pointer; font-size: var(--text-lg); }
 .cart-quitar:hover { color: var(--danger-strong); }
 .envio-box { display: flex; flex-direction: column; gap: var(--sp-2); margin: var(--sp-4) 0; padding-top: var(--sp-4); border-top: 1px solid var(--line); }
-.envio-label { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); }
 .envio-box select, .envio-box input {
     font-family: inherit; font-size: var(--text-sm); padding: var(--sp-2) var(--sp-3);
     border: 1.5px solid var(--line); border-radius: var(--r-md); background: var(--surface-sunk); color: var(--ink); outline: none;
@@ -277,34 +261,6 @@ body { min-height: 100vh; }
 .cart-total { display: flex; justify-content: space-between; align-items: baseline; margin: var(--sp-3) 0; padding-top: var(--sp-3); border-top: 2px solid var(--line); }
 .cart-total strong { font-size: var(--text-2xl); font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .cart-vacio { text-align: center; color: var(--ink-muted); padding: var(--sp-6) 0; }
-
-/* ===== Ficha de producto ===== */
-.ficha-caja { max-width: 680px; }
-#ficha-cont { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-5); }
-.ficha-galeria { display: flex; flex-direction: column; gap: var(--sp-2); }
-.ficha-main {
-    aspect-ratio: 1 / 1; border-radius: var(--r-lg); overflow: hidden;
-    background: linear-gradient(135deg, var(--primary-tint), var(--accent-tint));
-    display: grid; place-items: center; color: var(--primary-strong); font-weight: 800; font-size: var(--text-2xl);
-}
-.ficha-main img { width: 100%; height: 100%; object-fit: cover; }
-.ficha-thumbs { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
-.ficha-thumb { width: 56px; height: 56px; border-radius: var(--r-md); overflow: hidden; padding: 0;
-    border: 2px solid transparent; background: var(--surface-sunk); cursor: pointer; }
-.ficha-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.ficha-thumb.activo { border-color: var(--primary); }
-
-.ficha-info { display: flex; flex-direction: column; }
-.ficha-nombre { margin: var(--sp-1) 0; font-size: var(--text-xl); letter-spacing: -0.02em; line-height: 1.2; }
-.ficha-precio { font-size: var(--text-2xl); font-weight: 800; letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; margin-bottom: var(--sp-3); }
-.ficha-desc { color: var(--ink-muted); font-size: var(--text-sm); line-height: 1.6; flex: 1; white-space: pre-line; }
-.ficha-stock { font-size: var(--text-sm); color: var(--primary-strong); font-weight: 600; margin: var(--sp-3) 0; }
-.ficha-stock.agotado { color: var(--danger-strong); }
-.ficha-min { font-size: var(--text-sm); color: var(--accent-strong); font-weight: 700; margin-bottom: var(--sp-3); background: var(--accent-tint); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); display: inline-block; }
-.ficha-compra { display: flex; gap: var(--sp-3); align-items: center; }
-.ficha-compra .cart-cant { border: 1px solid var(--line); border-radius: var(--r-md); padding: 2px; }
-.ficha-compra .btn-primary { width: auto; flex: 1; }
-@media (max-width: 560px) { #ficha-cont { grid-template-columns: 1fr; } }
 
 /* Botones genéricos */
 .btn-primary { padding: var(--sp-3) var(--sp-4); border: none; border-radius: var(--r-md); background: var(--primary);
@@ -519,16 +475,14 @@ body { min-height: 100vh; }
 
 /* Ajustes de la tarjeta de producto (altura consistente + ofertas) */
 .prod { height: 100%; }
-.prod-precios { display: flex; align-items: baseline; gap: 8px; margin-top: auto; }
-.prod-precio-ant { font-size: var(--text-xs); color: var(--ink-muted); text-decoration: line-through; }
+/* min-height reserva la 2da línea (precio anterior) aunque no haya oferta → todas las tarjetas igual de altas */
+.prod-precios { display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; gap: 1px; margin-top: auto; min-height: 2.7em; }
+.prod-precio-ant { font-size: 0.72em; color: var(--ink-muted); text-decoration: line-through; }
 .oferta-badge { position: absolute; top: 10px; left: 10px; z-index: 2; background: var(--danger); color: #fff;
     font-size: var(--text-xs); font-weight: 800; padding: 2px 8px; border-radius: var(--r-full); }
 .prod-banner { padding: 0 !important; background-size: cover; background-position: center; display: flex; align-items: flex-end;
     text-decoration: none; color: #fff; flex: 0 0 260px; min-height: 100%; }
 .prod-banner-txt { background: linear-gradient(0deg, oklch(0.12 0 0 / 0.7), transparent); padding: 14px; width: 100%; font-weight: 800; }
-
-/* Grid de productos (bloque grid / ofertas) */
-.grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
 
 /* ===== Carrusel de marcas: por pasos, 1 logo cada 5s (como productos) ===== */
 /* Logo a su tamaño fijo (anula el flex 6-por-fila del carrusel genérico). Sin cuadro. */
