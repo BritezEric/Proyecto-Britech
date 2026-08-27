@@ -71,6 +71,7 @@ async function cargarHome() {
 function mostrarHome() {
     $('vista-catalogo').classList.add('oculto');
     $('vista-producto').classList.add('oculto');
+    $('vista-favoritos').classList.add('oculto');
     $('vista-home').classList.remove('oculto');
     q = ''; categoria = ''; $('buscar').value = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -92,6 +93,7 @@ function mostrarCatalogo({ q: nq = '', categoria: ncat = '', titulo = 'Catálogo
     $('filtro-categoria').value = ncat || '';
     $('vista-home').classList.add('oculto');
     $('vista-producto').classList.add('oculto');
+    $('vista-favoritos').classList.add('oculto');
     $('vista-catalogo').classList.remove('oculto');
     cargarCatalogo();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -141,6 +143,7 @@ function manejarClickProducto(e) {
 async function mostrarProducto(id) {
     $('vista-home').classList.add('oculto');
     $('vista-catalogo').classList.add('oculto');
+    $('vista-favoritos').classList.add('oculto');
     $('vista-producto').classList.remove('oculto');
     $('producto-cont').innerHTML = '<p class="t-vacio">Cargando…</p>';
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -193,6 +196,8 @@ async function toggleFavorito(id) {
         const r = await api.post('/api/tienda/favoritos/toggle', { producto_id: id });
         if (r.favorito) favoritos.add(id); else favoritos.delete(id);
         actualizarCorazones();
+        // Si estoy en la página de favoritos, saco/actualizo la tarjeta al instante.
+        if (!$('vista-favoritos').classList.contains('oculto')) renderFavoritos();
     } catch (e) { alert(e.message); }
 }
 
@@ -204,28 +209,32 @@ function actualizarCorazones() {
     });
 }
 
+let favProductos = [];   // último set de productos favoritos cargado (para re-render local)
+
+// Favoritos ahora es una PÁGINA con la misma grilla que el catálogo.
 async function verFavoritos() {
     cerrar('cuenta-menu');
-    const cont = $('favoritos-lista');
-    cont.innerHTML = '<p class="cart-vacio">Cargando…</p>';
-    abrir('modal-favoritos');
-    const r = await api.get('/api/tienda/favoritos');
-    favoritos = new Set(r.ids);
-    if (!r.productos.length) {
-        cont.innerHTML = '<p class="cart-vacio">Todavía no tenés favoritos. Tocá el ❤️ en un producto.</p>';
-        return;
-    }
-    cont.innerHTML = r.productos.map((p) => `
-        <div class="fav-row">
-            <div>
-                <div class="cart-nombre">${esc(p.nombre)}</div>
-                <div class="cart-precio">${esc(p.categoria || 'General')} · ${money.format(p.precio)}</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px">
-                <button class="prod-add" data-id="${p.id}" data-nombre="${esc(p.nombre)}" data-precio="${p.precio}" data-min="${Number(p.min_mayorista) || 1}">Agregar</button>
-                <button class="fav-quitar" data-fav="${p.id}" title="Quitar de favoritos">❤️</button>
-            </div>
-        </div>`).join('');
+    $('vista-home').classList.add('oculto');
+    $('vista-catalogo').classList.add('oculto');
+    $('vista-producto').classList.add('oculto');
+    $('vista-favoritos').classList.remove('oculto');
+    $('favoritos-grid').innerHTML = '<p class="t-vacio">Cargando…</p>';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+        const r = await api.get('/api/tienda/favoritos');
+        favoritos = new Set(r.ids);
+        favProductos = r.productos || [];
+    } catch { $('favoritos-grid').innerHTML = '<p class="t-vacio">No se pudieron cargar tus favoritos.</p>'; return; }
+    renderFavoritos();
+}
+
+function renderFavoritos() {
+    const cont = $('favoritos-grid');
+    const items = favProductos.filter((p) => favoritos.has(Number(p.id)));
+    $('fav-count').textContent = items.length ? `${items.length} producto${items.length > 1 ? 's' : ''}` : '';
+    cont.innerHTML = items.length
+        ? items.map(cardProducto).join('')
+        : '<p class="t-vacio">Todavía no tenés favoritos. Tocá el ❤️ en un producto.</p>';
 }
 
 // La ficha de producto ahora es una PÁGINA completa (mostrarProducto / renderProducto),
@@ -891,10 +900,12 @@ async function iniciar() {
     $('catalogo').addEventListener('click', manejarClickProducto);
     $('cat-menu').addEventListener('click', manejarClickProducto);
     $('producto-cont').addEventListener('click', manejarClickProducto);
+    $('favoritos-grid').addEventListener('click', manejarClickProducto);
 
     // Navegación entre vistas
     $('ir-inicio').addEventListener('click', mostrarHome);
     $('volver-inicio').addEventListener('click', mostrarHome);
+    $('fav-volver').addEventListener('click', mostrarHome);
 
     // búsqueda: escribir lleva al catálogo; vacío vuelve a la home
     $('buscar').addEventListener('input', (e) => {
@@ -974,21 +985,6 @@ async function iniciar() {
     $('pedidos-lista').addEventListener('change', (e) => {
         const inp = e.target.closest('input[data-pago]');
         if (inp) subirComprobantePedido(inp.files[0], Number(inp.dataset.pago));
-    });
-    $('favoritos-cerrar').addEventListener('click', () => cerrar('modal-favoritos'));
-
-    // Acciones dentro de "Mis favoritos": agregar al carrito o quitar de favoritos
-    $('favoritos-lista').addEventListener('click', async (e) => {
-        const add = e.target.closest('.prod-add');
-        if (add) {
-            const cant = (cliente && cliente.modo === 'mayorista') ? (Number(add.dataset.min) || 1) : 1;
-            agregar(Number(add.dataset.id), add.dataset.nombre, add.dataset.precio, cant);
-            add.textContent = '✓ Agregado';
-            setTimeout(() => { add.textContent = 'Agregar'; }, 1200);
-            return;
-        }
-        const quit = e.target.closest('.fav-quitar');
-        if (quit) { await toggleFavorito(Number(quit.dataset.fav)); verFavoritos(); }
     });
     $('ok-cerrar').addEventListener('click', () => cerrar('modal-ok'));
     const subir = (file) => subirComprobante(file, pedidoPagoId, $('pago-file-label'), $('pago-estado'));

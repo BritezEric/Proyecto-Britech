@@ -168,14 +168,6 @@ body { min-height: 100vh; }
 .fav-btn:hover { transform: scale(1.12); background: #fff; }
 .fav-btn:active { transform: scale(0.9); }
 
-/* Filas del modal "Mis favoritos" */
-.fav-row { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3);
-    padding: var(--sp-3) 0; border-bottom: 1px solid var(--line); }
-.fav-row:last-child { border-bottom: none; }
-.fav-quitar { border: none; background: none; cursor: pointer; font-size: 18px; line-height: 1;
-    transition: transform var(--dur-fast) var(--ease-out); }
-.fav-quitar:hover { transform: scale(1.15); }
-
 /* Imagen: cuadrada, contain (nunca recorta), fade-in al aparecer */
 .prod-thumb {
     aspect-ratio: 1 / 1; border-radius: 14px;

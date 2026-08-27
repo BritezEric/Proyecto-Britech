@@ -84,6 +84,18 @@
         <div id="producto-cont"></div>
     </section>
 
+    <!-- VISTA FAVORITOS (página, misma grilla que el catálogo) -->
+    <section id="vista-favoritos" class="oculto">
+        <div class="cat-top">
+            <div class="cat-top-info">
+                <button id="fav-volver" class="volver-inicio">← Inicio</button>
+                <h1>Mis favoritos</h1>
+                <span id="fav-count" class="cat-count"></span>
+            </div>
+        </div>
+        <main id="favoritos-grid" class="catalogo"></main>
+    </section>
+
     <footer class="t-footer">
         <div class="t-footer-cols">
             <div><strong>Britech</strong><p>Tu tienda mayorista y minorista de tecnología.</p></div>
@@ -263,15 +275,6 @@
             <p id="may-error" class="form-error oculto"></p>
             <button id="may-enviar" class="btn-primary">Enviar solicitud</button>
             <button id="may-cerrar" class="btn-secundario" style="margin-top:12px">Cancelar</button>
-        </div>
-    </div>
-
-    <!-- Mis favoritos -->
-    <div id="modal-favoritos" class="modal oculto">
-        <div class="modal-caja">
-            <h2>❤️ Mis favoritos</h2>
-            <div id="favoritos-lista"></div>
-            <button id="favoritos-cerrar" class="btn-secundario" style="margin-top:12px">Cerrar</button>
         </div>
     </div>
 
