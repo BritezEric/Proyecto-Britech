@@ -1076,7 +1076,10 @@ async function cargarNotificaciones() {
     });
     $('noti-panel').querySelectorAll('.noti-item').forEach((b) => b.addEventListener('click', async () => {
         $('noti-panel').classList.add('oculto');
-        if (b.dataset.id) { try { await api.post('/api/admin/notificaciones/leer', { id: Number(b.dataset.id) }); } catch {} }
+        if (b.dataset.id) {
+            try { await api.post('/api/admin/notificaciones/leer', { id: Number(b.dataset.id) }); } catch {}
+            cargarNotificaciones();   // baja el contador y saca el aviso, sin reabrir la campana
+        }
         // Pedido con referencia → abre el detalle al instante (ver comprobante, etc.).
         if (b.dataset.ir === 'pedidos' && b.dataset.ref) {
             await seleccionar('pedidos');

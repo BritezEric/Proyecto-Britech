@@ -22,12 +22,12 @@ class NotificacionRepository
         return (int) Database::conexion()->query("SELECT COUNT(*) FROM notificacion WHERE leida = 0")->fetchColumn();
     }
 
-    /** Últimas notificaciones (no leídas primero). */
+    /** Notificaciones NO leídas (la campana es una bandeja de pendientes). */
     public function ultimas(int $limit = 20): array
     {
         $st = Database::conexion()->prepare(
             "SELECT id, tipo, titulo, ir, ref_id, leida, creado_en
-             FROM notificacion ORDER BY leida ASC, id DESC LIMIT ?"
+             FROM notificacion WHERE leida = 0 ORDER BY id DESC LIMIT ?"
         );
         $st->bindValue(1, $limit, \PDO::PARAM_INT);
         $st->execute();
