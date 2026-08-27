@@ -1037,26 +1037,44 @@ async function renderInicio() {
 }
 
 // ---- Init ----
-// ---- Novedades / avisos (campana) ----
+// ---- Novedades / avisos (campana con bandeja de leídas) ----
+const NOTI_IC = { pedido_nuevo: '🛒', comprobante: '🧾', solicitud: '📨' };
+
+function fechaCorta(s) {
+    const d = new Date(String(s).replace(' ', 'T'));
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) + ' ' +
+           d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+}
+
 async function cargarNotificaciones() {
     let r;
     try { r = await api.get('/api/admin/notificaciones'); } catch { return; }
     const badge = $('noti-badge');
-    badge.textContent = r.total > 99 ? '99+' : r.total;
-    badge.classList.toggle('oculto', !r.total);
-    $('btn-noti').classList.toggle('tiene', !!r.total);
-    $('noti-panel').innerHTML = '<div class="noti-head">Novedades</div>' + (r.items.length
-        ? r.items.map((n) => `<button class="noti-item" data-ir="${esc(n.tipo)}">
-              <span class="noti-ic">${n.icono}</span>
-              <span class="noti-tx">${esc(n.texto)}</span>
-              <span class="noti-n">${Number(n.cantidad)}</span>
+    badge.textContent = r.no_leidas > 99 ? '99+' : r.no_leidas;
+    badge.classList.toggle('oculto', !r.no_leidas);
+    $('btn-noti').classList.toggle('tiene', !!r.no_leidas);
+
+    const lista = r.items.length
+        ? r.items.map((n) => `<button class="noti-item ${Number(n.leida) ? '' : 'no-leida'}" data-id="${n.id}" data-ir="${esc(n.ir || '')}">
+              <span class="noti-ic">${NOTI_IC[n.tipo] || '🔔'}</span>
+              <span class="noti-tx">${esc(n.titulo)}<span class="noti-fecha">${fechaCorta(n.creado_en)}</span></span>
            </button>`).join('')
-        : '<p class="noti-vacio">Todo al día ✓</p>');
-    $('noti-panel').querySelectorAll('[data-ir]').forEach((b) => b.addEventListener('click', () => {
+        : '<p class="noti-vacio">Sin novedades ✓</p>';
+    $('noti-panel').innerHTML = `<div class="noti-head">Novedades
+            ${r.no_leidas ? '<button class="noti-todas" id="noti-todas">Marcar leídas</button>' : ''}
+        </div>${lista}`;
+
+    const todas = $('noti-todas');
+    if (todas) todas.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try { await api.post('/api/admin/notificaciones/leer-todas', {}); } catch {}
+        cargarNotificaciones();
+    });
+    $('noti-panel').querySelectorAll('.noti-item').forEach((b) => b.addEventListener('click', async () => {
         $('noti-panel').classList.add('oculto');
-        const destino = { pedidos: 'pedidos', sin_asignar: 'repartos', comprobantes: 'pedidos',
-            solicitudes: 'solicitudes', sin_stock: 'productos' }[b.dataset.ir] || 'inicio';
-        seleccionar(destino);
+        if (b.dataset.id) { try { await api.post('/api/admin/notificaciones/leer', { id: Number(b.dataset.id) }); } catch {} }
+        if (b.dataset.ir) seleccionar(b.dataset.ir);
     }));
 }
 

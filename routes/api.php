@@ -25,6 +25,7 @@ use App\Controllers\FavoritoController;
 use App\Controllers\HomeController;
 use App\Controllers\BloqueController;
 use App\Controllers\DashboardController;
+use App\Controllers\NotificacionController;
 use App\Controllers\EmpresaEnvioController;
 use App\Controllers\RepartidorController;
 use App\Controllers\BarrioController;
@@ -56,7 +57,9 @@ $router->post('/api/ventas/anular',    [VentaController::class, 'anular'],     t
 // --- Panel admin: dashboard + ABM de tablas maestras (solo admin) ---
 $router->get('/api/admin/dashboard', [DashboardController::class, 'resumen'], true);
 $router->get('/api/admin/dashboard/serie', [DashboardController::class, 'serie'], true);
-$router->get('/api/admin/notificaciones', [DashboardController::class, 'notificaciones'], true);
+$router->get('/api/admin/notificaciones',        [NotificacionController::class, 'listar'],     true);
+$router->post('/api/admin/notificaciones/leer',  [NotificacionController::class, 'leer'],       true);
+$router->post('/api/admin/notificaciones/leer-todas', [NotificacionController::class, 'leerTodas'], true);
 $router->get('/api/admin/clientes',            [ClienteController::class, 'admin'],   true);
 $router->post('/api/admin/clientes/guardar',   [ClienteController::class, 'guardar'], true);
 $router->post('/api/admin/clientes/baja',      [ClienteController::class, 'baja'],    true);

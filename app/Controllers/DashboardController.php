@@ -48,27 +48,4 @@ class DashboardController
         Response::json(['ok' => true, 'serie' => (new DashboardRepository())->serieVentas($periodo)]);
     }
 
-    /**
-     * Novedades / avisos: cosas que necesitan atención AHORA (derivadas del estado
-     * actual, sin tabla nueva). Cada ítem sabe a qué vista del panel llevar.
-     */
-    public function notificaciones(): void
-    {
-        if (!Session::esAdmin()) { Response::json(['ok' => false, 'error' => 'Solo admin.'], 403); return; }
-        $r = new DashboardRepository();
-        $defs = [
-            ['pedidos',      $r->pedidosPendientes(),      '📦', 'Pedido(s) nuevo(s) sin preparar'],
-            ['sin_asignar',  $r->enviosSinAsignar(),        '🛵', 'Envío(s) sin repartidor asignado'],
-            ['comprobantes', $r->comprobantesEnRevision(),  '🧾', 'Comprobante(s) por revisar'],
-            ['solicitudes',  $r->solicitudesPendientes(),   '📨', 'Solicitud(es) mayorista(s) pendiente(s)'],
-            ['sin_stock',    $r->sinStock(),                '⚠️', 'Producto(s) sin stock'],
-        ];
-        $items = [];
-        foreach ($defs as [$tipo, $cant, $icono, $texto]) {
-            if ($cant > 0) {
-                $items[] = ['tipo' => $tipo, 'cantidad' => $cant, 'icono' => $icono, 'texto' => $texto];
-            }
-        }
-        Response::json(['ok' => true, 'total' => array_sum(array_column($items, 'cantidad')), 'items' => $items]);
-    }
 }

@@ -40,6 +40,8 @@ class MayoristaService
             throw new ValidacionException('Ya tenés una solicitud pendiente de aprobación.');
         }
         $this->solic->crear($clienteId, trim($mensaje ?? '') ?: null);
+        (new \App\Repositories\NotificacionRepository())
+            ->crear('solicitud', 'Nueva solicitud de cuenta mayorista', 'solicitudes', $clienteId);
     }
 
     public function resolver(int $id, string $estado, int $adminId): void

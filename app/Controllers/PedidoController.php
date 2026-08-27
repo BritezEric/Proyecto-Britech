@@ -94,6 +94,8 @@ class PedidoController
         }
 
         $repo->guardarComprobante($pedidoId, '/uploads/comprobantes/' . $nombre);
+        (new \App\Repositories\NotificacionRepository())
+            ->crear('comprobante', "Comprobante por revisar · pedido {$pedido['numero']}", 'pedidos', $pedidoId);
         Response::json(['ok' => true, 'estado_pago' => 'en_revision']);
     }
 
