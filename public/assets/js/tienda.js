@@ -315,6 +315,8 @@ function prepararEnvio() {
         if (!$('envio-telefono').value && cliente.telefono) $('envio-telefono').value = cliente.telefono;
         if (!$('envio-direccion').value && cliente.direccion) $('envio-direccion').value = cliente.direccion;
         if (!$('envio-localidad').value && cliente.localidad) $('envio-localidad').value = cliente.localidad;
+        if (!$('envio-provincia').value && cliente.provincia) $('envio-provincia').value = cliente.provincia;
+        if (!$('envio-cp').value && cliente.cp) $('envio-cp').value = cliente.cp;
         if (!$('moto-destinatario').value && cliente.nombre) $('moto-destinatario').value = cliente.nombre;
         if (!$('moto-telefono').value && cliente.telefono) $('moto-telefono').value = cliente.telefono;
     }
@@ -741,6 +743,43 @@ async function salir() {
     await refrescarVista();
 }
 
+// ============ Mi perfil ============
+function abrirPerfil() {
+    cerrar('cuenta-menu');
+    if (!cliente) { abrirAuth(false); return; }
+    $('perfil-avatar').textContent = inicial(cliente.nombre || '?');
+    $('perfil-nombre').textContent = cliente.nombre || 'Mi perfil';
+    $('perfil-email').textContent = cliente.email || '';
+    $('perfil-desde').textContent = cliente.creado_en
+        ? 'Cliente desde ' + new Date(cliente.creado_en.replace(' ', 'T')).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
+        : '';
+    const set = (id, v) => { $(id).value = v || ''; };
+    set('pf-nombre', cliente.nombre); set('pf-telefono', cliente.telefono); set('pf-documento', cliente.documento);
+    set('pf-direccion', cliente.direccion); set('pf-localidad', cliente.localidad);
+    set('pf-provincia', cliente.provincia); set('pf-cp', cliente.cp);
+    $('perfil-error').classList.add('oculto');
+    abrir('modal-perfil');
+}
+
+async function guardarPerfil(e) {
+    e.preventDefault();
+    const err = $('perfil-error'); err.classList.add('oculto');
+    const btn = e.target.querySelector('button[type=submit]'); btn.disabled = true;
+    const datos = {
+        nombre: $('pf-nombre').value, telefono: $('pf-telefono').value, documento: $('pf-documento').value,
+        direccion: $('pf-direccion').value, localidad: $('pf-localidad').value,
+        provincia: $('pf-provincia').value, cp: $('pf-cp').value,
+    };
+    try {
+        await api.post('/api/tienda/perfil', datos);
+        Object.assign(cliente, datos);   // reflejar sin recargar
+        pintarCuenta();
+        toast('✓ Perfil actualizado');
+        cerrar('modal-perfil');
+    } catch (ex) { err.textContent = ex.message; err.classList.remove('oculto'); }
+    finally { btn.disabled = false; }
+}
+
 async function verMisPedidos() {
     cerrar('cuenta-menu');
     const cont = $('pedidos-lista');
@@ -910,6 +949,9 @@ async function iniciar() {
     $('auth-cerrar').addEventListener('click', () => cerrar('modal-auth'));
     $('menu-salir').addEventListener('click', salir);
     $('menu-pedidos').addEventListener('click', verMisPedidos);
+    $('menu-perfil').addEventListener('click', abrirPerfil);
+    $('perfil-cerrar').addEventListener('click', () => cerrar('modal-perfil'));
+    $('form-perfil').addEventListener('submit', guardarPerfil);
     $('menu-favoritos').addEventListener('click', verFavoritos);
     $('pedidos-cerrar').addEventListener('click', () => cerrar('modal-pedidos'));
     $('pedidos-lista').addEventListener('change', (e) => {

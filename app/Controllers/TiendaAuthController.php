@@ -108,15 +108,40 @@ class TiendaAuthController
         $c['mayorista_aprobado'] = $estado['mayorista_aprobado'];
         $c['solicitud_estado']   = $estado['solicitud_estado'];
 
-        // Dirección/localidad para prefilling del checkout.
+        // Datos completos del perfil (para el checkout y la pantalla de perfil).
         $full = (new \App\Repositories\ClienteRepository())->buscarCompleto((int) $c['id']);
-        $c['direccion'] = $full['direccion'] ?? null;
-        $c['localidad'] = $full['localidad'] ?? null;
+        foreach (['documento', 'direccion', 'localidad', 'provincia', 'cp', 'creado_en'] as $k) {
+            $c[$k] = $full[$k] ?? null;
+        }
         // Si perdió el acceso, forzamos modo minorista.
         if (!$estado['mayorista_aprobado']) { Session::setClienteModo('minorista'); }
         $c['modo'] = Session::clienteModo();
 
         Response::json(['ok' => true, 'cliente' => $c]);
+    }
+
+    /** El cliente edita su propio perfil (datos de contacto + dirección). */
+    public function actualizarPerfil(): void
+    {
+        $c = Session::cliente();
+        if ($c === null) { Response::json(['ok' => false, 'error' => 'No logueado'], 401); return; }
+
+        $d = Request::json();
+        $g = fn($k) => trim((string) ($d[$k] ?? '')) ?: null;
+        $nombre = trim((string) ($d['nombre'] ?? ''));
+        if (mb_strlen($nombre) < 2) {
+            Response::json(['ok' => false, 'error' => 'Poné tu nombre (mínimo 2 letras).'], 422); return;
+        }
+        (new \App\Repositories\ClienteRepository())->actualizarPerfil((int) $c['id'], [
+            'nombre'    => $nombre,
+            'documento' => $g('documento'),
+            'telefono'  => $g('telefono'),
+            'direccion' => $g('direccion'),
+            'localidad' => $g('localidad'),
+            'provincia' => $g('provincia'),
+            'cp'        => $g('cp'),
+        ]);
+        Response::json(['ok' => true]);
     }
 
     /** Cambia el modo de navegación (minorista/mayorista). Mayorista requiere aprobación. */

@@ -107,6 +107,18 @@ class ClienteRepository
                        $d['direccion'], $d['localidad'], $d['lista_precio_id'], $d['activo'], $id]);
     }
 
+    /** El propio cliente edita su perfil (no toca lista_precio ni activo ni email). */
+    public function actualizarPerfil(int $id, array $d): void
+    {
+        Database::conexion()
+            ->prepare("UPDATE cliente SET
+                       nombre = ?, documento = ?, telefono = ?,
+                       direccion = ?, localidad = ?, provincia = ?, cp = ?
+                       WHERE id = ?")
+            ->execute([$d['nombre'], $d['documento'], $d['telefono'],
+                       $d['direccion'], $d['localidad'], $d['provincia'], $d['cp'], $id]);
+    }
+
     public function cambiarEstado(int $id, int $activo): void
     {
         Database::conexion()

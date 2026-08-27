@@ -94,8 +94,9 @@
 
     <!-- Menú de cuenta -->
     <div id="cuenta-menu" class="cuenta-menu oculto">
+        <button id="menu-perfil">👤 Mi perfil</button>
         <button id="menu-favoritos">❤️ Mis favoritos</button>
-        <button id="menu-pedidos">Mis pedidos</button>
+        <button id="menu-pedidos">📦 Mis pedidos</button>
         <button id="menu-salir">Cerrar sesión</button>
     </div>
 
@@ -274,6 +275,43 @@
             <h2>Mis pedidos</h2>
             <div id="pedidos-lista"></div>
             <button id="pedidos-cerrar" class="btn-secundario" style="margin-top:12px">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Mi perfil -->
+    <div id="modal-perfil" class="modal oculto">
+        <div class="modal-caja">
+            <div class="perfil-head">
+                <div class="perfil-avatar" id="perfil-avatar">·</div>
+                <div class="perfil-id">
+                    <h2 id="perfil-nombre">Mi perfil</h2>
+                    <span class="perfil-email" id="perfil-email"></span>
+                    <span class="perfil-desde" id="perfil-desde"></span>
+                </div>
+            </div>
+
+            <form id="form-perfil" class="perfil-form">
+                <label class="perfil-campo ancho"><span>Nombre completo *</span>
+                    <input id="pf-nombre" type="text" autocomplete="name" required></label>
+                <label class="perfil-campo"><span>Teléfono</span>
+                    <input id="pf-telefono" type="tel" autocomplete="tel"></label>
+                <label class="perfil-campo"><span>DNI / CUIT</span>
+                    <input id="pf-documento" type="text" inputmode="numeric"></label>
+                <div class="perfil-sub">Dirección de envío</div>
+                <label class="perfil-campo ancho"><span>Calle y número</span>
+                    <input id="pf-direccion" type="text" autocomplete="street-address"></label>
+                <label class="perfil-campo"><span>Localidad</span>
+                    <input id="pf-localidad" type="text" autocomplete="address-level2"></label>
+                <label class="perfil-campo"><span>Provincia</span>
+                    <input id="pf-provincia" type="text" autocomplete="address-level1"></label>
+                <label class="perfil-campo"><span>Código postal</span>
+                    <input id="pf-cp" type="text" autocomplete="postal-code"></label>
+                <p id="perfil-error" class="form-error oculto"></p>
+                <div class="perfil-acciones">
+                    <button type="button" id="perfil-cerrar" class="btn-secundario">Cerrar</button>
+                    <button type="submit" class="btn-primary btn-grande">Guardar cambios</button>
+                </div>
+            </form>
         </div>
     </div>
 

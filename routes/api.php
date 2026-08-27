@@ -132,6 +132,7 @@ $router->post('/api/tienda/restablecer',  [TiendaAuthController::class, 'restabl
 $router->post('/api/tienda/login',    [TiendaAuthController::class, 'login']);
 $router->post('/api/tienda/logout',   [TiendaAuthController::class, 'logout']);
 $router->get('/api/tienda/yo',        [TiendaAuthController::class, 'yo']);
+$router->post('/api/tienda/perfil',   [TiendaAuthController::class, 'actualizarPerfil']);
 // Catálogo público
 $router->get('/api/tienda/catalogo',   [CatalogoController::class, 'index']);
 $router->get('/api/tienda/producto',   [CatalogoController::class, 'producto']);
