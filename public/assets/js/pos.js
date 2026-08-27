@@ -416,9 +416,8 @@ input.addEventListener('keydown', async (e) => {
         window.location.href = '/login.html';
     });
 
-    await cargarClientes();
-    await cargarTiposPago();
-    await configurarEnvio();
+    // En paralelo (antes iba una tras otra): clientes, medios de pago y envío.
+    await Promise.all([cargarClientes(), cargarTiposPago(), configurarEnvio()]);
     renderCarrito();
     input.focus();
 })();

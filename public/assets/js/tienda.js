@@ -863,19 +863,19 @@ function cerrar(id) { const el = $(id); el.classList.contains('drawer') ? el.cla
 // ============ Init / eventos ============
 let debounce;
 async function iniciar() {
-    // ¿hay cliente logueado? (trae estado mayorista + modo)
+    // ¿hay cliente logueado? (trae estado mayorista + modo). Lo necesitan favoritos y la home.
     await refrescarCliente();
     actualizarBadge();
 
-    // categorías (menú superior + select del filtro)
-    await cargarCategorias();
-
-    // medios de envío + barrios (Moto Express) para el checkout
-    try { empresasEnvio = (await api.get('/api/tienda/envios')).empresas; } catch { empresasEnvio = []; }
-    try { barrios = (await api.get('/api/tienda/barrios')).barrios; } catch { barrios = []; }
-
-    await cargarFavoritos();
-    await cargarHome();          // vista por defecto: la home modular
+    // El resto va EN PARALELO (antes iba una llamada tras otra, en cascada).
+    // Solo la home espera a los favoritos (las tarjetas pintan el corazón).
+    const favListos = cargarFavoritos();
+    await Promise.all([
+        cargarCategorias(),
+        (async () => { try { empresasEnvio = (await api.get('/api/tienda/envios')).empresas; } catch { empresasEnvio = []; } })(),
+        (async () => { try { barrios = (await api.get('/api/tienda/barrios')).barrios; } catch { barrios = []; } })(),
+        favListos.then(() => cargarHome()),   // home = vista por defecto (modular)
+    ]);
 
     // Clicks de producto (agregar / favorito / ficha / ir a categoría): home + catálogo + menú
     $('home-bloques').addEventListener('click', manejarClickProducto);
