@@ -700,13 +700,16 @@ async function resolverSolicitud(id, accion) {
     } catch (ex) { alert(ex.message); }
 }
 
-// Detalle de un pedido (solo lectura)
+// Detalle de un pedido (solo lectura). numero es opcional: si no viene (ej. deep-link
+// desde una notificación), se toma del propio detalle.
 async function verPedido(id, numero) {
-    $('detalle-titulo').textContent = 'Pedido ' + numero;
+    $('detalle-titulo').textContent = numero ? 'Pedido ' + numero : 'Pedido…';
     const cont = $('detalle-items');
     cont.innerHTML = '<p class="td-mute">Cargando…</p>';
     $('modal-detalle').classList.remove('oculto');
     const r = await api.get(`/api/admin/pedidos/detalle?id=${id}`);
+    numero = numero || r.numero || '';
+    $('detalle-titulo').textContent = 'Pedido ' + numero;
     let total = 0;
     const filas = r.items.map((it) => {
         total += Number(it.subtotal);
@@ -1056,7 +1059,7 @@ async function cargarNotificaciones() {
     $('btn-noti').classList.toggle('tiene', !!r.no_leidas);
 
     const lista = r.items.length
-        ? r.items.map((n) => `<button class="noti-item ${Number(n.leida) ? '' : 'no-leida'}" data-id="${n.id}" data-ir="${esc(n.ir || '')}">
+        ? r.items.map((n) => `<button class="noti-item ${Number(n.leida) ? '' : 'no-leida'}" data-id="${n.id}" data-ir="${esc(n.ir || '')}" data-ref="${n.ref_id || ''}">
               <span class="noti-ic">${NOTI_IC[n.tipo] || '🔔'}</span>
               <span class="noti-tx">${esc(n.titulo)}<span class="noti-fecha">${fechaCorta(n.creado_en)}</span></span>
            </button>`).join('')
@@ -1074,7 +1077,13 @@ async function cargarNotificaciones() {
     $('noti-panel').querySelectorAll('.noti-item').forEach((b) => b.addEventListener('click', async () => {
         $('noti-panel').classList.add('oculto');
         if (b.dataset.id) { try { await api.post('/api/admin/notificaciones/leer', { id: Number(b.dataset.id) }); } catch {} }
-        if (b.dataset.ir) seleccionar(b.dataset.ir);
+        // Pedido con referencia → abre el detalle al instante (ver comprobante, etc.).
+        if (b.dataset.ir === 'pedidos' && b.dataset.ref) {
+            await seleccionar('pedidos');
+            verPedido(Number(b.dataset.ref));
+        } else if (b.dataset.ir) {
+            seleccionar(b.dataset.ir);
+        }
     }));
 }
 

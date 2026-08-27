@@ -118,6 +118,7 @@ class PedidoController
         $p = (new PedidoRepository())->buscarPorId($id);
         Response::json([
             'ok'           => true,
+            'numero'       => $p['numero'] ?? null,
             'items'        => (new PedidoRepository())->detalle($id),
             'envio'        => (new EnvioRepository())->dePedido($id),
             'repartidores' => (new RepartidorRepository())->activos(),
