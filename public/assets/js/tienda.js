@@ -750,9 +750,6 @@ async function verMisPedidos() {
     if (r.pedidos.length === 0) { cont.innerHTML = '<p class="cart-vacio">Todavía no hiciste pedidos.</p>'; return; }
     cont.innerHTML = r.pedidos.map((p) => {
         const total = Number(p.total) + Number(p.envio_costo || 0);
-        const envio = p.envio_estado
-            ? `<span class="badge ${esc(p.envio_estado)}" title="Envío">📦 ${esc(p.envio_estado.replace('_', ' '))}</span>`
-            : '';
         const seg = p.seguimiento_url
             ? `<a class="badge-link" href="${esc(p.seguimiento_url)}" target="_blank" rel="noopener">🔎 Seguir</a>`
             : '';
@@ -761,21 +758,35 @@ async function verMisPedidos() {
         const subir = (p.estado_pago === 'pendiente' || p.estado_pago === 'rechazado')
             ? `<label class="badge-link">📎 Comprobante<input type="file" accept="image/*,application/pdf" hidden data-pago="${p.id}"></label>`
             : '';
-        return `<div class="pedido-row">
-            <div>
-                <div class="cart-nombre">${esc(p.numero)}</div>
-                <div class="cart-precio">${new Date(p.creado_en.replace(' ', 'T')).toLocaleDateString('es-AR')}</div>
+        // El progreso del envío es lo que el cliente quiere ver; si no hay envío, el estado del pedido.
+        const seguimiento = p.envio_estado
+            ? envioStepper(p.envio_estado) + (seg ? `<div class="mp-seg">${seg}</div>` : '')
+            : `<span class="badge ${esc(p.estado)}">${esc(p.estado)}</span>`;
+        return `<div class="mp-pedido">
+            <div class="mp-top">
+                <div>
+                    <div class="cart-nombre">${esc(p.numero)}</div>
+                    <div class="cart-precio">${new Date(p.creado_en.replace(' ', 'T')).toLocaleDateString('es-AR')}</div>
+                </div>
+                <div class="mp-badges">
+                    <span class="cart-sub">${money.format(total)}</span>
+                    ${pago}
+                    ${subir}
+                </div>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-                <span class="cart-sub">${money.format(total)}</span>
-                <span class="badge ${esc(p.estado)}">${esc(p.estado)}</span>
-                ${pago}
-                ${envio}
-                ${seg}
-                ${subir}
-            </div>
+            <div class="mp-envio">${seguimiento}</div>
         </div>`;
     }).join('');
+}
+
+// Progreso del envío como pasos claros. "cancelado" se muestra aparte.
+const ENVIO_PASOS = [['pendiente', 'Pendiente'], ['despachado', 'Despachado'], ['en_camino', 'En camino'], ['entregado', 'Entregado']];
+function envioStepper(estado) {
+    if (estado === 'cancelado') return '<div class="envio-cancelado">✗ Envío cancelado</div>';
+    const cur = Math.max(0, ENVIO_PASOS.findIndex((p) => p[0] === estado));
+    return `<div class="envio-stepper">${ENVIO_PASOS.map(([, lbl], i) =>
+        `<div class="es-paso ${i < cur ? 'done' : i === cur ? 'actual' : ''}"><span class="es-dot"></span><span class="es-lbl">${lbl}</span></div>`
+    ).join('')}</div>`;
 }
 
 // Badge del estado de pago (texto legible + clase de color).
