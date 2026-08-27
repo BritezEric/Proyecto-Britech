@@ -22,6 +22,15 @@ const badgePago = (v) => {
     return `<span class="badge ${cls}">${esc(txt)}</span>`;
 };
 
+// Estado del comprobante que sube el cliente (solo aplica a Transferencia).
+const badgeComprobante = (url, row) => {
+    if (row.metodo_pago && row.metodo_pago !== 'transferencia')
+        return '<span class="badge neutral">no aplica</span>';
+    return url
+        ? '<span class="badge ok">📎 Recibido</span>'
+        : '<span class="badge danger">✗ Sin comprobante</span>';
+};
+
 // Estado del cliente considerando la verificación de correo de la tienda:
 // - dado de baja → Inactivo
 // - registrado en la tienda pero sin verificar el correo → Sin verificar
@@ -182,6 +191,7 @@ const ENTIDADES = {
             { key: 'total', label: 'Total', num: true, render: (v) => money.format(v) },
             { key: 'creado_en', label: 'Fecha', render: (v) => `<span class="td-mute">${esc(v)}</span>` },
             { key: 'estado_pago', label: 'Pago', render: (v) => badgePago(v) },
+            { key: 'comprobante_url', label: 'Comprobante', render: (v, row) => badgeComprobante(v, row) },
             { key: 'estado', label: 'Envío', render: renderEstadoInline },
         ],
         filtros: [
@@ -229,6 +239,47 @@ const ENTIDADES = {
             { key: 'costo_base', label: 'Costo base', tipo: 'number', req: true, def: 0 },
             { key: 'url_tracking', label: 'URL de seguimiento (usá {tracking} donde va el nº)', tipo: 'text', ancho: true },
             { key: 'es_retiro', label: 'Es retiro en local (sin dirección)', tipo: 'check' },
+            { key: 'activo', label: 'Activo', tipo: 'check', def: true },
+        ],
+    },
+
+    barrios: {
+        titulo: 'Barrios (Moto Express)', sub: 'Barrios de Formosa que cubre el moto y el precio de envío de cada uno.',
+        singular: 'barrio', endpoint: '/api/admin/barrios',
+        columnas: [
+            { key: 'nombre', label: 'Barrio', clase: 'td-fuerte' },
+            { key: 'costo', label: 'Precio de envío', num: true, render: (v) => money.format(v) },
+            { key: 'activo', label: 'Estado', render: badgeEstado },
+        ],
+        filtros: [
+            { key: 'activo', label: 'Estado', opciones: [{ v: '', t: 'Todos' }, { v: '1', t: 'Activos' }, { v: '0', t: 'Inactivos' }] },
+        ],
+        campos: [
+            { key: 'nombre', label: 'Nombre del barrio', tipo: 'text', req: true, ancho: true },
+            { key: 'costo', label: 'Precio de envío', tipo: 'number', req: true, def: 0 },
+            { key: 'activo', label: 'Activo', tipo: 'check', def: true },
+        ],
+    },
+
+    repartidores: {
+        titulo: 'Repartidores', sub: 'Motoqueros del Moto Express. Agregá, editá y mirá la paga del día según los barrios que entregó cada uno.',
+        singular: 'repartidor', endpoint: '/api/admin/repartidores',
+        acciones: ['ver', 'editar', 'baja'],
+        verFn: (id) => abrirRepartidor(id),
+        columnas: [
+            { key: 'nombre', label: 'Nombre', clase: 'td-fuerte' },
+            { key: 'telefono', label: 'Teléfono', render: (v) => v ? esc(v) : '<span class="td-mute">—</span>' },
+            { key: 'activos', label: 'A repartir', num: true, render: (v) => Number(v) > 0 ? `<strong>${Number(v)}</strong>` : '<span class="td-mute">0</span>' },
+            { key: 'envios_hoy', label: 'Entregó hoy', num: true },
+            { key: 'pago_hoy', label: 'A pagar hoy', num: true, render: (v) => money.format(v) },
+            { key: 'activo', label: 'Estado', render: badgeEstado },
+        ],
+        filtros: [
+            { key: 'activo', label: 'Estado', opciones: [{ v: '', t: 'Todos' }, { v: '1', t: 'Activos' }, { v: '0', t: 'Inactivos' }] },
+        ],
+        campos: [
+            { key: 'nombre', label: 'Nombre', tipo: 'text', req: true, ancho: true },
+            { key: 'telefono', label: 'Teléfono (opcional)', tipo: 'text' },
             { key: 'activo', label: 'Activo', tipo: 'check', def: true },
         ],
     },
@@ -286,9 +337,10 @@ const vistaAbm = $('vista-abm'), vistaInicio = $('vista-inicio');
 const PADRE = {
     clientes: 'tablas', productos: 'tablas', proveedores: 'tablas',
     categorias: 'tablas', marcas: 'tablas', solicitudes: 'tablas',
-    envios: 'pedidos',
+    empleados: 'tablas', repartidores: 'tablas', barrios: 'tablas',
+    envios: 'pedidos', pedidos: 'inicio',
 };
-const NOMBRE_VISTA = { tablas: 'Tablas', pedidos: 'Gestor de envíos' };
+const NOMBRE_VISTA = { tablas: 'Tablas', pedidos: 'Gestor de envíos', inicio: 'Panel' };
 
 // Cuadritos de la vista "Tablas" (Empresas de envío ya NO está acá: vive en el gestor).
 const TABLAS_CARDS = [
@@ -298,6 +350,9 @@ const TABLAS_CARDS = [
     { ent: 'categorias',  icon: '🏷️', label: 'Categorías',  desc: 'Rubros del catálogo' },
     { ent: 'marcas',      icon: '™️', label: 'Marcas',      desc: 'Marcas de los productos' },
     { ent: 'solicitudes', icon: '📨', label: 'Solicitudes', desc: 'Pedidos de cuenta mayorista' },
+    { ent: 'empleados',   icon: '🧑‍💼', label: 'Empleados',   desc: 'Rendimiento y sueldos' },
+    { ent: 'repartidores', icon: '🛵', label: 'Repartidores', desc: 'Motoqueros y su paga' },
+    { ent: 'barrios',     icon: '📍', label: 'Barrios',     desc: 'Zonas del moto y su precio' },
 ];
 
 function renderTablas() {
@@ -347,13 +402,14 @@ async function seleccionar(ent) {
     const navKey = PADRE[ent] || ent;
     document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('activo', b.dataset.ent === navKey));
     const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados'),
-          vistaTablas = $('vista-tablas'), vistaAjustes = $('vista-ajustes');
-    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas, vistaAjustes]
+          vistaTablas = $('vista-tablas'), vistaAjustes = $('vista-ajustes'), vistaRepartos = $('vista-repartos');
+    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas, vistaAjustes, vistaRepartos]
         .forEach((v) => v.classList.add('oculto'));
     if (ent === 'inicio')   { ocultarTodo(); vistaInicio.classList.remove('oculto');   return renderInicio(); }
     if (ent === 'tablas')   { ocultarTodo(); vistaTablas.classList.remove('oculto');   return renderTablas(); }
     if (ent === 'bloques')  { ocultarTodo(); vistaBloques.classList.remove('oculto');  return renderBloques(); }
     if (ent === 'empleados'){ ocultarTodo(); vistaEmpleados.classList.remove('oculto'); return renderEmpleados(); }
+    if (ent === 'repartos') { ocultarTodo(); vistaRepartos.classList.remove('oculto'); return renderRepartos(); }
     if (ent === 'ajustes')  { ocultarTodo(); vistaAjustes.classList.remove('oculto');  return renderAjustes(); }
     entActual = ent; cfg = ENTIDADES[ent];
     page = 1; q = ''; filtros = {};
@@ -429,7 +485,7 @@ function renderFilas(filas) {
             botones = acc.map((a) => {
                 if (a === 'editar') return `<button class="btn-fila" data-accion="editar" data-id="${row.id}">Editar</button>`;
                 if (a === 'baja')   return `<button class="btn-fila peligro" data-accion="baja" data-id="${row.id}" data-nombre="${esc(row.nombre)}">Baja</button>`;
-                if (a === 'ver')    return `<button class="btn-fila" data-accion="ver" data-id="${row.id}" data-numero="${esc(row.numero)}">Ver</button>`;
+                if (a === 'ver')    return `<button class="btn-fila ver-detalle" data-accion="ver" data-id="${row.id}" data-numero="${esc(row.numero)}">👁 Ver detalle</button>`;
                 return '';
             }).join('');
         }
@@ -666,10 +722,34 @@ async function verPedido(id, numero) {
         const costo = Number(e.costo) === 0 ? 'Gratis' : money.format(e.costo);
         total += Number(e.costo);
         const esRetiro = Number(e.es_retiro) === 1;
+        const esMoto = Number(e.es_moto) === 1;
         const selEstado = `<select id="envio-estado">${ESTADOS_ENVIO_ADMIN.map((s) =>
             `<option value="${s}" ${s === e.estado ? 'selected' : ''}>${s.replace('_', ' ')}</option>`).join('')}</select>`;
+        // Selector de repartidor (motoquero) para los envíos de Moto Express.
+        const selRepart = `<select id="env-repartidor"><option value="">— sin asignar —</option>${
+            (r.repartidores || []).map((rp) =>
+                `<option value="${rp.id}" ${Number(e.repartidor_id) === Number(rp.id) ? 'selected' : ''}>${esc(rp.nombre)}</option>`).join('')}</select>`;
 
-        if (esRetiro) {
+        if (esMoto) {
+            // Moto Express: barrio (precio fijo) + dirección con altura + repartidor a cargo.
+            envioHtml = `
+                <h4 class="detalle-sub">Envío — Moto Express</h4>
+                <div class="pedido-linea"><span>🛵 ${esc(e.barrio || e.localidad || 'Barrio')}</span><span class="tabular">${costo}</span></div>
+                <div class="envio-form">
+                    <div class="envio-grid2">
+                        <div><label>Destinatario</label><input id="env-destinatario" value="${esc(e.destinatario || '')}" placeholder="Quién recibe"></div>
+                        <div><label>Teléfono</label><input id="env-telefono" value="${esc(e.telefono || '')}" placeholder="Teléfono"></div>
+                        <div><label>Calle</label><input id="env-direccion" value="${esc(e.direccion || '')}" placeholder="Calle"></div>
+                        <div><label>Altura</label><input id="env-numero" value="${esc(e.numero || '')}" placeholder="Altura"></div>
+                        <div class="col-2"><label>Referencia</label><input id="env-referencia" value="${esc(e.referencia || '')}" placeholder="Entre calles / piso / depto"></div>
+                    </div>
+                    <div class="envio-fila">
+                        <div><label>Estado del envío</label>${selEstado}</div>
+                        <div><label>Repartidor a cargo</label>${selRepart}</div>
+                    </div>
+                    <button class="btn-primary" id="envio-guardar" data-id="${id}">Guardar envío</button>
+                </div>`;
+        } else if (esRetiro) {
             // Retiro en el local: no hay envío → sin datos de dirección ni seguimiento.
             envioHtml = `
                 <h4 class="detalle-sub">Entrega</h4>
@@ -750,12 +830,16 @@ async function verPedido(id, numero) {
             const datos = {};
             ['destinatario', 'telefono', 'direccion', 'numero', 'referencia', 'localidad', 'provincia', 'cp']
                 .forEach((k) => { const v = val('env-' + k); if (v !== undefined) datos[k] = v; });
-            await api.post('/api/admin/pedidos/envio', {
+            const payload = {
                 pedido_id: Number(id),
                 estado: $('envio-estado').value,
                 tracking: val('envio-tracking') || '',
                 datos,
-            });
+            };
+            // Repartidor a cargo (solo Moto Express): '' = sin asignar.
+            const rep = val('env-repartidor');
+            if (rep !== undefined) payload.repartidor_id = rep === '' ? 0 : Number(rep);
+            await api.post('/api/admin/pedidos/envio', payload);
             btn.textContent = 'Guardado ✓';
             cargar();   // refresca la columna "Envío" del listado de fondo
             // Recargar el detalle para refrescar el link de seguimiento con el nuevo tracking.
@@ -813,6 +897,15 @@ async function renderInicio() {
     try { d = await api.get('/api/admin/dashboard'); }
     catch { $('kpis').innerHTML = '<p class="tabla-vacia">No se pudo cargar el dashboard.</p>'; return; }
 
+    // --- Accesos rápidos (Envíos · Repartos · POS) ---
+    const sinAsignar = Number(d.envios_sin_asignar || 0);
+    $('dash-accesos').innerHTML = `
+        <button class="acceso-btn" data-ir="pedidos"><span class="acceso-ic">📦</span> Envíos</button>
+        <button class="acceso-btn" data-ir="repartos"><span class="acceso-ic">🛵</span> Repartos${sinAsignar > 0 ? `<span class="acceso-badge">${sinAsignar}</span>` : ''}</button>
+        <a class="acceso-btn" href="/pos.html"><span class="acceso-ic">🧾</span> Ir al POS</a>`;
+    $('dash-accesos').querySelectorAll('[data-ir]').forEach((b) =>
+        b.addEventListener('click', () => seleccionar(b.dataset.ir)));
+
     // --- KPIs ---
     const comp = d.comparativa || { variacion: null, anterior: 0 };
     const up = comp.variacion !== null && comp.variacion >= 0;
@@ -823,6 +916,7 @@ async function renderInicio() {
 
     $('kpis').innerHTML = [
         kpi('Ventas de hoy', money.format(d.ventas_hoy.monto), `${d.ventas_hoy.cantidad} venta(s) en el local`),
+        kpi('Página hoy', money.format((d.ventas_online_hoy || {}).monto || 0), `${(d.ventas_online_hoy || {}).cantidad || 0} pedido(s) online`),
         kpi('Físicas (mes)', money.format(d.ventas_mes), 'POS / local'),
         kpi('Online (mes)', money.format(d.ventas_online_mes), 'tienda online'),
         compCard,
@@ -974,7 +1068,7 @@ function wire() {
         if (!b) return;
         const id = b.dataset.id;
         if (b.dataset.accion === 'baja') return baja(id, b.dataset.nombre);
-        if (b.dataset.accion === 'ver')  return verPedido(id, b.dataset.numero);
+        if (b.dataset.accion === 'ver')  return cfg.verFn ? cfg.verFn(id) : verPedido(id, b.dataset.numero);
         if (b.dataset.accion === 'aprobar' || b.dataset.accion === 'rechazar') return resolverSolicitud(id, b.dataset.accion);
         const fila = filasActuales.find((f) => String(f.id) === String(id));
         abrirModal('editar', fila);

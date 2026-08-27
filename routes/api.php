@@ -26,6 +26,8 @@ use App\Controllers\HomeController;
 use App\Controllers\BloqueController;
 use App\Controllers\DashboardController;
 use App\Controllers\EmpresaEnvioController;
+use App\Controllers\RepartidorController;
+use App\Controllers\BarrioController;
 
 /** @var App\Core\Router $router */
 
@@ -101,6 +103,21 @@ $router->get('/api/admin/empresas-envio',          [EmpresaEnvioController::clas
 $router->post('/api/admin/empresas-envio/guardar', [EmpresaEnvioController::class, 'guardar'], true);
 $router->post('/api/admin/empresas-envio/baja',    [EmpresaEnvioController::class, 'baja'],    true);
 
+// Repartidores (Moto Express): ABM + reporte de paga — solo admin
+$router->get('/api/admin/repartidores',          [RepartidorController::class, 'admin'],    true);
+$router->get('/api/admin/repartidores/detalle',  [RepartidorController::class, 'detalle'],  true);
+$router->post('/api/admin/repartidores/guardar', [RepartidorController::class, 'guardar'],  true);
+$router->post('/api/admin/repartidores/baja',    [RepartidorController::class, 'baja'],     true);
+// Envíos sin repartidor + derivar (dispatch) — solo admin
+$router->get('/api/admin/envios/sin-asignar',    [RepartidorController::class, 'sinAsignar'], true);
+$router->post('/api/admin/envios/derivar',       [RepartidorController::class, 'derivar'],    true);
+$router->post('/api/admin/envios/estado',        [RepartidorController::class, 'estado'],     true);
+
+// Barrios del Moto Express (ABM admin)
+$router->get('/api/admin/barrios',          [BarrioController::class, 'admin'],   true);
+$router->post('/api/admin/barrios/guardar', [BarrioController::class, 'guardar'], true);
+$router->post('/api/admin/barrios/baja',    [BarrioController::class, 'baja'],    true);
+
 // --- Tienda online ---
 // Auth de cliente (la protección de cliente se chequea dentro del controlador)
 $router->post('/api/tienda/registro', [TiendaAuthController::class, 'registro']);
@@ -116,6 +133,7 @@ $router->get('/api/tienda/catalogo',   [CatalogoController::class, 'index']);
 $router->get('/api/tienda/producto',   [CatalogoController::class, 'producto']);
 $router->get('/api/tienda/categorias', [CatalogoController::class, 'categorias']);
 $router->get('/api/tienda/envios',     [EmpresaEnvioController::class, 'opciones']);
+$router->get('/api/tienda/barrios',    [RepartidorController::class, 'barrios']);
 // Pedidos del cliente
 $router->post('/api/tienda/pedidos',     [PedidoController::class, 'crear']);
 $router->get('/api/tienda/mis-pedidos',  [PedidoController::class, 'mis']);

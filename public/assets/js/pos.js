@@ -31,6 +31,8 @@ let ultimosResultados = [];
 let carrito = [];          // { id, nombre, precio, cantidad, stock, sobrePedido, descuento }
 let descuentoTotal = 0;    // descuento sobre el total
 let pagos = [];            // cobro mixto: [{ tipoId, monto }]
+let empresasEnvio = [];    // medios de envío (para el envío opcional de la venta)
+let barriosPos = [];       // barrios del Moto Express
 
 const money = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 const r2 = n => Math.round((Number(n) || 0) * 100) / 100;
@@ -244,9 +246,9 @@ descTotalIn.addEventListener('input', () => {
 btnCobrar.addEventListener('click', () => {
     if (carrito.length === 0) return;
     cobroError.classList.add('oculto');
-    cobroTotal.textContent = money.format(calcularTotal());
-    // arranca con un pago por el total, en el primer medio
-    pagos = [{ tipoId: tiposPago[0].id, monto: calcularTotal() }];
+    const total = r2(calcularTotal() + costoEnvioPOS());
+    // arranca con un pago por el total (productos + envío), en el primer medio
+    pagos = [{ tipoId: tiposPago[0].id, monto: total }];
     renderPagos();
     modalCobro.classList.remove('oculto');
 });
@@ -266,7 +268,9 @@ function renderPagos() {
 }
 
 function actualizarEstadoCobro() {
-    const total  = calcularTotal();
+    const envio  = costoEnvioPOS();
+    const total  = r2(calcularTotal() + envio);
+    cobroTotal.textContent = money.format(total);
     const pagado = r2(pagos.reduce((s, p) => s + (Number(p.monto) || 0), 0));
     const dif    = r2(total - pagado);
     elPagado.textContent = money.format(pagado);
@@ -290,7 +294,7 @@ pagosLista.addEventListener('click', (e) => {
     renderPagos();
 });
 btnAgrPago.addEventListener('click', () => {
-    const falta = r2(calcularTotal() - pagos.reduce((s, p) => s + (Number(p.monto) || 0), 0));
+    const falta = r2(calcularTotal() + costoEnvioPOS() - pagos.reduce((s, p) => s + (Number(p.monto) || 0), 0));
     pagos.push({ tipoId: tiposPago[0].id, monto: falta > 0 ? falta : 0 });
     renderPagos();
 });
@@ -302,6 +306,8 @@ btnConfirmar.addEventListener('click', async () => {
         items: carrito.map(i => ({ producto_id: i.id, cantidad: i.cantidad, descuento_linea: i.descuento || 0 })),
         pagos: pagos.filter(p => Number(p.monto) > 0).map(p => ({ tipo_pago_id: Number(p.tipoId), monto: Number(p.monto) })),
     };
+    const envio = envioPayloadPOS();
+    if (envio) payload.envio = envio;
     btnConfirmar.disabled = true;
     try {
         const resp = await api.post('/api/ventas', payload);
@@ -310,10 +316,17 @@ btnConfirmar.addEventListener('click', async () => {
             nombre: tiposPago.find(t => t.id == p.tipo_pago_id)?.nombre ?? '', monto: p.monto,
         }));
         renderTicket(resp.venta.numero, [...carrito], clienteActual.nombre,
-                     calcularSubtotal(), descuentoAplicado(), calcularTotal(), pagosTicket);
+                     calcularSubtotal(), descuentoAplicado(),
+                     Number(resp.venta.envio_costo || 0), Number(resp.venta.total), pagosTicket);
         document.getElementById('btn-pdf').href = '/api/ventas/ticket?id=' + resp.venta.venta_id;
         // reset
         carrito = []; descuentoTotal = 0; descTotalIn.value = 0;
+        document.getElementById('envio-on').checked = false;
+        document.getElementById('envio-box').classList.add('oculto');
+        document.getElementById('pos-envio-barrio').value = '';
+        document.querySelectorAll('.pos-barrio-card.activo').forEach((c) => c.classList.remove('activo'));
+        ['pos-env-destinatario', 'pos-env-telefono', 'pos-env-calle', 'pos-env-altura', 'pos-env-ref']
+            .forEach((id) => { document.getElementById(id).value = ''; });
         renderCarrito();
         modalCobro.classList.add('oculto');
         modalTicket.classList.remove('oculto');
@@ -326,12 +339,14 @@ btnConfirmar.addEventListener('click', async () => {
 
 // ================= TICKET =================
 
-function renderTicket(numero, items, cliente, subtotal, descuento, total, pagosTk) {
+function renderTicket(numero, items, cliente, subtotal, descuento, envioCosto, total, pagosTk) {
     const fecha = new Date().toLocaleString('es-AR');
     const lineas = items.map(i => `
         <div class="t-item"><span>${i.cantidad} x ${i.nombre}</span><span>${money.format(subtotalLinea(i))}</span></div>`).join('');
     const filaDesc = descuento > 0
         ? `<div class="t-item"><span>Descuento</span><span>- ${money.format(descuento)}</span></div>` : '';
+    const filaEnvio = envioCosto > 0
+        ? `<div class="t-item"><span>🛵 Envío</span><span>${money.format(envioCosto)}</span></div>` : '';
     const filasPago = pagosTk.map(p =>
         `<div class="t-pago">Pago (${p.nombre}): ${money.format(p.monto)}</div>`).join('');
 
@@ -348,6 +363,7 @@ function renderTicket(numero, items, cliente, subtotal, descuento, total, pagosT
         <div class="t-sep"></div>
         <div class="t-item"><span>Subtotal</span><span>${money.format(subtotal)}</span></div>
         ${filaDesc}
+        ${filaEnvio}
         <div class="t-total"><span>TOTAL</span><span>${money.format(total)}</span></div>
         ${filasPago}
         <div class="t-sep"></div>
@@ -402,6 +418,91 @@ input.addEventListener('keydown', async (e) => {
 
     await cargarClientes();
     await cargarTiposPago();
+    await configurarEnvio();
     renderCarrito();
     input.focus();
 })();
+
+// ================= ENVÍO OPCIONAL DE LA VENTA =================
+async function configurarEnvio() {
+    try { empresasEnvio = (await api.get('/api/tienda/envios')).empresas; } catch { empresasEnvio = []; }
+    try { barriosPos = (await api.get('/api/tienda/barrios')).barrios; } catch { barriosPos = []; }
+
+    const selE = document.getElementById('pos-envio-empresa');
+    selE.innerHTML = empresasEnvio.map((e) => {
+        const moto = Number(e.es_moto) ? 1 : 0;
+        const etq = moto ? 'según barrio' : (Number(e.costo_base) === 0 ? 'gratis' : money.format(e.costo_base));
+        return `<option value="${e.id}" data-retiro="${Number(e.es_retiro) ? 1 : 0}" data-moto="${moto}">${e.nombre} — ${etq}</option>`;
+    }).join('');
+
+    // Barrios como botones (se elige tocando uno).
+    document.getElementById('pos-barrio-cards').innerHTML = barriosPos.map((b) =>
+        `<button type="button" class="pos-barrio-card" data-barrio="${b.id}">
+            <span class="pos-barrio-nom">${b.nombre}</span>
+            <span class="pos-barrio-precio">${money.format(b.costo)}</span>
+        </button>`).join('');
+
+    document.getElementById('envio-on').addEventListener('change', (e) => {
+        document.getElementById('envio-box').classList.toggle('oculto', !e.target.checked);
+        toggleEnvioPOS();
+        recalcularCobro();
+    });
+    selE.addEventListener('change', () => { toggleEnvioPOS(); recalcularCobro(); });
+    document.getElementById('pos-barrio-cards').addEventListener('click', (e) => {
+        const c = e.target.closest('.pos-barrio-card');
+        if (!c) return;
+        document.getElementById('pos-envio-barrio').value = c.dataset.barrio;
+        document.querySelectorAll('.pos-barrio-card').forEach((x) => x.classList.toggle('activo', x === c));
+        recalcularCobro();
+    });
+    toggleEnvioPOS();
+}
+
+// Muestra según el medio: RETIRO en local → sin barrio ni dirección; MOTO → barrios
+// (botones) + dirección; otro correo → solo dirección.
+function toggleEnvioPOS() {
+    const opt = document.getElementById('pos-envio-empresa').selectedOptions[0];
+    const retiro = !!(opt && opt.dataset.retiro === '1');
+    const moto   = !!(opt && opt.dataset.moto === '1');
+    document.getElementById('pos-barrio-cards').classList.toggle('oculto', !moto);
+    document.getElementById('pos-envio-grid').classList.toggle('oculto', retiro);
+    document.getElementById('pos-envio-hint').classList.toggle('oculto', retiro);
+    if (retiro) { document.getElementById('pos-envio-barrio').value = ''; }
+}
+
+// Costo del envío según lo elegido (moto = barrio, otros = costo base, retiro/off = 0).
+function costoEnvioPOS() {
+    if (!document.getElementById('envio-on').checked) return 0;
+    const selE = document.getElementById('pos-envio-empresa');
+    const opt = selE.selectedOptions[0];
+    if (!opt || opt.dataset.retiro === '1') return 0;
+    if (opt.dataset.moto === '1') {
+        const b = document.getElementById('pos-envio-barrio').value;
+        const barrio = barriosPos.find((x) => String(x.id) === String(b));
+        return barrio ? Number(barrio.costo) : 0;
+    }
+    const emp = empresasEnvio.find((e) => String(e.id) === String(selE.value));
+    return emp ? Number(emp.costo_base) : 0;
+}
+
+// Al cambiar el envío dentro del cobro, re-sincroniza el total a cobrar.
+function recalcularCobro() {
+    if (modalCobro.classList.contains('oculto')) return;
+    if (pagos.length === 1) pagos[0].monto = r2(calcularTotal() + costoEnvioPOS());
+    renderPagos();
+}
+
+// Devuelve el objeto de envío para el payload, o null si no hay envío.
+function envioPayloadPOS() {
+    if (!document.getElementById('envio-on').checked) return null;
+    const g = (id) => document.getElementById(id).value.trim();
+    return {
+        empresa_envio_id: Number(document.getElementById('pos-envio-empresa').value) || null,
+        barrio_id: Number(document.getElementById('pos-envio-barrio').value) || null,
+        destinatario: g('pos-env-destinatario'),
+        telefono: g('pos-env-telefono'),
+        direccion: g('pos-env-calle'),
+        numero: g('pos-env-altura'),
+        referencia: g('pos-env-ref'),
+    };
+}

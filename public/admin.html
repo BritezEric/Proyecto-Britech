@@ -20,14 +20,11 @@
             <nav class="side-nav" id="nav">
                 <button data-ent="inicio"    class="nav-item">Inicio</button>
                 <button data-ent="tablas"    class="nav-item">Tablas</button>
-                <button data-ent="empleados" class="nav-item">Empleados</button>
-                <button data-ent="pedidos"   class="nav-item">Envíos</button>
                 <button data-ent="bloques"   class="nav-item">Inicio tienda</button>
                 <button data-ent="ajustes"   class="nav-item">Ajustes</button>
             </nav>
             <div class="side-foot">
                 <button id="btn-tema" class="side-link">🌙 Tema oscuro</button>
-                <a href="/pos.html" class="side-link">← Ir al POS</a>
                 <button id="btn-salir" class="side-link side-salir">Salir</button>
             </div>
         </aside>
@@ -74,6 +71,7 @@
                         <p class="sub">Datos para tomar decisiones: ventas, pedidos y reposición.</p>
                     </div>
                 </header>
+                <div id="dash-accesos" class="dash-accesos"></div>
                 <div id="kpis" class="cards"></div>
 
                 <h2 class="dash-h">💰 Finanzas</h2>
@@ -119,6 +117,21 @@
                     </div>
                 </header>
                 <div id="empleados-lista" class="emp-grid"></div>
+            </section>
+
+            <!-- Vista: repartos (derivar envíos + ver activos de cada repartidor + ticket) -->
+            <section id="vista-repartos" class="oculto">
+                <header class="content-top">
+                    <div>
+                        <button class="volver-link" data-ir-inicio>‹ Panel</button>
+                        <h1>Repartos</h1>
+                        <p class="sub">Derivá cada envío a un repartidor y sacá el ticket con los envíos que tiene que hacer.</p>
+                    </div>
+                </header>
+                <h4 class="detalle-sub">Envíos sin asignar</h4>
+                <div id="repartos-sin-asignar"></div>
+                <h4 class="detalle-sub">Repartidores con envíos activos</h4>
+                <div id="repartos-repartidores" class="emp-grid"></div>
             </section>
 
             <!-- Vista: Ajustes (config de la tienda) -->
@@ -211,9 +224,20 @@
         </div>
     </div>
 
+    <div id="modal-repartidor" class="modal oculto">
+        <div class="modal-caja">
+            <h2 id="rep-title">Repartidor</h2>
+            <div id="rep-detalle"></div>
+            <div class="modal-botones">
+                <button type="button" id="rep-cerrar" class="btn-secundario">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/admin.js"></script>
     <script src="/assets/js/admin-bloques.js"></script>
     <script src="/assets/js/admin-empleados.js"></script>
+    <script src="/assets/js/admin-repartidores.js"></script>
 </body>
 </html>

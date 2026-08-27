@@ -87,3 +87,16 @@ decore, y prohíbe coreografías de carga en UI de tarea). Cambios puntuales, to
   vitrina): NO en el catálogo/búsqueda ni en el admin (flujo de tarea → sin coreografía).
 - **Zoom sutil de la imagen** del producto al hover (`.prod:hover .prod-thumb img`, scale 1.05).
 El admin y el POS se dejaron como estaban (ya cumplían el registro).
+
+## Pase de pulido 2026-08-27 (Moto Express + formularios compactos)
+Criterio: densidad y jerarquía tipo marketplace, sin perder legibilidad ni la
+identidad. Motion barato (transform/opacity), respeta `prefers-reduced-motion`.
+- **Formularios del admin más compactos** (todos los modales con `.campo`):
+  labels 11px sentence-case (no MAYÚSCULAS), inputs 13px con relleno sutil, grid de
+  2 columnas, gaps ajustados → el form de producto (12 campos) entra en una pantalla
+  normal sin scroll. Mejor jerarquía label→input y botones compactos.
+- **Checkout tienda (paso pago)**: total en panel arriba (monto grande en morado),
+  acción principal **grande full-width** abajo y **"Volver"** como link discreto.
+- **Barrios como elección de tarjetas** (tienda) / **botones** (POS) que colapsan al
+  elegir, con "cambiar" para volver. Botón **WhatsApp** verde (`wa.me`).
+- **Dashboard**: accesos rápidos (Envíos/Repartos/POS) con **badge** de pendientes.

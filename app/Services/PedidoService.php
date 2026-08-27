@@ -8,6 +8,7 @@ use App\Repositories\PedidoRepository;
 use App\Repositories\ProductoRepository;
 use App\Repositories\EmpresaEnvioRepository;
 use App\Repositories\EnvioRepository;
+use App\Repositories\BarrioRepository;
 
 /**
  * Lógica de los pedidos de la tienda online.
@@ -74,15 +75,49 @@ class PedidoService
         $empresaId = (int) ($envio['empresa_envio_id'] ?? 0) ?: null;
         $costoEnvio = 0.0;
         $esRetiro = false;
+        $esMoto = false;
+        $barrioId = null;
         if ($empresaId !== null) {
             $empresa = (new EmpresaEnvioRepository())->buscarPorId($empresaId);
             if ($empresa === null || (int) $empresa['activo'] !== 1) {
                 throw new ValidacionException('El medio de envío no es válido.');
             }
             $esRetiro = (int) ($empresa['es_retiro'] ?? 0) === 1;
+            $esMoto   = (int) ($empresa['es_moto'] ?? 0) === 1;
             $costoEnvio = round((float) $empresa['costo_base'], 2);
         }
-        $datosEnvio = $this->datosEntrega($envio, $esRetiro);
+
+        // Moto Express: el cliente elige un BARRIO (fija la zona y el precio) y
+        // escribe la dirección con altura (a dónde va el moto). El barrio = localidad.
+        if ($esMoto) {
+            $barrioId = (int) ($envio['barrio_id'] ?? 0) ?: null;
+            $barrio = $barrioId ? (new BarrioRepository())->buscarPorId($barrioId) : null;
+            if ($barrio === null || (int) $barrio['activo'] !== 1) {
+                throw new ValidacionException('Elegí un barrio para el envío en moto.');
+            }
+            $costoEnvio = round((float) $barrio['costo'], 2);
+            $g = fn($k) => trim($envio[$k] ?? '') ?: null;
+            $datosEnvio = [
+                'destinatario' => $g('destinatario'),
+                'telefono'     => $g('telefono'),
+                'direccion'    => $g('direccion'),
+                'numero'       => $g('numero'),
+                'referencia'   => $g('referencia'),
+                'localidad'    => $barrio['nombre'],
+                'provincia'    => null,
+                'cp'           => null,
+            ];
+            $obligatorios = ['destinatario' => 'quién recibe', 'telefono' => 'un teléfono', 'direccion' => 'la calle', 'numero' => 'la altura'];
+            $faltan = [];
+            foreach ($obligatorios as $campo => $etiqueta) {
+                if ($datosEnvio[$campo] === null) { $faltan[] = $etiqueta; }
+            }
+            if ($faltan) {
+                throw new ValidacionException('Para el envío en moto falta: ' . implode(', ', $faltan) . '.');
+            }
+        } else {
+            $datosEnvio = $this->datosEntrega($envio, $esRetiro);
+        }
         $totalFinal = round($total + $costoEnvio, 2);
 
         $obs = trim($observacion ?? '') ?: null;
@@ -95,7 +130,7 @@ class PedidoService
             foreach ($lineas as $l) {
                 $this->repo->agregarDetalle($pedidoId, $l['pid'], $l['cant'], $l['precio'], $l['sub']);
             }
-            (new EnvioRepository())->crear($pedidoId, $empresaId, $datosEnvio, $costoEnvio);
+            (new EnvioRepository())->crear($pedidoId, $empresaId, $datosEnvio, $costoEnvio, $barrioId);
             $pdo->commit();
         } catch (\Throwable $e) {
             $pdo->rollBack();
@@ -202,8 +237,8 @@ class PedidoService
         $this->repo->cambiarEstado($id, $estado);
     }
 
-    /** Actualiza el envío de un pedido (gestor admin): estado, seguimiento y datos de entrega. */
-    public function actualizarEnvio(int $pedidoId, string $estado, ?string $tracking, array $datos = []): void
+    /** Actualiza el envío de un pedido (gestor admin): estado, seguimiento, datos de entrega y repartidor. */
+    public function actualizarEnvio(int $pedidoId, string $estado, ?string $tracking, array $datos = [], int|null|false $repartidorId = false): void
     {
         if (!in_array($estado, self::ESTADOS_ENVIO, true)) {
             throw new ValidacionException('Estado de envío inválido.');
@@ -218,7 +253,7 @@ class PedidoService
             if (array_key_exists($c, $datos)) { $limpios[$c] = trim((string) $datos[$c]) ?: null; }
         }
         (new EnvioRepository())->actualizarDatos(
-            $pedidoId, $estado, trim($tracking ?? '') ?: null, $limpios
+            $pedidoId, $estado, trim($tracking ?? '') ?: null, $limpios, $repartidorId
         );
     }
 }

@@ -13,6 +13,7 @@ let precioMin = '', precioMax = '', orden = 'nombre';   // filtros de la vista c
 let categoriasCache = [];
 let carrito = cargarCarrito();      // [{id, nombre, precio, cantidad}]
 let empresasEnvio = [];             // medios de envío disponibles
+let barrios = [];                   // barrios de Moto Express (id, nombre, costo)
 let favoritos = new Set();          // ids de productos favoritos del cliente
 let pedidoPagoId = null;            // pedido que espera comprobante de transferencia
 
@@ -290,9 +291,23 @@ function renderCarrito() {
 function prepararEnvio() {
     const sel = $('envio-empresa');
     if (!sel.dataset.listo) {
-        sel.innerHTML = empresasEnvio.map((e) =>
-            `<option value="${e.id}" data-costo="${e.costo_base}" data-retiro="${Number(e.es_retiro) ? 1 : 0}">${esc(e.nombre)} — ${Number(e.costo_base) === 0 ? 'gratis' : money.format(e.costo_base)}</option>`).join('');
+        sel.innerHTML = empresasEnvio.map((e) => {
+            const moto = Number(e.es_moto) ? 1 : 0;
+            // Moto Express: el precio depende del barrio, no lo mostramos fijo en la opción.
+            const etq = moto ? 'según barrio' : (Number(e.costo_base) === 0 ? 'gratis' : money.format(e.costo_base));
+            return `<option value="${e.id}" data-costo="${e.costo_base}" data-retiro="${Number(e.es_retiro) ? 1 : 0}" data-moto="${moto}">${esc(e.nombre)} — ${etq}</option>`;
+        }).join('');
         sel.dataset.listo = '1';
+    }
+    // Barrios del Moto Express como tarjetas de elección (una vez).
+    const cont = $('barrio-opciones');
+    if (!cont.dataset.listo) {
+        cont.innerHTML = barrios.map((b) =>
+            `<button type="button" class="barrio-card" data-barrio="${b.id}" data-costo="${b.costo}">
+                <span class="barrio-nom">${esc(b.nombre)}</span>
+                <span class="barrio-precio">${money.format(b.costo)}</span>
+            </button>`).join('');
+        cont.dataset.listo = '1';
     }
     // Prefill con los datos que ya tenga el cliente (si están cargados).
     if (cliente) {
@@ -300,6 +315,8 @@ function prepararEnvio() {
         if (!$('envio-telefono').value && cliente.telefono) $('envio-telefono').value = cliente.telefono;
         if (!$('envio-direccion').value && cliente.direccion) $('envio-direccion').value = cliente.direccion;
         if (!$('envio-localidad').value && cliente.localidad) $('envio-localidad').value = cliente.localidad;
+        if (!$('moto-destinatario').value && cliente.nombre) $('moto-destinatario').value = cliente.nombre;
+        if (!$('moto-telefono').value && cliente.telefono) $('moto-telefono').value = cliente.telefono;
     }
     toggleEnvioCampos();
 }
@@ -309,12 +326,51 @@ function envioEsRetiro() {
     return opt ? opt.dataset.retiro === '1' : false;
 }
 
-// Si es "retiro en local", ocultamos todos los datos de entrega.
+function envioEsMoto() {
+    const opt = $('envio-empresa').selectedOptions[0];
+    return opt ? opt.dataset.moto === '1' : false;
+}
+
+// Barrio elegido en el moto (id o 0).
+function barrioSel() { return Number($('envio-barrio').value) || 0; }
+
+// Elegir un barrio: colapsa las tarjetas → chip + muestra la dirección.
+function elegirBarrio(id, costo, nombre) {
+    $('envio-barrio').value = id;
+    $('barrio-chip-txt').textContent = `${nombre} — ${money.format(costo)}`;
+    $('barrio-opciones').classList.add('oculto');
+    $('barrio-elegido').classList.remove('oculto');
+    $('moto-direccion').classList.remove('oculto');
+    actualizarMontos();
+}
+
+// Volver atrás: vuelve a mostrar las tarjetas de barrio.
+function cambiarBarrio() {
+    $('envio-barrio').value = '';
+    $('barrio-elegido').classList.add('oculto');
+    $('moto-direccion').classList.add('oculto');
+    $('barrio-opciones').classList.remove('oculto');
+    actualizarMontos();
+}
+
+// Retiro → sin datos. Moto Express → barrio + dirección. Envío → dirección completa.
 function toggleEnvioCampos() {
-    $('envio-campos').classList.toggle('oculto', envioEsRetiro());
+    const moto = envioEsMoto();
+    $('envio-campos').classList.toggle('oculto', envioEsRetiro() || moto);
+    $('envio-moto').classList.toggle('oculto', !moto);
+    // Al entrar al moto sin barrio elegido, arranca mostrando las tarjetas.
+    if (moto && !barrioSel()) {
+        $('barrio-opciones').classList.remove('oculto');
+        $('barrio-elegido').classList.add('oculto');
+        $('moto-direccion').classList.add('oculto');
+    }
 }
 
 function costoEnvioSel() {
+    if (envioEsMoto()) {
+        const b = barrios.find((x) => Number(x.id) === barrioSel());
+        return b ? Number(b.costo) : 0;
+    }
     const opt = $('envio-empresa').selectedOptions[0];
     return opt ? Number(opt.dataset.costo) : 0;
 }
@@ -328,7 +384,19 @@ function actualizarMontos() {
 }
 
 // Datos de entrega tal como están en el formulario.
+// Moto Express: barrio (zona/precio) + calle y altura. El resto lo completa el server.
 function datosEnvioForm() {
+    if (envioEsMoto()) {
+        return {
+            empresa_envio_id: Number($('envio-empresa').value) || null,
+            barrio_id: barrioSel() || null,
+            destinatario: $('moto-destinatario').value.trim(),
+            telefono: $('moto-telefono').value.trim(),
+            direccion: $('moto-calle').value.trim(),
+            numero: $('moto-altura').value.trim(),
+            referencia: $('moto-referencia').value.trim(),
+        };
+    }
     return {
         empresa_envio_id: Number($('envio-empresa').value) || null,
         destinatario: $('envio-destinatario').value.trim(),
@@ -346,6 +414,16 @@ function datosEnvioForm() {
 function validarEntrega() {
     const err = $('cart-error'); err.classList.add('oculto');
     if (envioEsRetiro()) return true;
+    if (envioEsMoto()) {
+        if (!barrioSel()) {
+            err.textContent = 'Elegí tu barrio para el envío en moto.'; err.classList.remove('oculto'); return false;
+        }
+        const e = datosEnvioForm();
+        const req = { destinatario: 'quién recibe', telefono: 'teléfono', direccion: 'calle', numero: 'altura' };
+        const faltan = Object.keys(req).filter((k) => !e[k]).map((k) => req[k]);
+        if (faltan.length) { err.textContent = 'Falta: ' + faltan.join(', ') + '.'; err.classList.remove('oculto'); return false; }
+        return true;
+    }
     const e = datosEnvioForm();
     const req = { destinatario: 'quién recibe', telefono: 'teléfono', direccion: 'calle',
         numero: 'número', localidad: 'localidad', provincia: 'provincia', cp: 'código postal' };
@@ -735,8 +813,9 @@ async function iniciar() {
     // categorías (menú superior + select del filtro)
     await cargarCategorias();
 
-    // medios de envío para el checkout
+    // medios de envío + barrios (Moto Express) para el checkout
     try { empresasEnvio = (await api.get('/api/tienda/envios')).empresas; } catch { empresasEnvio = []; }
+    try { barrios = (await api.get('/api/tienda/barrios')).barrios; } catch { barrios = []; }
 
     await cargarFavoritos();
     await cargarHome();          // vista por defecto: la home modular
@@ -791,6 +870,12 @@ async function iniciar() {
         document.querySelectorAll('.metodo').forEach((l) => l.classList.toggle('activo', l.querySelector('input').checked));
     }));
     $('envio-empresa').addEventListener('change', () => { toggleEnvioCampos(); actualizarMontos(); });
+    // Elegir barrio (tarjetas) → colapsa y muestra la dirección; "cambiar" vuelve atrás.
+    $('barrio-opciones').addEventListener('click', (e) => {
+        const c = e.target.closest('.barrio-card');
+        if (c) elegirBarrio(Number(c.dataset.barrio), Number(c.dataset.costo), c.querySelector('.barrio-nom').textContent);
+    });
+    $('barrio-cambiar').addEventListener('click', cambiarBarrio);
 
     // acceso mayorista (toggle modo / solicitar)
     $('mayorista-zona').addEventListener('click', (e) => {

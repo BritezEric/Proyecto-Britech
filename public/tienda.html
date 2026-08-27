@@ -105,11 +105,34 @@
             <h2>Tu carrito</h2>
             <div id="cart-items"></div>
             <div id="cart-resumen" class="oculto">
+                <div class="cart-montos">
+                    <div class="fila-monto"><span>Subtotal</span><span id="cart-subtotal">$ 0,00</span></div>
+                    <div class="fila-monto"><span>Envío</span><span id="cart-envio">$ 0,00</span></div>
+                    <div class="cart-total"><span>Total</span><strong id="cart-total">$ 0,00</strong></div>
+                </div>
                 <!-- Paso 1: entrega (retiro / envío) -->
                 <div id="paso-entrega" class="checkout-paso">
                     <div class="paso-head"><span class="paso-num">1</span> Entrega</div>
                     <div class="envio-box">
                         <select id="envio-empresa"></select>
+
+                        <!-- Moto Express: elegir barrio (colapsa al elegir) + dirección con altura -->
+                        <div id="envio-moto" class="oculto">
+                            <div id="barrio-opciones" class="barrio-cards"></div>
+                            <div id="barrio-elegido" class="barrio-chip oculto">
+                                <span id="barrio-chip-txt"></span>
+                                <button type="button" id="barrio-cambiar">cambiar</button>
+                            </div>
+                            <input type="hidden" id="envio-barrio" value="">
+                            <div id="moto-direccion" class="envio-grid oculto">
+                                <input id="moto-destinatario" type="text" placeholder="Quién recibe *" autocomplete="name">
+                                <input id="moto-telefono" type="tel" placeholder="Teléfono *" autocomplete="tel">
+                                <input id="moto-calle" type="text" placeholder="Calle *" autocomplete="address-line1">
+                                <input id="moto-altura" type="text" placeholder="Altura (número) *" autocomplete="address-line2">
+                                <input id="moto-referencia" type="text" placeholder="Referencia / piso / depto (opcional)" class="envio-ancho">
+                            </div>
+                        </div>
+
                         <div id="envio-campos" class="envio-grid">
                             <input id="envio-destinatario" type="text" placeholder="Quién recibe *" autocomplete="name">
                             <input id="envio-telefono" type="tel" placeholder="Teléfono *" autocomplete="tel">
@@ -122,7 +145,7 @@
                         </div>
                     </div>
                     <p id="cart-error" class="form-error oculto"></p>
-                    <button id="btn-a-pago" class="btn-primary">Continuar al pago →</button>
+                    <button id="btn-a-pago" class="btn-primary btn-grande">Continuar al pago →</button>
                 </div>
 
                 <!-- Paso 2: método de pago -->
@@ -147,15 +170,9 @@
                     </div>
                     <p id="cart-error2" class="form-error oculto"></p>
                     <div class="paso-acciones">
-                        <button id="btn-volver-entrega" class="btn-secundario">← Volver</button>
-                        <button id="btn-confirmar-pedido" class="btn-primary">Confirmar pedido</button>
+                        <button id="btn-volver-entrega" class="btn-volver">← Volver</button>
+                        <button id="btn-confirmar-pedido" class="btn-primary btn-grande">Confirmar pedido</button>
                     </div>
-                </div>
-
-                <div class="cart-montos">
-                    <div class="fila-monto"><span>Subtotal</span><span id="cart-subtotal">$ 0,00</span></div>
-                    <div class="fila-monto"><span>Envío</span><span id="cart-envio">$ 0,00</span></div>
-                    <div class="cart-total"><span>Total</span><strong id="cart-total">$ 0,00</strong></div>
                 </div>
             </div>
             <button id="cart-cerrar" class="btn-secundario" style="margin-top:12px">Seguir comprando</button>

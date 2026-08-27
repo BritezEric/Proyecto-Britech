@@ -33,7 +33,7 @@ class EmpresaEnvioRepository
     public function activas(): array
     {
         return Database::conexion()
-            ->query("SELECT id, nombre, costo_base, es_retiro FROM empresa_envio WHERE activo = 1 ORDER BY es_retiro DESC, costo_base, nombre")
+            ->query("SELECT id, nombre, costo_base, es_retiro, es_moto FROM empresa_envio WHERE activo = 1 ORDER BY es_retiro DESC, costo_base, nombre")
             ->fetchAll();
     }
 

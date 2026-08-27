@@ -18,10 +18,12 @@ class DashboardController
         Response::json([
             'ok' => true,
             'ventas_hoy'            => $r->ventasHoy(),
+            'ventas_online_hoy'     => $r->ventasOnlineHoy(),
             'ventas_mes'            => $r->ventasMes(),
             'ventas_online_mes'     => $r->ventasOnlineMes(),
             'ticket_promedio_mes'   => $r->ticketPromedioMes(),
             'pedidos_pendientes'    => $r->pedidosPendientes(),
+            'envios_sin_asignar'    => $r->enviosSinAsignar(),
             'solicitudes_pendientes'=> $r->solicitudesPendientes(),
             'sin_stock'             => $r->sinStock(),
             'stock_bajo'            => $r->stockBajo(),

@@ -127,6 +127,25 @@ class DashboardRepository
         );
     }
 
+    /** Envíos de moto ACTIVOS sin repartidor asignado (para el aviso de Repartos). */
+    public function enviosSinAsignar(): int
+    {
+        return (int) $this->unValor(
+            "SELECT COUNT(*) FROM envio e JOIN barrio b ON b.id = e.barrio_id
+             WHERE e.repartidor_id IS NULL AND e.estado IN ('pendiente','despachado','en_camino')"
+        );
+    }
+
+    /** Ventas de la página (tienda online) de HOY: cantidad de pedidos + monto. */
+    public function ventasOnlineHoy(): array
+    {
+        $r = $this->unaFila(
+            "SELECT COUNT(*) AS cantidad, COALESCE(SUM(total),0) AS monto
+             FROM pedido WHERE estado <> 'cancelado' AND DATE(creado_en) = CURDATE()"
+        );
+        return ['cantidad' => (int) ($r['cantidad'] ?? 0), 'monto' => (float) ($r['monto'] ?? 0)];
+    }
+
     /**
      * Serie de ventas para el gráfico, con el eje según el período elegido, y
      * separando ventas FÍSICAS (POS, tabla venta) de ONLINE (tienda, tabla pedido).

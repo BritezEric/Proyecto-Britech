@@ -7,6 +7,9 @@ use App\Repositories\ClienteRepository;
 use App\Repositories\ProductoRepository;
 use App\Repositories\VentaRepository;
 use App\Repositories\InventarioRepository;
+use App\Repositories\EmpresaEnvioRepository;
+use App\Repositories\BarrioRepository;
+use App\Repositories\EnvioRepository;
 use App\Core\ValidacionException;
 
 /**
@@ -97,7 +100,13 @@ class VentaService
         }
         $total     = round($subtotal - $descuento, 2);
 
-        // 4) Validar que los pagos sumen exactamente el total (RN6).
+        // 3b) Envío opcional: se valida y su costo se SUMA al total (sube el ticket).
+        $envio = (!empty($datos['envio']) && is_array($datos['envio']))
+            ? $this->resolverEnvio($datos['envio']) : null;
+        $envioCosto = $envio['costo'] ?? 0.0;
+        $total = round($total + $envioCosto, 2);
+
+        // 4) Validar que los pagos sumen exactamente el total (productos + envío) (RN6).
         $sumaPagos = 0.0;
         foreach ($pagos as $pg) {
             $sumaPagos += (float) ($pg['monto'] ?? 0);
@@ -140,6 +149,13 @@ class VentaService
 
             $ventaRepo->crearComprobante($ventaId, $numero);
 
+            // Envío opcional cargado por el vendedor (el repartidor se asigna después).
+            if ($envio !== null && $envio['insertar']) {
+                (new EnvioRepository())->crear(
+                    null, $envio['empresa_id'], $envio['datos'], $envio['costo'], $envio['barrio_id'], $ventaId
+                );
+            }
+
             $pdo->commit();
         } catch (\Throwable $e) {
             // Si algo falló, deshacemos TODO.
@@ -147,7 +163,66 @@ class VentaService
             throw $e;
         }
 
-        return ['venta_id' => $ventaId, 'numero' => $numero, 'total' => $total];
+        return ['venta_id' => $ventaId, 'numero' => $numero, 'total' => $total, 'envio_costo' => $envioCosto];
+    }
+
+    /**
+     * Valida el envío de una venta del POS y calcula su costo (moto = precio del
+     * barrio; otros = costo base; retiro = 0). Devuelve el costo + los datos para
+     * insertar el envío después de crear la venta. El costo SE SUMA al total de la
+     * venta (el ticket sube). El repartidor se asigna luego desde Repartidores.
+     *
+     * @return array{costo: float, insertar: bool, empresa_id: ?int, barrio_id: ?int, datos: array}
+     */
+    private function resolverEnvio(array $envio): array
+    {
+        $vacio = ['costo' => 0.0, 'insertar' => false, 'empresa_id' => null, 'barrio_id' => null, 'datos' => []];
+
+        $empresaId = (int) ($envio['empresa_envio_id'] ?? 0) ?: null;
+        if ($empresaId === null) { return $vacio; }   // sin medio elegido → sin envío
+
+        $empresa = (new EmpresaEnvioRepository())->buscarPorId($empresaId);
+        if ($empresa === null || (int) $empresa['activo'] !== 1) {
+            throw new ValidacionException('El medio de envío no es válido.');
+        }
+        if ((int) ($empresa['es_retiro'] ?? 0) === 1) { return $vacio; }   // retiro → sin envío ni costo
+
+        $esMoto = (int) ($empresa['es_moto'] ?? 0) === 1;
+        $g = fn($k) => trim($envio[$k] ?? '') ?: null;
+        $barrioId = null;
+        $costo = round((float) $empresa['costo_base'], 2);
+        $localidad = $g('localidad');
+
+        if ($esMoto) {
+            $barrioId = (int) ($envio['barrio_id'] ?? 0) ?: null;
+            $barrio = $barrioId ? (new BarrioRepository())->buscarPorId($barrioId) : null;
+            if ($barrio === null || (int) $barrio['activo'] !== 1) {
+                throw new ValidacionException('Elegí un barrio para el envío en moto.');
+            }
+            $costo = round((float) $barrio['costo'], 2);
+            $localidad = $barrio['nombre'];
+        }
+
+        if ($g('destinatario') === null || $g('direccion') === null || $g('numero') === null) {
+            throw new ValidacionException('Para el envío falta: quién recibe, calle y altura.');
+        }
+
+        return [
+            'costo'      => $costo,
+            'insertar'   => true,
+            'empresa_id' => $empresaId,
+            'barrio_id'  => $barrioId,
+            'datos'      => [
+                'destinatario' => $g('destinatario'),
+                'telefono'     => $g('telefono'),
+                'direccion'    => $g('direccion'),
+                'numero'       => $g('numero'),
+                'referencia'   => $g('referencia'),
+                'localidad'    => $localidad,
+                'provincia'    => $g('provincia'),
+                'cp'           => $g('cp'),
+            ],
+        ];
     }
 
     /**

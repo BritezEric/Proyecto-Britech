@@ -231,6 +231,31 @@ body { min-height: 100vh; }
 .envio-grid.oculto { display: none; }
 .envio-grid .envio-ancho { grid-column: 1 / -1; }
 @media (max-width: 480px) { .envio-grid { grid-template-columns: 1fr; } }
+
+/* ===== Moto Express: elección de barrio (tarjetas que colapsan) + dirección ===== */
+#envio-moto { display: flex; flex-direction: column; gap: var(--sp-2); }
+#envio-moto.oculto { display: none; }
+.barrio-cards { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
+.barrio-cards.oculto { display: none; }
+.barrio-card {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+    padding: var(--sp-3); border: 1.5px solid var(--line); border-radius: var(--r-md);
+    background: var(--surface-sunk); color: var(--ink); cursor: pointer; text-align: left;
+    transition: border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.barrio-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 6px 16px oklch(0.52 0.24 296 / 0.16); }
+.barrio-card:active { transform: scale(0.98); }
+.barrio-nom { font-weight: 700; font-size: var(--text-sm); }
+.barrio-precio { font-size: var(--text-xs); color: var(--primary-strong); font-weight: 700; }
+.barrio-chip {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3); border: 1.5px solid var(--primary); border-radius: var(--r-md);
+    background: var(--primary-tint); font-weight: 700; font-size: var(--text-sm);
+    animation: paso-in var(--dur-fast) var(--ease-out) both;
+}
+.barrio-chip.oculto { display: none; }
+.barrio-chip button { border: none; background: none; color: var(--primary-strong); font-weight: 700; cursor: pointer; text-decoration: underline; font-size: var(--text-xs); }
+@media (max-width: 480px) { .barrio-cards { grid-template-columns: 1fr; } }
 /* ===== Checkout por pasos (1 entrega · 2 pago) ===== */
 .checkout-paso { animation: paso-in var(--dur) var(--ease-out) both; }
 .checkout-paso.oculto { display: none; }
@@ -239,9 +264,23 @@ body { min-height: 100vh; }
     margin: var(--sp-4) 0 var(--sp-1); }
 .paso-num { display: grid; place-items: center; width: 22px; height: 22px; border-radius: var(--r-full);
     background: var(--primary); color: #fff; font-size: 12px; font-weight: 800; }
-.paso-acciones { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
-.paso-acciones .btn-primary { flex: 1; }
-.paso-acciones .btn-secundario { flex: 0 0 auto; }
+/* Acciones del paso apiladas: acción principal grande abajo, "volver" sutil arriba. */
+.paso-acciones { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-4); }
+/* Botón principal grande (Confirmar / Continuar): full-width, alto, imposible de no ver. */
+.btn-grande {
+    width: 100%; padding: var(--sp-4); font-size: var(--text-base); font-weight: 800;
+    border-radius: var(--r-md); box-shadow: var(--shadow-primary, 0 6px 18px oklch(0.52 0.24 296 / 0.3));
+}
+.btn-grande:not(:disabled):hover { transform: translateY(-1px); }
+.btn-grande:not(:disabled):active { transform: translateY(0) scale(0.99); }
+/* "Volver": link discreto, no compite con el CTA. */
+.btn-volver {
+    align-self: center; background: none; border: none; cursor: pointer;
+    color: var(--ink-muted); font-family: inherit; font-size: var(--text-sm); font-weight: 600;
+    padding: var(--sp-1) var(--sp-2); border-radius: var(--r-sm);
+    transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.btn-volver:hover { color: var(--ink); background: var(--surface-sunk); }
 
 .metodos { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-2); }
 .metodo { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3);
@@ -255,11 +294,12 @@ body { min-height: 100vh; }
 .metodo-txt strong { font-size: var(--text-sm); }
 .metodo-txt small { font-size: var(--text-xs); color: var(--ink-muted); }
 
-.cart-montos { margin-top: var(--sp-3); }
+/* Resumen de montos: panel arriba del checkout, con el total bien protagonista. */
+.cart-montos { margin: 0 0 var(--sp-4); padding: var(--sp-3) var(--sp-4); background: var(--surface-sunk); border-radius: var(--r-md); }
 .fila-monto { display: flex; justify-content: space-between; font-size: var(--text-sm); color: var(--ink-muted); padding: var(--sp-1) 0; }
 .fila-monto span:last-child { color: var(--ink); font-variant-numeric: tabular-nums; }
-.cart-total { display: flex; justify-content: space-between; align-items: baseline; margin: var(--sp-3) 0; padding-top: var(--sp-3); border-top: 2px solid var(--line); }
-.cart-total strong { font-size: var(--text-2xl); font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.cart-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: var(--sp-2); padding-top: var(--sp-2); border-top: 2px solid var(--line); }
+.cart-total strong { font-size: var(--text-2xl); font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--primary-strong); }
 .cart-vacio { text-align: center; color: var(--ink-muted); padding: var(--sp-6) 0; }
 
 /* Botones genéricos */

@@ -10,6 +10,7 @@ use App\Core\ValidacionException;
 use App\Services\PedidoService;
 use App\Repositories\PedidoRepository;
 use App\Repositories\EnvioRepository;
+use App\Repositories\RepartidorRepository;
 
 /**
  * Pedidos de la tienda.
@@ -114,9 +115,10 @@ class PedidoController
         $id = (int) Request::query('id', '0');
         $p = (new PedidoRepository())->buscarPorId($id);
         Response::json([
-            'ok'    => true,
-            'items' => (new PedidoRepository())->detalle($id),
-            'envio' => (new EnvioRepository())->dePedido($id),
+            'ok'           => true,
+            'items'        => (new PedidoRepository())->detalle($id),
+            'envio'        => (new EnvioRepository())->dePedido($id),
+            'repartidores' => (new RepartidorRepository())->activos(),
             'pago'  => $p ? [
                 'estado_pago'     => $p['estado_pago'],
                 'metodo_pago'     => $p['metodo_pago'],
@@ -160,9 +162,11 @@ class PedidoController
         if (!Session::esAdmin()) { Response::json(['ok' => false, 'error' => 'Solo admin.'], 403); return; }
         $d = Request::json();
         try {
+            // repartidor_id presente → se reasigna (0/'' = sin asignar); ausente → no se toca.
+            $rep = array_key_exists('repartidor_id', $d) ? ((int) $d['repartidor_id'] ?: null) : false;
             (new PedidoService())->actualizarEnvio(
                 (int) ($d['pedido_id'] ?? 0), $d['estado'] ?? '', $d['tracking'] ?? null,
-                is_array($d['datos'] ?? null) ? $d['datos'] : []
+                is_array($d['datos'] ?? null) ? $d['datos'] : [], $rep
             );
             Response::json(['ok' => true]);
         } catch (ValidacionException $e) {

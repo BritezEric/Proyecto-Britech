@@ -74,6 +74,21 @@
                 <div><span id="falta-label">Falta</span><span id="falta">$ 0,00</span></div>
             </div>
 
+            <label class="etiqueta pos-envio-tog"><input type="checkbox" id="envio-on"> 🛵 Envío a domicilio</label>
+            <div id="envio-box" class="oculto">
+                <select id="pos-envio-empresa"></select>
+                <div id="pos-barrio-cards" class="pos-barrio-cards oculto"></div>
+                <input type="hidden" id="pos-envio-barrio" value="">
+                <div id="pos-envio-grid" class="pos-envio-grid oculto">
+                    <input id="pos-env-destinatario" type="text" placeholder="Quién recibe *">
+                    <input id="pos-env-telefono" type="tel" placeholder="Teléfono">
+                    <input id="pos-env-calle" type="text" placeholder="Calle *">
+                    <input id="pos-env-altura" type="text" placeholder="Altura *">
+                    <input id="pos-env-ref" type="text" placeholder="Referencia (opcional)" class="pos-env-ancho">
+                </div>
+                <p id="pos-envio-hint" class="pos-envio-hint td-mute oculto">El repartidor se asigna después desde “Repartos” en el panel admin.</p>
+            </div>
+
             <p id="cobro-error" class="cobro-error oculto"></p>
             <div class="modal-botones">
                 <button id="btn-cancelar" class="btn-secundario">Cancelar</button>

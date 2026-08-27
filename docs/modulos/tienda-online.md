@@ -5,6 +5,10 @@
 > con aprobación del admin + toggle minorista/mayorista**. Detalle y estado en
 > [entrada-datos.md](entrada-datos.md).
 > Lo de abajo es la nota de planificación original (referencia de alcance).
+>
+> **Ampliación (2026-08-27):** checkout en **2 pasos** con **métodos de pago**
+> (Transferencia / Mercado Pago / Tarjeta) y **Moto Express** (envío por barrio).
+> Ver [envios-repartidores.md](envios-repartidores.md).
 
 ## Referencia de producto
 Modelo a seguir (con **otro diseño** y catálogo propio):

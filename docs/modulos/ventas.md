@@ -3,6 +3,10 @@
 > Estado: **APROBADO** — decisiones cerradas.
 > Base de datos implementada: ver [ventas-modelo-datos.md](ventas-modelo-datos.md) y `database/schema_ventas.sql`.
 > Documentación viva: se actualiza a medida que construimos.
+>
+> **Ampliación (2026-08-27):** el POS puede cargar un **envío** en la venta (su
+> costo suma al total/ticket; el repartidor se asigna después). Ver
+> [envios-repartidores.md](envios-repartidores.md).
 
 ---
 

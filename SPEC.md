@@ -4,7 +4,7 @@
 > desarrollo. Si cambia una regla de negocio o una decisión, primero se actualiza
 > acá y en el doc del módulo, antes de tocar código importante.
 >
-> Última actualización: 2026-08-19
+> Última actualización: 2026-08-27
 
 ---
 
@@ -27,7 +27,10 @@ pedidos, precios minorista/mayorista, compras/sobre pedido, envíos, tickets/
 comprobantes, facturación AFIP, usuarios y permisos, dashboard, documentación y
 auditoría.
 
-**En construcción ahora:** módulo **Ventas (POS)**.
+**Construido y en uso:** POS (ventas), ABM admin (Entrada de Datos), tienda online
+(catálogo + carrito + checkout 2 pasos + pedidos), **Envíos + Moto Express +
+Repartidores** (con envío también desde el POS), empleados/sueldos y dashboard.
+**Próximo:** gateway de pago real (MP/Tarjeta), compras/aprovisionamiento y AFIP.
 
 ---
 
@@ -105,13 +108,14 @@ Chart.js (dashboard), Laravel, PHPUnit, Git.
 
 | Orden | Módulo | Estado |
 |---|---|---|
-| 0 | Cimientos (Composer, `.env`, PDO, Router) | **⬅️ siguiente** |
-| 1 | Auth mínimo (login/sesión) | pendiente |
-| 2 | Base mínima para vender (producto/cliente/precio/stock) | BD lista |
-| 3 | **⭐ Ventas (POS)** | BD lista, código pendiente |
-| 4 | Ampliar Productos/Clientes/Stock + ABM genérico | pendiente |
-| 5 | Pedidos → Envíos → Tienda online | planificado |
-| 6 | Dashboard | pendiente |
+| 0 | Cimientos (Composer, `.env`, PDO, Router) | ✅ hecho |
+| 1 | Auth mínimo (login/sesión) | ✅ hecho |
+| 2 | Base mínima para vender (producto/cliente/precio/stock) | ✅ hecho |
+| 3 | **⭐ Ventas (POS)** | ✅ hecho |
+| 4 | Ampliar Productos/Clientes/Stock + ABM genérico | ✅ hecho |
+| 5 | Pedidos → Envíos → Tienda online | ✅ hecho |
+| 5b | **Moto Express + barrios + Repartidores + envío en POS** | ✅ hecho |
+| 6 | Dashboard | ✅ hecho (accesos, KPIs, finanzas) |
 | 7 | Compras / aprovisionamiento (sobre pedido) | pendiente |
 | 8 | AFIP, seguridad final, testing, optimización | pendiente |
 
@@ -141,6 +145,8 @@ funcione de punta a punta, y luego ampliar. No construir módulos completos a me
 17. **Sistema de diseño unificado:** identidad propia comercial-cálida (verde de marca `#048b56` + acento ámbar `#e18600`, tipografía Hanken Grotesk), **no** look de plantilla/admin, ni ruidoso, ni anticuado. Tokens únicos en [`public/assets/css/tokens.css`](public/assets/css/tokens.css); estrategia y componentes en [DESIGN.md](DESIGN.md); registro/usuarios en [PRODUCT.md](PRODUCT.md). Aplicado a login, POS y ventas. (Guiado con la skill *impeccable*: paleta OKLCH, contraste WCAG AA, motion contenido, principios de emil-design-eng/apple.)
 18. **Módulo de Entrada de Datos (panel admin):** ABM completo de las tablas maestras — **Clientes, Productos (+precio +stock inicial), Proveedores, Categorías, Marcas** — con **búsqueda, filtros y paginación** (server-side). Un framework de ABM reutilizable en el frontend (`admin.js` guiado por config por entidad) y un patrón backend por capas (Repository → Service con validaciones → Controller). Baja **lógica** (`activo=0`), no borrado físico. Ver [docs/modulos/entrada-datos.md](docs/modulos/entrada-datos.md).
 19. **Tienda online + navegación por rol:** tienda pública con **registro/login de cliente** (el cliente ES un `cliente` con `password_hash`), catálogo con precio por lista, carrito y **checkout que crea un Pedido** (`Venta ≠ Pedido`, no descuenta stock). El admin ve y gestiona pedidos (estado + detalle) en el panel. Navegación por rol: landing `/` (hub) → **admin** al panel, **vendedor** al POS, **cliente** a la tienda. Ver [docs/modulos/entrada-datos.md](docs/modulos/entrada-datos.md).
+20. **Envíos: Moto Express por barrio + Repartidores:** medio de envío local **Moto Express** que en el checkout pide un **barrio** (precio fijo, ABM `barrio`) + calle y altura, en vez de la dirección completa. **Repartidores** (ABM, sin login) que el admin **deriva** a cada envío desde la vista **Repartos** (tablero de sin-asignar); su **paga** = suma del precio de los barrios de sus envíos **entregados** en el día. Un **envío** puede colgar de un **pedido** (tienda) **o** de una **venta** (POS) — `envio.venta_id` + `pedido_id` NULL-able. Regla: **no se marca "entregado"** si el pago del pedido no está `pagado` (las ventas del POS ya se cobraron). Utilidades: **ticket imprimible** y **mensaje de WhatsApp** (`wa.me`, sin API) con los envíos a repartir. Ver [docs/modulos/envios-repartidores.md](docs/modulos/envios-repartidores.md).
+21. **Métodos de pago en el checkout + envío en el POS:** el checkout de la tienda es de **2 pasos** (entrega → método de pago: Transferencia con comprobante, Mercado Pago, Tarjeta; `pedido.metodo_pago`) — MP/Tarjeta **aún sin gateway real**. El **POS** puede cargar un envío en la venta; su costo **se suma al total** (sube el ticket) y el pago debe cuadrar con productos + envío. Cortes por fecha con `CURDATE()` de MySQL (evita el desfase de zona horaria). Ver [docs/modulos/envios-repartidores.md](docs/modulos/envios-repartidores.md).
 
 ### Patrones de diseño (se nombran mientras se aprenden)
 No se agregan patrones "porque sí" (eso empeora el código). Se usan donde
@@ -157,6 +163,7 @@ resuelven un problema real, y se etiquetan al aparecer:
 ## 8. Modelo de datos
 
 - **Módulo Ventas (14 tablas):** ver [docs/modulos/ventas-modelo-datos.md](docs/modulos/ventas-modelo-datos.md) — implementado en [database/schema_ventas.sql](database/schema_ventas.sql).
+- **Envíos / Moto Express:** tablas `barrio` y `repartidor`; `envio` ampliado con `barrio_id`, `repartidor_id`, `venta_id` (y `pedido_id` NULL-able); `empresa_envio.es_moto`; `pedido.metodo_pago`. Ver [docs/modulos/envios-repartidores.md](docs/modulos/envios-repartidores.md) — scripts [`schema_moto_barrios.sql`](database/schema_moto_barrios.sql), [`schema_envio_venta.sql`](database/schema_envio_venta.sql), [`schema_metodo_pago.sql`](database/schema_metodo_pago.sql).
 - Diseño normalizado a **3FN**: sin datos duplicados, relaciones por FK, integridad referencial (InnoDB).
 
 ---
@@ -192,7 +199,10 @@ SPEC.md                          ← este documento (referencia maestra)
 docs/modulos/ventas.md           ← spec del módulo Ventas
 docs/modulos/ventas-modelo-datos.md
 docs/modulos/tienda-online.md    ← nota de planificación
+docs/modulos/entrada-datos.md    ← ABM admin + tienda + dashboard
+docs/modulos/envios-repartidores.md  ← Moto Express, barrios, repartidores, Repartos, pago
 database/schema_ventas.sql       ← esquema SQL de Ventas
+database/schema_moto_barrios.sql · schema_envio_venta.sql · schema_metodo_pago.sql
 ```
 
 A medida que avancemos se sumarán: docs de otros módulos, registro de decisiones

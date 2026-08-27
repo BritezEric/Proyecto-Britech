@@ -73,6 +73,10 @@ class VentaController
         $anulada = $v['estado'] === 'anulada' ? "<div class='anul'>*** ANULADA ***</div>" : '';
         $desc = (float) $v['descuento'] > 0
             ? "<div class='row'><span>Descuento</span><span>-{$fmt($v['descuento'])}</span></div>" : '';
+        // El envío no es una línea de detalle: es la diferencia entre el total y (subtotal - descuento).
+        $envioMonto = round((float) $v['total'] - ((float) $v['subtotal'] - (float) $v['descuento']), 2);
+        $envio = $envioMonto > 0.001
+            ? "<div class='row'><span>Envio</span><span>{$fmt($envioMonto)}</span></div>" : '';
 
         return "<html><head><meta charset='utf-8'><style>
             * { font-family: 'DejaVu Sans', sans-serif; }
@@ -102,6 +106,7 @@ class VentaController
             <div class='sep'></div>
             <div class='row'><span>Subtotal</span><span>{$fmt($v['subtotal'])}</span></div>
             {$desc}
+            {$envio}
             <div class='row total'><span>TOTAL</span><span>{$fmt($v['total'])}</span></div>
             <div class='sep'></div>
             {$pagos}
