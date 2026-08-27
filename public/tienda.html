@@ -101,9 +101,14 @@
     </div>
 
     <!-- Carrito -->
-    <div id="modal-carrito" class="modal oculto">
-        <div class="modal-caja">
-            <h2>Tu carrito</h2>
+    <div id="modal-carrito" class="drawer">
+        <div class="drawer-overlay" data-cerrar-drawer></div>
+        <aside class="drawer-panel">
+            <header class="drawer-head">
+                <h2>🛒 Tu carrito</h2>
+                <button id="cart-cerrar" class="drawer-x" aria-label="Cerrar">×</button>
+            </header>
+            <div class="drawer-body">
             <div id="cart-items"></div>
             <div id="cart-resumen" class="oculto">
                 <div class="cart-montos">
@@ -176,8 +181,8 @@
                     </div>
                 </div>
             </div>
-            <button id="cart-cerrar" class="btn-secundario" style="margin-top:12px">Seguir comprando</button>
-        </div>
+            </div>
+        </aside>
     </div>
 
     <!-- Auth (login / registro) -->

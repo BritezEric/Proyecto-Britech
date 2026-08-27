@@ -850,8 +850,9 @@ async function subirComprobantePedido(file, pedidoId) {
 }
 
 // ============ Utilidades de modal ============
-function abrir(id) { $(id).classList.remove('oculto'); }
-function cerrar(id) { $(id).classList.add('oculto'); }
+// Los drawers (panel deslizable) usan .abierto; el resto, .oculto.
+function abrir(id) { const el = $(id); el.classList.contains('drawer') ? el.classList.add('abierto') : el.classList.remove('oculto'); }
+function cerrar(id) { const el = $(id); el.classList.contains('drawer') ? el.classList.remove('abierto') : el.classList.add('oculto'); }
 
 // ============ Init / eventos ============
 let debounce;
@@ -985,6 +986,13 @@ async function iniciar() {
     // cerrar modales al clickear el fondo
     document.querySelectorAll('.modal').forEach((m) =>
         m.addEventListener('click', (e) => { if (e.target === m) m.classList.add('oculto'); }));
+    // cerrar drawers: clic en el overlay o tecla Escape
+    document.querySelectorAll('.drawer-overlay').forEach((o) =>
+        o.addEventListener('click', () => cerrar(o.closest('.drawer').id)));
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        document.querySelectorAll('.drawer.abierto').forEach((d) => d.classList.remove('abierto'));
+    });
 
     // Si vino desde el login con ?registro=1 y no hay sesión, abrir el registro.
     if (new URLSearchParams(location.search).get('registro') === '1' && !cliente) {
