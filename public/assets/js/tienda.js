@@ -120,6 +120,12 @@ function manejarClickProducto(e) {
     }
     const fav = e.target.closest('.fav-btn');
     if (fav) { toggleFavorito(Number(fav.dataset.fav)); return true; }
+    const copiar = e.target.closest('[data-copiar]');
+    if (copiar) {
+        e.preventDefault();
+        navigator.clipboard?.writeText(copiar.dataset.copiar).then(() => toast('✓ Código copiado')).catch(() => {});
+        return true;
+    }
     const add = e.target.closest('.prod-add');
     if (add) {
         const cant = (cliente && cliente.modo === 'mayorista') ? (Number(add.dataset.min) || 1) : 1;

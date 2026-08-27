@@ -23,23 +23,22 @@ function cardProducto(p) {
         ? `<div class="prod-thumb con-img"><img src="${esc(p.imagen)}" alt="" loading="lazy"></div>`
         : `<div class="prod-thumb">${esc(inicial(p.nombre))}</div>`;
     const stockTxt = Number(p.es_sobre_pedido) === 1 ? 'Sobre pedido' : (agotado ? 'Sin stock' : 'Disponible: ' + Number(p.stock));
+    const cod = esc(p.sku || ('#' + p.id));
     return `<article class="prod" data-id="${p.id}">
         ${hayAnt ? `<span class="oferta-badge">-${off}%</span>` : ''}
         <button class="fav-btn ${favOn ? 'activo' : ''}" data-fav="${p.id}" aria-label="Favorito">${favOn ? '❤️' : '🤍'}</button>
         ${thumb}
-        <h3 class="prod-nombre">${esc(p.nombre)}</h3>
         <div class="prod-meta">
             <span class="prod-cat">${esc(p.categoria || 'General')}</span>
             ${p.marca ? `<span class="prod-marca">${esc(p.marca)}</span>` : ''}
         </div>
+        <h3 class="prod-nombre">${esc(p.nombre)}</h3>
         <div class="prod-precios">
             <span class="prod-precio">${money.format(p.precio)}</span>
             ${hayAnt ? `<span class="prod-precio-ant">${money.format(p.precio_anterior)}</span>` : ''}
         </div>
-        <div class="prod-foot">
-            <span class="prod-cod">${esc(p.sku || ('#' + p.id))}</span>
-            <button class="prod-add" data-id="${p.id}" data-nombre="${esc(p.nombre)}" data-precio="${p.precio}" data-min="${min}" ${agotado ? 'disabled' : ''} aria-label="Agregar al carrito" title="${agotado ? esc(stockTxt) : 'Agregar al carrito'}">🛍️</button>
-        </div>
+        <button class="prod-cod" data-copiar="${cod}" title="Copiar código" type="button">${cod}</button>
+        <button class="prod-add" data-id="${p.id}" data-nombre="${esc(p.nombre)}" data-precio="${p.precio}" data-min="${min}" ${agotado ? 'disabled' : ''} aria-label="Agregar al carrito" title="${agotado ? esc(stockTxt) : 'Agregar al carrito'}">+</button>
     </article>`;
 }
 
