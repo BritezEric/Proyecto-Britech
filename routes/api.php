@@ -56,6 +56,7 @@ $router->post('/api/ventas/anular',    [VentaController::class, 'anular'],     t
 // --- Panel admin: dashboard + ABM de tablas maestras (solo admin) ---
 $router->get('/api/admin/dashboard', [DashboardController::class, 'resumen'], true);
 $router->get('/api/admin/dashboard/serie', [DashboardController::class, 'serie'], true);
+$router->get('/api/admin/notificaciones', [DashboardController::class, 'notificaciones'], true);
 $router->get('/api/admin/clientes',            [ClienteController::class, 'admin'],   true);
 $router->post('/api/admin/clientes/guardar',   [ClienteController::class, 'guardar'], true);
 $router->post('/api/admin/clientes/baja',      [ClienteController::class, 'baja'],    true);

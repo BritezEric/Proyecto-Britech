@@ -62,6 +62,12 @@ class DashboardRepository
         return (int) $this->unValor("SELECT COUNT(*) FROM solicitud_mayorista WHERE estado = 'pendiente'");
     }
 
+    /** Comprobantes de transferencia esperando revisión del admin. */
+    public function comprobantesEnRevision(): int
+    {
+        return (int) $this->unValor("SELECT COUNT(*) FROM pedido WHERE estado_pago = 'en_revision'");
+    }
+
     /** Productos activos con stock <= umbral (no sobre pedido). Para reponer. */
     public function stockBajo(): array
     {

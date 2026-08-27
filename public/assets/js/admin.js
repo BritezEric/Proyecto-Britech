@@ -1037,10 +1037,47 @@ async function renderInicio() {
 }
 
 // ---- Init ----
+// ---- Novedades / avisos (campana) ----
+async function cargarNotificaciones() {
+    let r;
+    try { r = await api.get('/api/admin/notificaciones'); } catch { return; }
+    const badge = $('noti-badge');
+    badge.textContent = r.total > 99 ? '99+' : r.total;
+    badge.classList.toggle('oculto', !r.total);
+    $('btn-noti').classList.toggle('tiene', !!r.total);
+    $('noti-panel').innerHTML = '<div class="noti-head">Novedades</div>' + (r.items.length
+        ? r.items.map((n) => `<button class="noti-item" data-ir="${esc(n.tipo)}">
+              <span class="noti-ic">${n.icono}</span>
+              <span class="noti-tx">${esc(n.texto)}</span>
+              <span class="noti-n">${Number(n.cantidad)}</span>
+           </button>`).join('')
+        : '<p class="noti-vacio">Todo al día ✓</p>');
+    $('noti-panel').querySelectorAll('[data-ir]').forEach((b) => b.addEventListener('click', () => {
+        $('noti-panel').classList.add('oculto');
+        const destino = { pedidos: 'pedidos', sin_asignar: 'repartos', comprobantes: 'pedidos',
+            solicitudes: 'solicitudes', sin_stock: 'productos' }[b.dataset.ir] || 'inicio';
+        seleccionar(destino);
+    }));
+}
+
 let debounce;
 function wire() {
     document.querySelectorAll('.nav-item').forEach((b) =>
         b.addEventListener('click', () => seleccionar(b.dataset.ent)));
+
+    // Campana de novedades: refresca al abrir; se cierra al clickear afuera.
+    $('btn-noti').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const panel = $('noti-panel');
+        const abrir = panel.classList.contains('oculto');
+        if (abrir) await cargarNotificaciones();
+        panel.classList.toggle('oculto', !abrir);
+    });
+    document.addEventListener('click', (e) => {
+        if (!$('noti-panel').classList.contains('oculto')
+            && !e.target.closest('#noti-panel') && !e.target.closest('#btn-noti'))
+            $('noti-panel').classList.add('oculto');
+    });
 
     $('q').addEventListener('input', (e) => {
         clearTimeout(debounce);
@@ -1115,4 +1152,6 @@ function wire() {
     }
     wire();
     seleccionar('inicio');
+    cargarNotificaciones();
+    setInterval(cargarNotificaciones, 60000);   // refresca cada 60s
 })();
