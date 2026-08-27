@@ -85,88 +85,141 @@ async function renderRepartos() {
 }
 
 // ---------- Detalle de un repartidor ----------
+let repId = null;   // repartidor abierto (para recargar por fecha)
+
 async function abrirRepartidor(id, fecha) {
-    const modal = $('modal-repartidor');
-    $('rep-title').textContent = 'Cargando…';
-    $('rep-detalle').innerHTML = '<p class="td-mute">Cargando…</p>';
-    modal.classList.remove('oculto');
+    repId = id;
+    $('rep-title').textContent = 'Repartidor';
+    $('rep-detalle').innerHTML = '<div class="rep-cargando"><span class="rep-spin"></span></div>';
+    $('modal-repartidor').classList.remove('oculto');
+    await cargarRepartidor(id, fecha);
+}
 
+// Trae y pinta el detalle. Sin placeholder "Cargando…" (evita el parpadeo al
+// cambiar de fecha); el innerHTML se reemplaza de una.
+async function cargarRepartidor(id, fecha) {
     const qs = fecha ? `&fecha=${encodeURIComponent(fecha)}` : '';
-    const r = await api.get(`/api/admin/repartidores/detalle?id=${id}${qs}`);
+    let r;
+    try { r = await api.get(`/api/admin/repartidores/detalle?id=${id}${qs}`); }
+    catch { $('rep-detalle').innerHTML = '<p class="td-mute">No se pudo cargar el detalle.</p>'; return; }
     repDetalle = r;
-    const rep = r.repartidor;
-    $('rep-title').textContent = rep.nombre;
+    pintarRepartidor(r);
+}
 
-    // Envíos ACTIVOS (a repartir): producto, dirección, estado + acciones.
+function tarjetaEnvio(e) {
+    return `<div class="rep-envio" data-envio="${e.envio_id}">
+        <div class="rep-envio-top">
+            <span class="rep-badge">${esc(REP_ESTADO[e.estado] || e.estado)}</span>
+            <span class="rep-envio-barrio">${esc(e.barrio)}</span>
+            ${e.origen === 'venta' ? '<span class="chip">POS</span>' : ''}
+        </div>
+        <div class="rep-envio-datos">
+            <div><b>Dirección:</b> ${esc(e.direccion || '')} ${esc(e.altura || '')}${e.referencia ? ' — ' + esc(e.referencia) : ''}</div>
+            <div><b>Entregar a:</b> ${esc(quienRecibe(e))}${e.telefono ? ' · ' + esc(e.telefono) : ''}</div>
+            <div class="td-mute">${esc(e.productos || '—')}</div>
+        </div>
+        <div class="rep-envio-acc">
+            <button class="btn-mini ghost" data-accion="salida" ${e.estado === 'en_camino' ? 'disabled' : ''}>Salió 🛵</button>
+            <button class="btn-mini" data-accion="entregado">Entregado ✓</button>
+        </div>
+    </div>`;
+}
+
+function pintarRepartidor(r) {
+    $('rep-title').textContent = r.repartidor.nombre;
     const activos = r.activos.length
-        ? r.activos.map((e) => `
-            <div class="rep-envio">
-                <div class="rep-envio-top">
-                    <strong>${esc(e.numero)}</strong>
-                    <span class="badge neutral">${esc(REP_ESTADO[e.estado] || e.estado)}</span>
-                    <span class="tabular">${money.format(e.envio_costo)}</span>
-                </div>
-                ${envioDatos(e)}
-                <div class="rep-envio-acc">
-                    <button class="btn-mini" data-envio="${e.envio_id}" data-estado="en_camino" ${e.estado === 'en_camino' ? 'disabled' : ''}>🛵 Marcar salida</button>
-                    <button class="btn-mini" data-envio="${e.envio_id}" data-estado="entregado">✓ Entregado</button>
-                </div>
-            </div>`).join('')
-        : '<p class="td-mute">Sin envíos activos para repartir.</p>';
+        ? r.activos.map(tarjetaEnvio).join('')
+        : '<p class="rep-vacio">✓ Nada pendiente por repartir.</p>';
 
-    // Paga del día por barrio (solo entregados).
+    $('rep-detalle').innerHTML = `
+        <div class="rep-head">
+            ${r.repartidor.telefono ? `<span class="rep-tel">📞 ${esc(r.repartidor.telefono)}</span>` : '<span></span>'}
+            <div class="rep-head-acc">
+                <a class="btn-wa" href="${esc(linkWhatsapp(r))}" target="_blank" rel="noopener">WhatsApp</a>
+                <button class="btn-secundario btn-sm" id="rep-ticket">🎫 Ticket</button>
+            </div>
+        </div>
+
+        <div class="rep-kpis">
+            <div class="rep-kpi"><span class="rep-num" id="k-repartir">${r.activos.length}</span><span class="rep-lbl">A repartir</span></div>
+            <div class="rep-kpi"><span class="rep-num" id="k-entreg">${Number(r.envios)}</span><span class="rep-lbl">Entregados</span></div>
+            <div class="rep-kpi"><span class="rep-num" id="k-pagar">${money.format(r.total)}</span><span class="rep-lbl">A pagar</span></div>
+        </div>
+
+        <div class="rep-seccion-h">Envíos a repartir</div>
+        <div class="rep-envios" id="rep-lista">${activos}</div>
+
+        <details class="rep-paga">
+            <summary>Paga del día <input type="date" id="rep-fecha" value="${esc(r.fecha)}"></summary>
+            <div id="rep-paga-body">${pagaBody(r)}</div>
+        </details>
+    `;
+
+    $('rep-ticket').addEventListener('click', () => imprimirTicket(repDetalle));
+    const fInp = $('rep-fecha');
+    fInp.addEventListener('change', (ev) => { ev.stopPropagation(); cargarRepartidor(repId, ev.target.value); });
+    fInp.addEventListener('click', (ev) => ev.stopPropagation());   // no togglea el <details>
+
+    $('rep-lista').addEventListener('click', (ev) => {
+        const btn = ev.target.closest('[data-accion]');
+        if (!btn) return;
+        const card = btn.closest('.rep-envio');
+        const env = repDetalle.activos.find((a) => String(a.envio_id) === String(card.dataset.envio));
+        if (!env) return;
+        (btn.dataset.accion === 'entregado') ? marcarEntregado(env, card, btn) : marcarSalida(env, card, btn);
+    });
+}
+
+function pagaBody(r) {
     const filas = r.por_barrio.length
         ? r.por_barrio.map((b) => `<div class="pedido-linea">
               <span>${esc(b.barrio)} · ${Number(b.cantidad)} × ${money.format(b.costo)}</span>
               <span class="tabular">${money.format(b.subtotal)}</span></div>`).join('')
         : '<p class="td-mute">Todavía nada entregado en esta fecha.</p>';
+    return filas + `<div class="pedido-linea total"><strong>Total</strong><strong class="tabular">${money.format(r.total)}</strong></div>`;
+}
 
-    // Mini-gráfico de paga por día.
-    const max = Math.max(1, ...r.serie.map((s) => Number(s.total)));
-    const barras = r.serie.length
-        ? r.serie.map((s) => {
-            const alto = Math.round((Number(s.total) / max) * 100);
-            const etq = s.dia.slice(8) + '/' + s.dia.slice(5, 7);
-            return `<div class="emp-bar" title="${etq}: ${money.format(s.total)} (${Number(s.envios)} env.)">
-                <div class="emp-bar-fill" style="height:${alto}%"></div><span>${etq}</span></div>`;
-        }).join('')
-        : '<p class="td-mute">Sin entregas en los últimos días.</p>';
+// Actualiza KPIs + paga en el sitio (sin re-render de todo el modal).
+function refrescarResumenRep() {
+    const r = repDetalle;
+    $('k-repartir').textContent = r.activos.length;
+    $('k-entreg').textContent = Number(r.envios);
+    $('k-pagar').textContent = money.format(r.total);
+    $('rep-paga-body').innerHTML = pagaBody(r);
+    if (!r.activos.length && !$('rep-lista').querySelector('.rep-envio'))
+        $('rep-lista').innerHTML = '<p class="rep-vacio">✓ Nada pendiente por repartir.</p>';
+}
 
-    $('rep-detalle').innerHTML = `
-        <div class="emp-detalle-top">
-            ${rep.telefono ? `<span class="td-mute">📞 ${esc(rep.telefono)}</span>` : ''}
-            <a class="btn-wa" href="${esc(linkWhatsapp(r))}" target="_blank" rel="noopener">📲 Enviar por WhatsApp</a>
-            <button class="btn-primary" id="rep-ticket">🎫 Ticket de reparto</button>
-        </div>
+// Marcar ENTREGADO: valida en el server; si OK, la tarjeta se va y se actualizan los números.
+async function marcarEntregado(env, card, btn) {
+    btn.disabled = true;
+    try {
+        await api.post('/api/admin/envios/estado', { envio_id: env.envio_id, estado: 'entregado' });
+    } catch (ex) { toast('⚠ ' + ex.message); btn.disabled = false; return; }
 
-        <div class="emp-kpis">
-            <div class="emp-kpi"><span class="emp-num">${r.activos.length}</span><span class="emp-lbl">A repartir</span></div>
-            <div class="emp-kpi"><span class="emp-num">${Number(r.envios)}</span><span class="emp-lbl">Entregados (día)</span></div>
-            <div class="emp-kpi"><span class="emp-num">${money.format(r.total)}</span><span class="emp-lbl">A pagar (día)</span></div>
-        </div>
+    card.classList.add('rep-envio-out');
+    setTimeout(() => card.remove(), 240);
 
-        <h4 class="detalle-sub">Envíos a repartir</h4>
-        <div class="rep-envios">${activos}</div>
+    repDetalle.activos = repDetalle.activos.filter((a) => a.envio_id !== env.envio_id);
+    repDetalle.envios = Number(repDetalle.envios) + 1;
+    const c = Number(env.envio_costo) || 0;
+    repDetalle.total = Number(repDetalle.total) + c;
+    const b = repDetalle.por_barrio.find((x) => x.barrio === env.barrio);
+    if (b) { b.cantidad = Number(b.cantidad) + 1; b.subtotal = Number(b.subtotal) + c; }
+    else repDetalle.por_barrio.push({ barrio: env.barrio, costo: env.envio_costo, cantidad: 1, subtotal: c });
+    refrescarResumenRep();
+    toast('✓ Entregado');
+}
 
-        <h4 class="detalle-sub">Paga del día
-            <input type="date" id="rep-fecha" value="${esc(r.fecha)}" class="rep-fecha-inp">
-        </h4>
-        ${filas}
-        <div class="pedido-linea total"><strong>Total a pagar</strong><strong class="tabular">${money.format(r.total)}</strong></div>
-        <div class="emp-chart">${barras}</div>
-    `;
-
-    $('rep-fecha').addEventListener('change', (ev) => abrirRepartidor(id, ev.target.value));
-    $('rep-ticket').addEventListener('click', () => imprimirTicket(r));
-
-    $('rep-detalle').querySelectorAll('[data-envio]').forEach((b) => b.addEventListener('click', async () => {
-        b.disabled = true;
-        try {
-            await api.post('/api/admin/envios/estado', { envio_id: Number(b.dataset.envio), estado: b.dataset.estado });
-            toast(b.dataset.estado === 'entregado' ? '✓ Entregado' : '🛵 Marcado como salido');
-            abrirRepartidor(id, $('rep-fecha').value);
-        } catch (ex) { toast('⚠ ' + ex.message); b.disabled = false; }
-    }));
+// Marcar SALIDA (en camino): actualiza el estado en la tarjeta, sin sacarla.
+async function marcarSalida(env, card, btn) {
+    btn.disabled = true;
+    try {
+        await api.post('/api/admin/envios/estado', { envio_id: env.envio_id, estado: 'en_camino' });
+    } catch (ex) { toast('⚠ ' + ex.message); btn.disabled = false; return; }
+    env.estado = 'en_camino';
+    card.querySelector('.rep-badge').textContent = REP_ESTADO['en_camino'];
+    toast('🛵 En camino');
 }
 
 // Normaliza un teléfono argentino a formato WhatsApp (54 9 + área + número, solo dígitos).
