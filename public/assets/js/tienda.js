@@ -559,7 +559,16 @@ async function subirComprobante(file, pedidoId, labelEl, estadoEl) {
 
 // ============ Cuenta (login / registro) ============
 function pintarCuenta() {
-    $('btn-cuenta').textContent = cliente ? `Hola, ${cliente.nombre.split(' ')[0]} ▾` : 'Ingresar';
+    const b = $('btn-cuenta');
+    if (cliente) {
+        b.classList.add('t-avatar');
+        b.innerHTML = `<span class="t-avatar-ini">${esc(inicial(cliente.nombre || '?'))}</span>`;
+        b.title = cliente.nombre;
+    } else {
+        b.classList.remove('t-avatar');
+        b.textContent = 'Ingresar';
+        b.title = 'Ingresar';
+    }
 }
 
 // Tema de la tienda según el modo: minorista = claro, mayorista = oscuro.
@@ -960,6 +969,7 @@ async function iniciar() {
     $('perfil-cerrar').addEventListener('click', () => cerrar('modal-perfil'));
     $('form-perfil').addEventListener('submit', guardarPerfil);
     $('menu-favoritos').addEventListener('click', verFavoritos);
+    $('btn-favoritos-header').addEventListener('click', () => cliente ? verFavoritos() : abrirAuth(false));
     $('pedidos-cerrar').addEventListener('click', () => cerrar('modal-pedidos'));
     $('pedidos-lista').addEventListener('change', (e) => {
         const inp = e.target.closest('input[data-pago]');

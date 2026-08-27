@@ -47,6 +47,24 @@ body { min-height: 100vh; }
     min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--r-full);
     display: inline-grid; place-items: center; font-size: var(--text-xs);
 }
+/* Botones-ícono del header (favoritos, carrito) */
+.t-ico {
+    position: relative; flex: none; width: 40px; height: 40px; border-radius: var(--r-full);
+    background: oklch(1 0 0 / 0.12); border: 1px solid oklch(1 0 0 / 0.18); color: #fff;
+    cursor: pointer; font-size: 18px; line-height: 1; display: grid; place-items: center;
+    transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.t-ico:hover { background: oklch(1 0 0 / 0.22); transform: translateY(-1px); }
+.t-carrito .t-cart-count { position: absolute; top: -3px; right: -3px; box-shadow: 0 0 0 2px oklch(0.175 0 0); }
+/* Avatar del usuario logueado (btn-cuenta) */
+.t-avatar {
+    width: 40px; height: 40px; padding: 0; flex: none; border: none; cursor: pointer;
+    border-radius: var(--r-full); background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+    display: grid; place-items: center;
+    transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
+}
+.t-avatar:hover { transform: translateY(-1px); filter: brightness(1.08); }
+.t-avatar-ini { font-weight: 800; font-size: 14px; color: #fff; letter-spacing: -0.01em; }
 
 /* ===== Vista catálogo / categoría (sidebar de filtros + grid) ===== */
 .cat-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap;
