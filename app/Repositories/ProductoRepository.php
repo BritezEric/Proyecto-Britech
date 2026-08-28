@@ -251,18 +251,37 @@ class ProductoRepository
      * @return array{rows: array, total: int}
      */
     public function catalogo(?string $q, ?int $categoriaId, int $listaId, int $limit, int $offset,
-        ?float $precioMin = null, ?float $precioMax = null, ?string $orden = null): array
+        ?float $precioMin = null, ?float $precioMax = null, ?string $orden = null,
+        ?array $marcaIds = null, bool $soloStock = false): array
     {
         $pdo = Database::conexion();
-        $where  = ['p.activo = 1', 'pr.precio IS NOT NULL'];
-        $params = [$listaId];   // primer ? es el de la lista en el JOIN
+        $baseFrom = "FROM producto p
+                     LEFT JOIN precio pr ON pr.producto_id = p.id AND pr.lista_precio_id = ?
+                     LEFT JOIN categoria c ON c.id = p.categoria_id
+                     LEFT JOIN marca m ON m.id = p.marca_id
+                     LEFT JOIN inventario i ON i.producto_id = p.id";
+
+        // Filtros comunes a todo (búsqueda / categoría / precio / stock). El de MARCA
+        // se aplica aparte porque las facetas de marca se cuentan SIN filtrar por marca.
+        $baseWhere  = ['p.activo = 1', 'pr.precio IS NOT NULL'];
+        $baseParams = [$listaId];   // primer ? es el de la lista en el JOIN
         if ($q !== null && $q !== '') {
-            $where[] = "(p.nombre LIKE ? OR p.descripcion LIKE ?)";
-            $like = "%{$q}%"; array_push($params, $like, $like);
+            $baseWhere[] = "(p.nombre LIKE ? OR p.descripcion LIKE ?)";
+            $like = "%{$q}%"; array_push($baseParams, $like, $like);
         }
-        if ($categoriaId !== null) { $where[] = "p.categoria_id = ?"; $params[] = $categoriaId; }
-        if ($precioMin !== null) { $where[] = "pr.precio >= ?"; $params[] = $precioMin; }
-        if ($precioMax !== null) { $where[] = "pr.precio <= ?"; $params[] = $precioMax; }
+        if ($categoriaId !== null) { $baseWhere[] = "p.categoria_id = ?"; $baseParams[] = $categoriaId; }
+        if ($precioMin !== null)   { $baseWhere[] = "pr.precio >= ?";     $baseParams[] = $precioMin; }
+        if ($precioMax !== null)   { $baseWhere[] = "pr.precio <= ?";     $baseParams[] = $precioMax; }
+        if ($soloStock)            { $baseWhere[] = "(p.es_sobre_pedido = 1 OR COALESCE(i.cantidad, 0) > 0)"; }
+
+        // Filtro de marca (IN con marcadores) sumado a los comunes para el listado y el total.
+        $where  = $baseWhere;
+        $params = $baseParams;
+        if ($marcaIds) {
+            $in = implode(',', array_fill(0, count($marcaIds), '?'));
+            $where[] = "p.marca_id IN ($in)";
+            foreach ($marcaIds as $mid) $params[] = (int) $mid;
+        }
         $sqlWhere = 'WHERE ' . implode(' AND ', $where);
 
         // Orden (lista blanca: nunca interpolar entrada del usuario en el SQL).
@@ -272,19 +291,17 @@ class ProductoRepository
             'nombre'      => 'p.nombre ASC',
         ][$orden] ?? 'p.nombre ASC';
 
-        $baseFrom = "FROM producto p
-                     LEFT JOIN precio pr ON pr.producto_id = p.id AND pr.lista_precio_id = ?
-                     LEFT JOIN categoria c ON c.id = p.categoria_id
-                     LEFT JOIN marca m ON m.id = p.marca_id
-                     LEFT JOIN inventario i ON i.producto_id = p.id";
+        $bind = function (\PDOStatement $st, array $vals) {
+            foreach ($vals as $i => $v) $st->bindValue($i + 1, $v, is_int($v) ? \PDO::PARAM_INT : \PDO::PARAM_STR);
+        };
 
-        // COUNT: mismos JOIN/WHERE (la lista va primero también)
+        // COUNT (con filtro de marca)
         $stC = $pdo->prepare("SELECT COUNT(*) $baseFrom $sqlWhere");
-        foreach ($params as $i => $v) $stC->bindValue($i + 1, $v, is_int($v) ? \PDO::PARAM_INT : \PDO::PARAM_STR);
-        $stC->execute();
+        $bind($stC, $params); $stC->execute();
         $total = (int) $stC->fetchColumn();
 
-        $sql = "SELECT p.id, p.sku, p.nombre, p.descripcion, p.es_sobre_pedido, p.min_mayorista,
+        // Listado
+        $sql = "SELECT p.id, p.sku, p.nombre, p.descripcion, p.es_sobre_pedido, p.min_mayorista, p.precio_anterior,
                        c.nombre AS categoria, m.nombre AS marca,
                        pr.precio, COALESCE(i.cantidad, 0) AS stock,
                        (SELECT url FROM producto_imagen pi WHERE pi.producto_id = p.id
@@ -293,11 +310,25 @@ class ProductoRepository
                 ORDER BY $orderBy
                 LIMIT ? OFFSET ?";
         $st = $pdo->prepare($sql);
-        $full = array_merge($params, [$limit, $offset]);
-        foreach ($full as $i => $v) $st->bindValue($i + 1, $v, is_int($v) ? \PDO::PARAM_INT : \PDO::PARAM_STR);
-        $st->execute();
+        $bind($st, array_merge($params, [$limit, $offset])); $st->execute();
+        $rows = $st->fetchAll();
 
-        return ['rows' => $st->fetchAll(), 'total' => $total];
+        // Facetas de marca: cuenta por marca respetando los filtros comunes PERO no el de marca
+        // (así el usuario puede sumar marcas y sigue viendo cuántos hay de cada una).
+        $stF = $pdo->prepare("SELECT p.marca_id AS id, m.nombre AS nombre, COUNT(*) AS total
+                              $baseFrom WHERE " . implode(' AND ', $baseWhere) . " AND p.marca_id IS NOT NULL
+                              GROUP BY p.marca_id, m.nombre ORDER BY total DESC, m.nombre");
+        $bind($stF, $baseParams); $stF->execute();
+        $marcas = array_map(fn($r) => ['id' => (int) $r['id'], 'nombre' => $r['nombre'], 'total' => (int) $r['total']], $stF->fetchAll());
+
+        // Tope de precio (máximo de la lista) para dimensionar el slider del filtro.
+        $stT = $pdo->prepare("SELECT MAX(pr.precio) FROM producto p
+                              LEFT JOIN precio pr ON pr.producto_id = p.id AND pr.lista_precio_id = ?
+                              WHERE p.activo = 1 AND pr.precio IS NOT NULL");
+        $stT->bindValue(1, $listaId, \PDO::PARAM_INT); $stT->execute();
+        $tope = (float) ($stT->fetchColumn() ?: 0);
+
+        return ['rows' => $rows, 'total' => $total, 'marcas' => $marcas, 'tope' => $tope];
     }
 
     /**

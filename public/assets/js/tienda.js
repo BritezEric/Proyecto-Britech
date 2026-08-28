@@ -10,6 +10,10 @@
 let cliente = null;                 // {id, nombre, email, lista_precio_id} o null
 let page = 1, q = '', categoria = '';
 let precioMin = '', precioMax = '', orden = 'nombre';   // filtros de la vista catálogo
+let marcasSel = new Set();          // ids de marcas seleccionadas (facetas)
+let soloStock = false;              // filtro "solo con stock"
+let precioTope = 0;                 // máximo de precio (para dimensionar el slider)
+let marcasFacet = [];               // [{id, nombre, total}] de la última búsqueda
 let categoriasCache = [];
 let carrito = cargarCarrito();      // [{id, nombre, precio, cantidad}]
 let empresasEnvio = [];             // medios de envío disponibles
@@ -40,12 +44,70 @@ async function cargarCatalogo() {
     if (precioMin !== '') params.set('precio_min', precioMin);
     if (precioMax !== '') params.set('precio_max', precioMax);
     if (orden) params.set('orden', orden);
+    if (marcasSel.size) params.set('marca_ids', [...marcasSel].join(','));
+    if (soloStock) params.set('solo_stock', '1');
     const r = await api.get(`/api/tienda/catalogo?${params}`);
     $('lista-info').textContent = r.lista_precio_id === 2 ? 'Precios mayoristas' : 'Precios minoristas';
     $('catalogo-count').textContent = `${r.total} producto${r.total === 1 ? '' : 's'}`;
+    marcasFacet = r.marcas || [];
+    if (r.tope > precioTope) { precioTope = r.tope; ajustarTopeSlider(); }
     renderClasificacion();
+    renderMarcas();
+    actualizarLimpiar();
     renderCatalogo(r.data);
     renderPaginacion(r);
+}
+
+// Facetas de marca: checkbox + conteo, filtrables por el buscador interno.
+function renderMarcas() {
+    const cont = $('marca-lista');
+    if (!cont) return;
+    const filtro = ($('marca-buscar').value || '').trim().toLowerCase();
+    const items = marcasFacet.filter((m) => m.nombre.toLowerCase().includes(filtro));
+    if (!items.length) { cont.innerHTML = '<p class="marca-vacia">Sin marcas.</p>'; return; }
+    cont.innerHTML = items.map((m) => `
+        <label class="marca-item">
+            <input type="checkbox" data-marca="${m.id}" ${marcasSel.has(m.id) ? 'checked' : ''}>
+            <span class="marca-nombre">${esc(m.nombre)}</span>
+            <span class="marca-count">${m.total}</span>
+        </label>`).join('');
+}
+
+// Muestra "Limpiar filtros" solo si hay algún filtro activo.
+function actualizarLimpiar() {
+    const activo = marcasSel.size || soloStock || precioMin !== '' || precioMax !== '';
+    $('filtros-limpiar').classList.toggle('oculto', !activo);
+}
+
+function limpiarFiltros() {
+    marcasSel.clear(); soloStock = false; precioMin = ''; precioMax = '';
+    $('filtro-stock').checked = false;
+    $('precio-min').value = ''; $('precio-max').value = '';
+    $('marca-buscar').value = '';
+    sincronizarSliderDesdeInputs();
+    page = 1; cargarCatalogo();
+}
+
+// ---- Slider de precio (doble rango nativo, sin librerías) ----
+function ajustarTopeSlider() {
+    const tope = Math.max(1, Math.ceil(precioTope));
+    $('rango-min').max = tope; $('rango-max').max = tope;
+    if (precioMax === '') $('rango-max').value = tope;
+    pintarRango();
+}
+
+function pintarRango() {
+    const min = Number($('rango-min').value), max = Number($('rango-max').value);
+    const tope = Number($('rango-max').max) || 1;
+    const a = Math.min(min, max), b = Math.max(min, max);
+    $('rango-fill').style.left = (a / tope * 100) + '%';
+    $('rango-fill').style.right = (100 - b / tope * 100) + '%';
+}
+
+function sincronizarSliderDesdeInputs() {
+    $('rango-min').value = precioMin === '' ? 0 : precioMin;
+    $('rango-max').value = precioMax === '' ? ($('rango-max').max || 0) : precioMax;
+    pintarRango();
 }
 
 // Lista de categorías en el sidebar (clasificación), resaltando la activa.
@@ -87,8 +149,11 @@ async function refrescarVista() {
 function mostrarCatalogo({ q: nq = '', categoria: ncat = '', titulo = 'Catálogo' } = {}) {
     q = nq; categoria = ncat; page = 1;
     precioMin = ''; precioMax = ''; orden = 'nombre';   // filtros limpios al entrar
+    marcasSel.clear(); soloStock = false;
     if ($('precio-min')) { $('precio-min').value = ''; $('precio-max').value = ''; }
     if ($('orden')) $('orden').value = 'nombre';
+    if ($('filtro-stock')) $('filtro-stock').checked = false;
+    if ($('marca-buscar')) $('marca-buscar').value = '';
     $('catalogo-titulo').textContent = titulo;
     $('filtro-categoria').value = ncat || '';
     $('vista-home').classList.add('oculto');
@@ -930,6 +995,33 @@ async function iniciar() {
     $('precio-aplicar').addEventListener('click', aplicarPrecio);
     [$('precio-min'), $('precio-max')].forEach((el) =>
         el.addEventListener('keydown', (e) => { if (e.key === 'Enter') aplicarPrecio(); }));
+
+    // Slider de precio: mueve los inputs numéricos y busca al soltar.
+    ['rango-min', 'rango-max'].forEach((id) => {
+        $(id).addEventListener('input', () => {
+            const a = Math.min(Number($('rango-min').value), Number($('rango-max').value));
+            const b = Math.max(Number($('rango-min').value), Number($('rango-max').value));
+            $('precio-min').value = a > 0 ? a : '';
+            $('precio-max').value = b < Number($('rango-max').max) ? b : '';
+            pintarRango();
+        });
+        $(id).addEventListener('change', aplicarPrecio);   // al soltar, aplica
+    });
+
+    // Filtro "solo con stock"
+    $('filtro-stock').addEventListener('change', (e) => { soloStock = e.target.checked; page = 1; cargarCatalogo(); });
+
+    // Filtro de marca (facetas): buscador interno + checkboxes
+    $('marca-buscar').addEventListener('input', renderMarcas);
+    $('marca-lista').addEventListener('change', (e) => {
+        const chk = e.target.closest('input[data-marca]');
+        if (!chk) return;
+        const id = Number(chk.dataset.marca);
+        if (chk.checked) marcasSel.add(id); else marcasSel.delete(id);
+        page = 1; cargarCatalogo();
+    });
+
+    $('filtros-limpiar').addEventListener('click', limpiarFiltros);
 
     // carrito
     $('btn-carrito').addEventListener('click', () => { renderCarrito(); abrir('modal-carrito'); });

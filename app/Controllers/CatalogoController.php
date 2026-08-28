@@ -24,16 +24,23 @@ class CatalogoController
         $min = Request::query('precio_min');
         $max = Request::query('precio_max');
 
+        $marcasRaw = Request::query('marca_ids');   // lista separada por comas: "3,7"
+        $marcaIds = $marcasRaw ? array_values(array_filter(array_map('intval', explode(',', $marcasRaw)))) : null;
+
         $r = (new ProductoRepository())->catalogo(
             $q,
             $cat === null || $cat === '' ? null : (int) $cat,
             $lista, $perPage, $offset,
             ($min === null || $min === '') ? null : (float) $min,
             ($max === null || $max === '') ? null : (float) $max,
-            Request::query('orden')
+            Request::query('orden'),
+            $marcaIds,
+            Request::query('solo_stock') === '1'
         );
         $resp = Paginacion::respuesta($r['rows'], $r['total'], $page, $perPage);
         $resp['lista_precio_id'] = $lista;
+        $resp['marcas'] = $r['marcas'];   // facetas para el filtro de marca
+        $resp['tope'] = $r['tope'];       // precio máximo (para el slider)
         Response::json($resp);
     }
 

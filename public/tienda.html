@@ -58,13 +58,30 @@
         </div>
         <div class="cat-layout">
             <aside class="cat-side">
+                <button id="filtros-limpiar" class="filtros-limpiar oculto" type="button">Limpiar filtros</button>
                 <div class="cat-filtro">
                     <h3>Precio</h3>
+                    <div id="precio-slider" class="rango">
+                        <div class="rango-riel"><div id="rango-fill" class="rango-fill"></div></div>
+                        <input id="rango-min" type="range" min="0" max="100" value="0" step="1">
+                        <input id="rango-max" type="range" min="0" max="100" value="100" step="1">
+                    </div>
                     <div class="precio-inputs">
                         <input id="precio-min" type="number" min="0" placeholder="Mínimo" inputmode="numeric">
                         <input id="precio-max" type="number" min="0" placeholder="Máximo" inputmode="numeric">
                     </div>
                     <button id="precio-aplicar" class="btn-primary">Aplicar</button>
+                </div>
+                <div class="cat-filtro">
+                    <label class="filtro-toggle">
+                        <input id="filtro-stock" type="checkbox">
+                        <span>Solo con stock</span>
+                    </label>
+                </div>
+                <div class="cat-filtro">
+                    <h3>Marca</h3>
+                    <input id="marca-buscar" class="marca-buscar" type="search" placeholder="Buscar marca…" autocomplete="off">
+                    <div id="marca-lista" class="marca-lista"></div>
                 </div>
                 <div class="cat-filtro">
                     <h3>Clasificación</h3>
