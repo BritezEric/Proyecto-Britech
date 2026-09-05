@@ -56,3 +56,26 @@ especificaciones, buscador, carrito, favoritos, precios mayoristas, cuentas B2B.
 Un **pedido** online confirmado generará una **venta** (misma lógica de descuento
 de stock y comprobante que el POS). Por eso primero construimos Ventas bien: la
 tienda online se apoya en ese motor.
+
+## Rediseño de la tienda (2026-09-04)
+
+Rediseño de la UX del front tomando patrones de tiendas mayoristas (no el diseño
+visual: se mantiene la paleta morada y la tipografía Hanken Grotesk del proyecto).
+
+- **Carrito como drawer**: panel lateral derecho reutilizable (`.drawer` + `.abierto`,
+  overlay y cierre con Escape), en vez de modal centrado.
+- **Header**: buscador "¿Qué buscás?", **corazón de favoritos** y **carrito** como
+  botones-ícono circulares; el usuario logueado se muestra como **avatar con iniciales**.
+- **Tarjeta de producto** (`cardProducto`, reutilizada en home/catálogo/favoritos):
+  grilla responsive 2/3/4 columnas, botón "+" circular que aparece al hover, código
+  copiable y badge de oferta cuando hay `precio_anterior`.
+- **Favoritos como página** (no modal): reutiliza la grilla del catálogo; quitar un
+  favorito saca la tarjeta al instante.
+- **Filtros avanzados del catálogo**: filtro de **marca con facetas** (conteo por marca
+  respetando el resto de filtros) + buscador interno, **slider de precio** (doble rango
+  nativo, sin librerías) sincronizado con los inputs, toggle **solo con stock**, y
+  botón **Limpiar filtros**. Backend: `ProductoRepository::catalogo()` acepta
+  `marca_ids` / `solo_stock` y devuelve las facetas de marca + el tope de precio.
+- **Ficha de producto** (página completa `renderProducto`): galería con lightbox,
+  breadcrumb, specs, relacionados y una fila de acciones **Compartir** (Web Share nativo
+  en móvil / copiar link en desktop) + **copiar código**.

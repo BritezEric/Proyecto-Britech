@@ -1,12 +1,20 @@
 # Britech
 
 Plataforma de gestión y venta de productos tecnológicos: **POS** (punto de venta),
-**tienda online** y **panel de administración** (con finanzas). Proyecto de la materia
-*Módulo de Entrada de Datos*.
+**tienda online** y **panel de administración** (finanzas, envíos, reposición).
+Proyecto de la materia *Prácticas Profesionalizantes*.
 
-- **Stack:** PHP 8.1+ · MySQL/MariaDB (InnoDB, utf8mb4) · PDO · Composer · PHPMailer
+- **Stack:** PHP 8.1+ · MySQL/MariaDB (InnoDB, utf8mb4) · PDO · Composer · PHPMailer · Dompdf
 - **Arquitectura:** MVC por capas → `Front Controller → Router → Controller → Service → Repository → PDO`
 - **Front:** HTML + CSS + JS puro (sin frameworks), consumiendo la API JSON.
+
+### ¿Qué hace?
+
+- **POS**: venta con scanner, stock en vivo, medios de pago, envío en el ticket, anulación con motivo.
+- **Tienda online**: catálogo con filtros (marca/precio/stock), favoritos, carrito, checkout con
+  transferencia + comprobante, Moto Express (envío por barrio) y seguimiento del pedido.
+- **Admin**: alta de productos/tablas maestras, finanzas (gastos y sueldos), gestión de envíos
+  y repartidores con paga por reparto, campana de notificaciones y dashboard con accesos rápidos.
 
 ## Requisitos
 
@@ -42,6 +50,11 @@ El primero crea la base `britech_v2`; el resto hace `USE britech_v2`.
 13. database/schema_empleados.sql       (sueldos = gastos etiquetados al empleado)
 14. database/schema_bloques.sql         (page builder de la home — independiente)
 15. database/schema_marca_logo.sql       (logo de marca para el carrusel de marcas)
+16. database/schema_metodo_pago.sql      (método de pago elegido en el checkout)
+17. database/schema_moto_barrios.sql     (Moto Express: barrios con costo + repartidores)
+18. database/schema_envio_venta.sql      (un envío puede colgar de un pedido O de una venta POS)
+19. database/schema_notificaciones.sql   (campana de notificaciones del admin)
+20. database/schema_cliente_perfil.sql   (perfil de cliente: provincia + código postal)
 ```
 
 Desde la terminal (uno por uno, o encadenados):
@@ -62,6 +75,11 @@ mysql -u root britech_v2 < database/schema_gastos.sql
 mysql -u root britech_v2 < database/schema_empleados.sql
 mysql -u root britech_v2 < database/schema_bloques.sql
 mysql -u root britech_v2 < database/schema_marca_logo.sql
+mysql -u root britech_v2 < database/schema_metodo_pago.sql
+mysql -u root britech_v2 < database/schema_moto_barrios.sql
+mysql -u root britech_v2 < database/schema_envio_venta.sql
+mysql -u root britech_v2 < database/schema_notificaciones.sql
+mysql -u root britech_v2 < database/schema_cliente_perfil.sql
 ```
 
 **3. Variables de entorno** — copiar la plantilla y completar:
