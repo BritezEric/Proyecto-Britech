@@ -253,6 +253,15 @@ function renderProducto(p, relacionados) {
                 <div class="pp-eyebrow">${esc(p.marca || 'Producto')}${p.categoria ? ' · ' + esc(p.categoria) : ''}</div>
                 <h1 class="pp-nombre">${esc(p.nombre)}</h1>
 
+                <div class="pp-acciones">
+                    <button class="pp-accion" id="pp-compartir" type="button" title="Compartir">
+                        <span class="pp-accion-ic">↗</span> Compartir
+                    </button>
+                    <button class="pp-accion" data-copiar="${esc(p.sku || ('#' + p.id))}" type="button" title="Copiar código">
+                        <span class="pp-accion-ic">⧉</span> ${esc(p.sku || ('#' + p.id))}
+                    </button>
+                </div>
+
                 <div class="pp-precio-box">
                     ${hayAnt ? `<div class="pp-ant"><s>${money.format(p.precio_anterior)}</s> <span class="pp-off">-${off}%</span></div>` : ''}
                     <div class="pp-precio">${money.format(p.precio)}</div>
@@ -324,6 +333,17 @@ function renderProducto(p, relacionados) {
         $('pp-fav').classList.toggle('activo', on);
         $('pp-fav').textContent = on ? '❤️' : '🤍';
     });
+    // Compartir: Web Share nativo (celular) o copiar el link (desktop).
+    $('pp-compartir').addEventListener('click', async () => {
+        const url = location.origin + '/tienda.html#producto-' + p.id;
+        try {
+            if (navigator.share) { await navigator.share({ title: p.nombre, url }); return; }
+            await navigator.clipboard.writeText(url);
+            toast('✓ Link copiado');
+        } catch {}   // el usuario canceló el diálogo: sin acción
+    });
+    // El botón "copiar código" usa el handler delegado [data-copiar] de producto-cont.
+
     // Carrusel de relacionados
     cont.querySelectorAll('.carrusel').forEach(montarCarrusel);
 }

@@ -673,7 +673,16 @@ body { min-height: 100vh; }
 
 .pp-info { display: flex; flex-direction: column; }
 .pp-eyebrow { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); font-weight: 600; }
-.pp-nombre { font-size: var(--text-2xl); font-weight: 800; letter-spacing: -0.02em; margin: var(--sp-1) 0 var(--sp-4); line-height: 1.2; }
+.pp-nombre { font-size: var(--text-2xl); font-weight: 800; letter-spacing: -0.02em; margin: var(--sp-1) 0 var(--sp-3); line-height: 1.2; }
+
+/* Fila de acciones (compartir / copiar código) bajo el título */
+.pp-acciones { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+.pp-accion { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    font-family: inherit; font-size: var(--text-sm); font-weight: 700; color: var(--ink-muted);
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-full);
+    padding: 5px 12px; transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+.pp-accion:hover { color: var(--primary-strong); border-color: var(--primary); background: var(--primary-tint); }
+.pp-accion-ic { font-size: 15px; line-height: 1; }
 .pp-precio-box { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--sp-4); margin-bottom: var(--sp-4); }
 .pp-ant { font-size: var(--text-sm); color: var(--ink-muted); margin-bottom: 2px; }
 .pp-off { background: var(--danger); color: #fff; font-weight: 800; font-size: var(--text-xs); padding: 1px 8px; border-radius: var(--r-full); margin-left: 6px; }
