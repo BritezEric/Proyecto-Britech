@@ -93,6 +93,26 @@ cp .env.example .env
 Editar `.env`: credenciales de la base y, para que salgan los correos, `MAIL_USER` +
 `MAIL_PASSWORD` (para Gmail, una **App Password** con 2FA activado). **Nunca** subir el `.env`.
 
+### Login con Google (Auth0) — opcional
+
+El botón "Continuar con Google" de la tienda usa **Auth0** como intermediario. Si no
+lo configurás, el botón avisa y el login por email sigue funcionando. Para activarlo:
+
+1. Crear una cuenta en [auth0.com](https://auth0.com) y una **Regular Web Application**.
+2. En *Authentication → Social*, activar la conexión **Google** y habilitarla para la app.
+3. En la app de Auth0, en *Settings*:
+   - **Allowed Callback URLs**: `http://127.0.0.1:8123/api/tienda/auth0/callback`
+   - **Allowed Logout URLs**: `http://127.0.0.1:8123/tienda.html`
+4. Completar en el `.env` (los datos salen de *Settings* de la app):
+   ```
+   AUTH0_DOMAIN=tu-tenant.us.auth0.com
+   AUTH0_CLIENT_ID=...
+   AUTH0_CLIENT_SECRET=...        # NUNCA subir a git
+   AUTH0_COOKIE_SECRET=...        # generar: openssl rand -hex 32
+   ```
+
+El SDK se instala solo con `composer install` (paquete `auth0/auth0-php`).
+
 ## Levantar el proyecto
 
 Servidor de desarrollo de PHP:

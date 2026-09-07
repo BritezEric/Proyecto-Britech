@@ -161,6 +161,25 @@ class ClienteRepository
         return (int) $pdo->lastInsertId();
     }
 
+    /** Alta de un cliente que entró con Google: verificado, sin contraseña.
+     *  (Puede definir una luego con "olvidé mi contraseña" si quiere.) */
+    public function crearDesdeGoogle(string $nombre, string $email): int
+    {
+        $pdo = Database::conexion();
+        $pdo->prepare("INSERT INTO cliente (nombre, email, password_hash, email_verificado, lista_precio_id, activo)
+                       VALUES (?, ?, NULL, 1, 1, 1)")
+            ->execute([$nombre, $email]);
+        return (int) $pdo->lastInsertId();
+    }
+
+    /** Marca el email como verificado (sin tocar la contraseña). */
+    public function marcarVerificado(int $clienteId): void
+    {
+        Database::conexion()
+            ->prepare("UPDATE cliente SET email_verificado = 1 WHERE id = ?")
+            ->execute([$clienteId]);
+    }
+
     /** Define la contraseña del cliente y marca su email como verificado (activa la cuenta). */
     public function definirPassword(int $clienteId, string $hash): void
     {

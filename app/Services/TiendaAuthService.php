@@ -165,6 +165,30 @@ class TiendaAuthService
         ];
     }
 
+    /**
+     * Login con Google (vía Auth0): busca el cliente por email o lo crea ya
+     * verificado (sin contraseña). Si existía a medio registrar, lo verifica.
+     * Devuelve los datos de sesión.
+     */
+    public function loginConGoogle(string $email, string $nombre): array
+    {
+        $email = trim(mb_strtolower($email));
+        $c = $this->repo->buscarParaLogin($email);
+
+        if ($c === null) {
+            $id = $this->repo->crearDesdeGoogle(trim($nombre) ?: $email, $email);
+            return $this->sesionDe($id);
+        }
+        if ((int) $c['activo'] !== 1) {
+            throw new ValidacionException('La cuenta está deshabilitada.');
+        }
+        // Si se había registrado por email sin activar, Google le da el alta.
+        if ((int) $c['email_verificado'] !== 1) {
+            $this->repo->marcarVerificado((int) $c['id']);
+        }
+        return $this->sesionDe((int) $c['id']);
+    }
+
     /** Arma los datos de sesión de un cliente por id. */
     private function sesionDe(int $clienteId): array
     {

@@ -45,4 +45,14 @@ return [
         'from_email'  => $leer('MAIL_FROM_EMAIL', 'no-reply@britech.local'),
         'from_nombre' => $leer('MAIL_FROM_NOMBRE', 'Britech'),
     ],
+    // Login social con Google vía Auth0 (opcional: si no está configurado, el
+    // botón "Continuar con Google" avisa y sigue andando el login por email).
+    'auth0' => [
+        'domain'        => $leer('AUTH0_DOMAIN', ''),
+        'client_id'     => $leer('AUTH0_CLIENT_ID', ''),
+        'client_secret' => $leer('AUTH0_CLIENT_SECRET', ''),
+        'cookie_secret' => $leer('AUTH0_COOKIE_SECRET', ''),
+        'redirect_uri'  => $leer('AUTH0_REDIRECT_URI',
+            $leer('APP_URL', 'http://127.0.0.1:8123') . '/api/tienda/auth0/callback'),
+    ],
 ];

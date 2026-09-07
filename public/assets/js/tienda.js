@@ -945,7 +945,22 @@ function cerrar(id) { const el = $(id); el.classList.contains('drawer') ? el.cla
 
 // ============ Init / eventos ============
 let debounce;
+// Muestra el resultado del login con Google (?auth=...) y limpia la URL.
+function avisoAuth() {
+    const p = new URLSearchParams(location.search).get('auth');
+    if (!p) return;
+    const msg = {
+        google_no_config: 'El login con Google todavía no está configurado.',
+        google_email: 'Tu cuenta de Google no tiene un email verificado.',
+        google_fallo: 'No se pudo ingresar con Google. Probá de nuevo.',
+    }[p];
+    if (msg) toast('⚠ ' + msg);
+    history.replaceState(null, '', location.pathname);   // saca ?auth de la URL
+}
+
 async function iniciar() {
+    avisoAuth();   // si volvimos del login con Google, mostramos el resultado.
+
     // ¿hay cliente logueado? (trae estado mayorista + modo). Lo necesitan favoritos y la home.
     await refrescarCliente();
     actualizarBadge();

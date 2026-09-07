@@ -39,6 +39,18 @@ body { min-height: 100vh; }
 .t-btn.staff { background: var(--accent); color: var(--on-accent); border-color: transparent; }
 .t-btn.staff:hover { background: var(--accent-strong); }
 #staff-zona { display: flex; align-items: center; }
+/* Botón de login con Google (Auth0) */
+.btn-google { display: flex; align-items: center; justify-content: center; gap: var(--sp-2);
+    width: 100%; padding: 11px; border: 1.5px solid var(--line); border-radius: var(--r-md);
+    background: var(--surface); color: var(--ink); font-family: inherit; font-size: var(--text-sm);
+    font-weight: 700; text-decoration: none; cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+.btn-google:hover { background: var(--surface-2); border-color: var(--ink-muted); }
+.btn-google svg { flex: none; }
+.auth-o { display: flex; align-items: center; gap: var(--sp-3); margin: var(--sp-3) 0; }
+.auth-o::before, .auth-o::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.auth-o span { font-size: var(--text-xs); color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+
 .auth-staff-link { text-align: center; margin: var(--sp-4) 0 0; font-size: var(--text-sm); color: var(--ink-muted); }
 .auth-staff-link a { color: var(--primary-strong); font-weight: 600; text-decoration: none; }
 .auth-staff-link a:hover { text-decoration: underline; }

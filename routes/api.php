@@ -30,6 +30,7 @@ use App\Controllers\EmpresaEnvioController;
 use App\Controllers\RepartidorController;
 use App\Controllers\BarrioController;
 use App\Controllers\ReposicionController;
+use App\Controllers\Auth0Controller;
 
 /** @var App\Core\Router $router */
 
@@ -135,6 +136,9 @@ $router->post('/api/tienda/olvide',       [TiendaAuthController::class, 'olvide'
 $router->post('/api/tienda/restablecer',  [TiendaAuthController::class, 'restablecer']);
 $router->post('/api/tienda/login',    [TiendaAuthController::class, 'login']);
 $router->post('/api/tienda/logout',   [TiendaAuthController::class, 'logout']);
+// Login con Google vía Auth0 (rutas de navegador: redirigen, no devuelven JSON)
+$router->get('/api/tienda/auth0/login',    [Auth0Controller::class, 'login']);
+$router->get('/api/tienda/auth0/callback', [Auth0Controller::class, 'callback']);
 $router->get('/api/tienda/yo',        [TiendaAuthController::class, 'yo']);
 $router->post('/api/tienda/perfil',   [TiendaAuthController::class, 'actualizarPerfil']);
 // Catálogo público
