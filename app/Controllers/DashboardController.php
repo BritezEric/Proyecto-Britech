@@ -24,6 +24,7 @@ class DashboardController
             'ticket_promedio_mes'   => $r->ticketPromedioMes(),
             'pedidos_pendientes'    => $r->pedidosPendientes(),
             'envios_sin_asignar'    => $r->enviosSinAsignar(),
+            'reposicion_faltantes'  => $r->reposicionFaltantes(),
             'solicitudes_pendientes'=> $r->solicitudesPendientes(),
             'sin_stock'             => $r->sinStock(),
             'stock_bajo'            => $r->stockBajo(),

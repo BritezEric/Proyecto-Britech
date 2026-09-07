@@ -111,7 +111,8 @@ class ProductoService
             'descripcion' => $p['descripcion'], 'categoria_id' => $p['categoria_id'],
             'marca_id' => $p['marca_id'], 'proveedor_id' => $p['proveedor_id'],
             'es_sobre_pedido' => $p['es_sobre_pedido'], 'min_mayorista' => $p['min_mayorista'],
-            'precio_anterior' => $p['precio_anterior'], 'activo' => $activo,
+            'precio_anterior' => $p['precio_anterior'], 'costo' => $p['costo'],
+            'stock_minimo' => $p['stock_minimo'], 'activo' => $activo,
         ];
     }
 
@@ -150,6 +151,18 @@ class ProductoService
             throw new ValidacionException('El precio anterior debe ser mayor al precio minorista (para que sea una oferta).');
         }
 
+        // Costo (compra al proveedor): opcional, ≥ 0.
+        $costo = $in['costo'] ?? '';
+        if ($costo !== '' && (!is_numeric($costo) || (float) $costo < 0)) {
+            throw new ValidacionException('El costo debe ser un número ≥ 0.');
+        }
+
+        // Umbral de stock mínimo (reposición): entero ≥ 0. 0 = sin alerta.
+        $stockMin = $in['stock_minimo'] ?? 0;
+        if (!is_numeric($stockMin) || (int) $stockMin < 0) {
+            throw new ValidacionException('El stock mínimo debe ser un número entero ≥ 0.');
+        }
+
         // Imágenes: una URL por línea (deben ser http/https).
         $imagenes = [];
         foreach (preg_split('/\r\n|\r|\n/', (string) ($in['imagenes'] ?? '')) as $u) {
@@ -173,6 +186,8 @@ class ProductoService
             'es_sobre_pedido' => isset($in['es_sobre_pedido']) ? (int) (bool) $in['es_sobre_pedido'] : 0,
             'min_mayorista'   => (int) $min,
             'precio_anterior' => ($precioAnt === '' || (float) $precioAnt <= 0) ? null : round((float) $precioAnt, 2),
+            'costo'           => $costo === '' ? null : round((float) $costo, 2),
+            'stock_minimo'    => (int) $stockMin,
             'activo'          => isset($in['activo']) ? (int) (bool) $in['activo'] : 1,
             'precio_minorista'=> round((float) $precioMin, 2),
             'precio_mayorista'=> $precioMay === '' ? null : round((float) $precioMay, 2),

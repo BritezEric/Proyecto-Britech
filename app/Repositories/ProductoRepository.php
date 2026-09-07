@@ -223,11 +223,12 @@ class ProductoRepository
         $pdo = Database::conexion();
         $pdo->prepare("INSERT INTO producto
                        (sku, codigo_barras, nombre, descripcion, categoria_id, marca_id,
-                        proveedor_id, es_sobre_pedido, min_mayorista, precio_anterior, activo)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                        proveedor_id, es_sobre_pedido, min_mayorista, precio_anterior, costo, stock_minimo, activo)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
             ->execute([$d['sku'], $d['codigo_barras'], $d['nombre'], $d['descripcion'],
                        $d['categoria_id'], $d['marca_id'], $d['proveedor_id'],
-                       $d['es_sobre_pedido'], $d['min_mayorista'], $d['precio_anterior'], $d['activo']]);
+                       $d['es_sobre_pedido'], $d['min_mayorista'], $d['precio_anterior'],
+                       $d['costo'], $d['stock_minimo'], $d['activo']]);
         return (int) $pdo->lastInsertId();
     }
 
@@ -236,11 +237,34 @@ class ProductoRepository
         Database::conexion()
             ->prepare("UPDATE producto SET sku = ?, codigo_barras = ?, nombre = ?, descripcion = ?,
                        categoria_id = ?, marca_id = ?, proveedor_id = ?, es_sobre_pedido = ?,
-                       min_mayorista = ?, precio_anterior = ?, activo = ?
+                       min_mayorista = ?, precio_anterior = ?, costo = ?, stock_minimo = ?, activo = ?
                        WHERE id = ?")
             ->execute([$d['sku'], $d['codigo_barras'], $d['nombre'], $d['descripcion'],
                        $d['categoria_id'], $d['marca_id'], $d['proveedor_id'],
-                       $d['es_sobre_pedido'], $d['min_mayorista'], $d['precio_anterior'], $d['activo'], $id]);
+                       $d['es_sobre_pedido'], $d['min_mayorista'], $d['precio_anterior'],
+                       $d['costo'], $d['stock_minimo'], $d['activo'], $id]);
+    }
+
+    /**
+     * Productos activos con stock en o por debajo de su mínimo (para Reposición).
+     * Trae el proveedor asignado + su teléfono (para armar el mensaje de compra).
+     * Solo cuenta productos con stock_minimo > 0 (0 = sin alerta) y que no sean
+     * "sobre pedido" (esos no se reponen).
+     */
+    public function stockBajo(): array
+    {
+        $sql = "SELECT p.id, p.sku, p.nombre, p.costo, p.stock_minimo,
+                       COALESCE(i.cantidad, 0) AS stock,
+                       p.proveedor_id, pv.nombre AS proveedor, pv.telefono AS proveedor_tel
+                FROM producto p
+                LEFT JOIN inventario i ON i.producto_id = p.id
+                LEFT JOIN proveedor pv ON pv.id = p.proveedor_id
+                WHERE p.activo = 1
+                  AND p.es_sobre_pedido = 0
+                  AND p.stock_minimo > 0
+                  AND COALESCE(i.cantidad, 0) <= p.stock_minimo
+                ORDER BY (p.stock_minimo - COALESCE(i.cantidad, 0)) DESC, p.nombre";
+        return Database::conexion()->query($sql)->fetchAll();
     }
 
     // ===== Catálogo de la tienda online =====

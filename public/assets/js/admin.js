@@ -110,10 +110,12 @@ const ENTIDADES = {
             { key: 'categoria_id', label: 'Categoría', tipo: 'select', origen: 'categorias', vacio: '(sin categoría)' },
             { key: 'marca_id', label: 'Marca', tipo: 'select', origen: 'marcas', vacio: '(sin marca)' },
             { key: 'proveedor_id', label: 'Proveedor', tipo: 'select', origen: 'proveedores', vacio: '(sin proveedor)' },
+            { key: 'costo', label: 'Costo (compra al proveedor)', tipo: 'number' },
             { key: 'precio_minorista', label: 'Precio minorista', tipo: 'number', req: true },
             { key: 'precio_mayorista', label: 'Precio mayorista', tipo: 'number' },
             { key: 'precio_anterior', label: 'Precio anterior (oferta)', tipo: 'number' },
             { key: 'stock', label: 'Stock', tipo: 'number', req: true, def: 0 },
+            { key: 'stock_minimo', label: 'Stock mínimo (avisa reposición)', tipo: 'number', def: 0 },
             { key: 'min_mayorista', label: 'Cant. mínima mayorista', tipo: 'number', def: 1 },
             { key: 'es_sobre_pedido', label: 'Se vende sobre pedido (sin stock)', tipo: 'check' },
             { key: 'activo', label: 'Activo', tipo: 'check', def: true },
@@ -402,14 +404,16 @@ async function seleccionar(ent) {
     const navKey = PADRE[ent] || ent;
     document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('activo', b.dataset.ent === navKey));
     const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados'),
-          vistaTablas = $('vista-tablas'), vistaAjustes = $('vista-ajustes'), vistaRepartos = $('vista-repartos');
-    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas, vistaAjustes, vistaRepartos]
+          vistaTablas = $('vista-tablas'), vistaAjustes = $('vista-ajustes'), vistaRepartos = $('vista-repartos'),
+          vistaReposicion = $('vista-reposicion');
+    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas, vistaAjustes, vistaRepartos, vistaReposicion]
         .forEach((v) => v.classList.add('oculto'));
     if (ent === 'inicio')   { ocultarTodo(); vistaInicio.classList.remove('oculto');   return renderInicio(); }
     if (ent === 'tablas')   { ocultarTodo(); vistaTablas.classList.remove('oculto');   return renderTablas(); }
     if (ent === 'bloques')  { ocultarTodo(); vistaBloques.classList.remove('oculto');  return renderBloques(); }
     if (ent === 'empleados'){ ocultarTodo(); vistaEmpleados.classList.remove('oculto'); return renderEmpleados(); }
     if (ent === 'repartos') { ocultarTodo(); vistaRepartos.classList.remove('oculto'); return renderRepartos(); }
+    if (ent === 'reposicion'){ ocultarTodo(); vistaReposicion.classList.remove('oculto'); return renderReposicion(); }
     if (ent === 'ajustes')  { ocultarTodo(); vistaAjustes.classList.remove('oculto');  return renderAjustes(); }
     entActual = ent; cfg = ENTIDADES[ent];
     page = 1; q = ''; filtros = {};
@@ -902,9 +906,11 @@ async function renderInicio() {
 
     // --- Accesos rápidos (Envíos · Repartos · POS) ---
     const sinAsignar = Number(d.envios_sin_asignar || 0);
+    const faltantes = Number(d.reposicion_faltantes || 0);
     $('dash-accesos').innerHTML = `
         <button class="acceso-btn" data-ir="pedidos"><span class="acceso-ic">📦</span> Envíos</button>
         <button class="acceso-btn" data-ir="repartos"><span class="acceso-ic">🛵</span> Repartos${sinAsignar > 0 ? `<span class="acceso-badge">${sinAsignar}</span>` : ''}</button>
+        <button class="acceso-btn" data-ir="reposicion"><span class="acceso-ic">🛒</span> Reposición${faltantes > 0 ? `<span class="acceso-badge">${faltantes}</span>` : ''}</button>
         <a class="acceso-btn" href="/pos.html"><span class="acceso-ic">🧾</span> Ir al POS</a>`;
     $('dash-accesos').querySelectorAll('[data-ir]').forEach((b) =>
         b.addEventListener('click', () => seleccionar(b.dataset.ir)));

@@ -29,6 +29,7 @@ use App\Controllers\NotificacionController;
 use App\Controllers\EmpresaEnvioController;
 use App\Controllers\RepartidorController;
 use App\Controllers\BarrioController;
+use App\Controllers\ReposicionController;
 
 /** @var App\Core\Router $router */
 
@@ -116,6 +117,9 @@ $router->post('/api/admin/repartidores/baja',    [RepartidorController::class, '
 $router->get('/api/admin/envios/sin-asignar',    [RepartidorController::class, 'sinAsignar'], true);
 $router->post('/api/admin/envios/derivar',       [RepartidorController::class, 'derivar'],    true);
 $router->post('/api/admin/envios/estado',        [RepartidorController::class, 'estado'],     true);
+
+// Reposición: productos con stock bajo + pedido a proveedor — solo admin
+$router->get('/api/admin/reposicion', [ReposicionController::class, 'index'], true);
 
 // Barrios del Moto Express (ABM admin)
 $router->get('/api/admin/barrios',          [BarrioController::class, 'admin'],   true);

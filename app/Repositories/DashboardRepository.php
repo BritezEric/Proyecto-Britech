@@ -80,6 +80,17 @@ class DashboardRepository
         return Database::conexion()->query($sql)->fetchAll();
     }
 
+    /** Cuántos productos están en o por debajo de su stock_minimo (reposición). */
+    public function reposicionFaltantes(): int
+    {
+        return (int) $this->unValor(
+            "SELECT COUNT(*) FROM producto p
+             LEFT JOIN inventario i ON i.producto_id = p.id
+             WHERE p.activo = 1 AND p.es_sobre_pedido = 0
+               AND p.stock_minimo > 0 AND COALESCE(i.cantidad,0) <= p.stock_minimo"
+        );
+    }
+
     public function sinStock(): int
     {
         return (int) $this->unValor(

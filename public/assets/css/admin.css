@@ -632,3 +632,46 @@ td.acciones { text-align: right; white-space: nowrap; }
 .noti-item.no-leida { background: var(--primary-tint); }
 .noti-item.no-leida:hover { background: var(--primary-tint); filter: brightness(0.98); }
 .noti-item.no-leida::after { content: ""; position: absolute; top: 12px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+
+/* ===== Reposición (pedido a proveedores por stock bajo) ===== */
+.repo-grupo { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: var(--sp-4); }
+.repo-prov { display: flex; flex-direction: column; gap: 2px; padding: var(--sp-3) var(--sp-4);
+    background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.repo-prov.sin { background: var(--danger-tint, #fdecec); }
+.repo-prov-nom { font-weight: 800; font-size: var(--text-md); color: var(--ink); }
+.repo-prov-sub { font-size: var(--text-xs); color: var(--ink-muted); }
+.repo-tabla { display: flex; flex-direction: column; }
+.repo-head, .repo-fila { display: grid; grid-template-columns: 2.2fr 0.9fr 1fr 0.9fr 1.6fr 1fr;
+    gap: var(--sp-3); align-items: center; padding: var(--sp-2) var(--sp-4); }
+.repo-head { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.03em;
+    color: var(--ink-muted); font-weight: 700; border-bottom: 1px solid var(--line); }
+.repo-fila { border-bottom: 1px solid var(--line); font-size: var(--text-sm); color: var(--ink); }
+.repo-fila:last-child { border-bottom: none; }
+.repo-nom { display: flex; flex-direction: column; font-weight: 600; }
+.repo-nom small { color: var(--ink-muted); font-weight: 500; font-size: var(--text-xs); }
+.repo-stock b { font-weight: 800; }
+.repo-stock b.sin { color: var(--danger, #d33); }
+.repo-stock b.bajo { color: #c77700; }
+.repo-qty { width: 70px; padding: 5px 8px; border: 1.5px solid var(--line); border-radius: var(--r-sm);
+    background: var(--surface); color: var(--ink); font-family: inherit; font-size: var(--text-sm); }
+.repo-qty:focus { border-color: var(--primary); outline: none; }
+.repo-select { width: 100%; max-width: 100%; padding: 5px 8px; border: 1.5px solid var(--line);
+    border-radius: var(--r-sm); background: var(--surface); color: var(--ink); font-family: inherit; font-size: var(--text-sm); }
+.repo-select:focus { border-color: var(--primary); outline: none; }
+.ta-r { text-align: right; }
+.repo-sub { font-weight: 700; font-variant-numeric: tabular-nums; }
+.repo-foot { display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap;
+    padding: var(--sp-3) var(--sp-4); background: var(--surface-2); border-top: 1px solid var(--line); }
+.repo-total-lbl { font-size: var(--text-sm); color: var(--ink-muted); }
+.repo-total { font-weight: 800; font-size: var(--text-lg); color: var(--ink); font-variant-numeric: tabular-nums; }
+.repo-enviar { margin-left: auto; }
+.repo-vacio { text-align: center; padding: var(--sp-7); color: var(--ink-muted); }
+.repo-vacio-ic { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 50%;
+    background: var(--primary-tint); color: var(--primary-strong); font-size: 24px; margin-bottom: var(--sp-3); }
+@media (max-width: 720px) {
+    .repo-head { display: none; }
+    .repo-fila { grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
+    .repo-nom { grid-column: 1 / -1; }
+    .repo-enviar { margin-left: 0; width: 100%; }
+}
