@@ -4,6 +4,7 @@ namespace App\Core;
 
 use Auth0\SDK\Auth0;
 use Auth0\SDK\Configuration\SdkConfiguration;
+use Composer\CaBundle\CaBundle;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\HttpFactory;
 
@@ -29,6 +30,15 @@ class Auth0Factory
         // Inyectamos el cliente/factories de Guzzle explícitamente en vez de
         // depender de la autodiscovery (que en este entorno no los encuentra).
         $http = new HttpFactory();
+        // CA bundle para verificar el TLS con Auth0. No dependemos del php.ini
+        // (algunos Laragon quedan con un curl.cainfo apuntando a una ruta muerta,
+        // lo que da "cURL error 77"). CaBundle busca uno válido y, si no, usa el
+        // que trae empaquetado. Se puede forzar con CURL_CA_BUNDLE en el .env.
+        $ca = getenv('CURL_CA_BUNDLE') ?: ($_ENV['CURL_CA_BUNDLE'] ?? '');
+        if ($ca === '' || !is_readable($ca)) {
+            $ca = CaBundle::getSystemCaRootBundlePath();
+        }
+        $guzzle = new GuzzleClient(['verify' => $ca]);
         return new Auth0(new SdkConfiguration(
             strategy: SdkConfiguration::STRATEGY_REGULAR,
             domain: $cfg['domain'],
@@ -37,7 +47,7 @@ class Auth0Factory
             cookieSecret: $cfg['cookie_secret'],
             redirectUri: $cfg['redirect_uri'],
             scope: ['openid', 'profile', 'email'],
-            httpClient: new GuzzleClient(),
+            httpClient: $guzzle,
             httpRequestFactory: $http,
             httpResponseFactory: $http,
             httpStreamFactory: $http,
