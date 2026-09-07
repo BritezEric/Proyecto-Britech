@@ -38,9 +38,6 @@ use App\Controllers\Auth0Controller;
 $router->post('/api/login',      [AuthController::class, 'login']);
 $router->post('/api/logout',     [AuthController::class, 'logout']);
 $router->get('/api/yo',          [AuthController::class, 'yo']);
-// Login de staff con Google vía Auth0 (rutas de navegador: redirigen)
-$router->get('/api/staff/auth0/login',    [Auth0Controller::class, 'staffLogin']);
-$router->get('/api/staff/auth0/callback', [Auth0Controller::class, 'staffCallback']);
 $router->post('/api/verificar',    [UsuarioController::class, 'verificar']);
 $router->post('/api/olvide',       [AuthController::class, 'olvide']);
 $router->post('/api/restablecer',  [AuthController::class, 'restablecer']);

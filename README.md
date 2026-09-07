@@ -101,9 +101,7 @@ lo configurás, el botón avisa y el login por email sigue funcionando. Para act
 1. Crear una cuenta en [auth0.com](https://auth0.com) y una **Regular Web Application**.
 2. En *Authentication → Social*, activar la conexión **Google** y habilitarla para la app.
 3. En la app de Auth0, en *Settings*:
-   - **Allowed Callback URLs** (las dos, separadas por coma):
-     `http://127.0.0.1:8123/api/tienda/auth0/callback`,
-     `http://127.0.0.1:8123/api/staff/auth0/callback`
+   - **Allowed Callback URLs**: `http://127.0.0.1:8123/api/tienda/auth0/callback`
    - **Allowed Logout URLs**: `http://127.0.0.1:8123/tienda.html`
 4. Completar en el `.env` (los datos salen de *Settings* de la app):
    ```
@@ -115,10 +113,8 @@ lo configurás, el botón avisa y el login por email sigue funcionando. Para act
 
 El SDK se instala solo con `composer install` (paquete `auth0/auth0-php`).
 
-**Clientes vs staff:** el botón de Google en la **tienda** auto-registra al cliente si
-no tenía cuenta. El botón en el **login de staff** (`/login.html`) es más estricto por
-seguridad: **solo** deja entrar si el email de Google ya pertenece a un usuario staff
-dado de alta; si no, avisa y no crea nada (para que cualquier Gmail no acceda al panel).
+El login con Google es **solo para clientes de la tienda**: si el email no tenía
+cuenta, se registra automáticamente. El staff entra siempre con email + contraseña.
 
 ## Levantar el proyecto
 

@@ -954,7 +954,8 @@ function avisoAuth() {
         google_email: 'Tu cuenta de Google no tiene un email verificado.',
         google_fallo: 'No se pudo ingresar con Google. Probá de nuevo.',
     }[p];
-    if (msg) toast('⚠ ' + msg);
+    const detalle = new URLSearchParams(location.search).get('detalle');
+    if (msg) toast('⚠ ' + msg + (detalle ? ' (' + detalle + ')' : ''));
     history.replaceState(null, '', location.pathname);   // saca ?auth de la URL
 }
 

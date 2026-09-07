@@ -20,28 +20,6 @@ class UsuarioRepository
         return $stmt->fetch() ?: null;
     }
 
-    /** Igual que buscarPorEmail pero sin distinguir mayúsculas (para login con Google). */
-    public function buscarPorEmailCI(string $email): ?array
-    {
-        $stmt = Database::conexion()->prepare(
-            "SELECT u.id, u.nombre, u.email, u.password_hash, u.rol_id,
-                    u.activo, u.email_verificado, r.nombre AS rol
-             FROM usuario u
-             JOIN rol r ON r.id = u.rol_id
-             WHERE LOWER(u.email) = LOWER(?)"
-        );
-        $stmt->execute([$email]);
-        return $stmt->fetch() ?: null;
-    }
-
-    /** Marca el email como verificado (sin tocar la contraseña). */
-    public function marcarVerificado(int $id): void
-    {
-        Database::conexion()
-            ->prepare("UPDATE usuario SET email_verificado = 1 WHERE id = ?")
-            ->execute([$id]);
-    }
-
     public function buscarPorId(int $id): ?array
     {
         $stmt = Database::conexion()->prepare(

@@ -38,37 +38,6 @@ class AuthService
         return ['id' => (int) $usuario['id'], 'nombre' => $usuario['nombre'], 'rol_id' => (int) $usuario['rol_id']];
     }
 
-    /**
-     * Login de STAFF con Google (vía Auth0). Por seguridad NO auto-crea usuarios:
-     * el email de Google tiene que pertenecer ya a un usuario staff dado de alta.
-     * Si existe pero nunca verificó su correo, Google se lo da por verificado
-     * (probó ser dueño del email). Devuelve los datos e inicia la sesión.
-     */
-    public function loginConGoogle(string $email): array
-    {
-        $repo = new UsuarioRepository();
-        $usuario = $repo->buscarPorEmailCI(trim($email));
-
-        if ($usuario === null) {
-            throw new ValidacionException('Tu cuenta de Google no está habilitada como staff. Pedile a un admin que te dé de alta.');
-        }
-        if ((int) $usuario['activo'] !== 1) {
-            throw new ValidacionException('El usuario está inactivo.');
-        }
-        if ((int) $usuario['email_verificado'] !== 1) {
-            $repo->marcarVerificado((int) $usuario['id']);   // Google confirma el email
-        }
-
-        Session::login((int) $usuario['id'], [
-            'nombre' => $usuario['nombre'],
-            'email'  => $usuario['email'],
-            'rol_id' => (int) $usuario['rol_id'],
-            'rol'    => $usuario['rol'],
-        ]);
-
-        return ['id' => (int) $usuario['id'], 'nombre' => $usuario['nombre'], 'rol' => $usuario['rol']];
-    }
-
     public function logout(): void
     {
         Session::logout();
