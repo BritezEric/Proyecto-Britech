@@ -90,6 +90,26 @@ input:focus, select:focus {
     box-shadow: var(--ring-primary);
 }
 
+/* Campo de contraseña con botón "ojo" (mostrar/ocultar). */
+.pw-campo { position: relative; display: flex; margin-bottom: var(--sp-4); }
+.pw-campo input { flex: 1; margin-bottom: 0; padding-right: 2.8rem; }
+.pw-campo .pw-ojo {
+    position: absolute; right: 0; top: 0; height: 100%; width: 2.8rem;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none; box-shadow: none; padding: 0;
+    color: var(--ink-muted); cursor: pointer; transform: none;
+    transition: color var(--dur-fast) var(--ease-out);
+}
+.pw-campo .pw-ojo:hover { background: none; color: var(--primary-strong); transform: none; box-shadow: none; }
+.pw-campo .pw-ojo svg { width: 1.2rem; height: 1.2rem; }
+.pw-campo .pw-ojo .ojo-tacha { display: none; }
+.pw-campo .pw-ojo.activo .ojo-tacha { display: block; }
+
+/* Pista bajo el campo (largo mínimo / coincidencia). */
+.login-hint { margin: calc(-1 * var(--sp-3)) 0 var(--sp-4); font-size: var(--text-xs); color: var(--ink-muted); transition: color var(--dur-fast) var(--ease-out); }
+.login-hint.malo { color: var(--danger-strong); font-weight: 600; }
+.login-hint.bien { color: var(--primary-strong); font-weight: 600; }
+
 button {
     padding: var(--sp-3) var(--sp-4);
     border: none;

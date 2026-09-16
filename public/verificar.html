@@ -19,12 +19,23 @@
             <span class="brand-word">Britech</span></h1>
         <p class="login-sub">Creá tu contraseña para activar la cuenta.</p>
 
-        <form id="form-verificar">
+        <form id="form-verificar" novalidate>
             <label for="password">Nueva contraseña</label>
-            <input id="password" type="password" required autocomplete="new-password" minlength="8">
+            <div class="pw-campo">
+                <input id="password" type="password" required autocomplete="new-password" minlength="8" autofocus>
+                <button type="button" class="pw-ojo" data-ver="password" aria-label="Mostrar contraseña">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><line class="ojo-tacha" x1="3" y1="3" x2="21" y2="21"/></svg>
+                </button>
+            </div>
+            <p class="login-hint" id="pw-hint">Mínimo 8 caracteres.</p>
 
             <label for="password2">Repetir contraseña</label>
-            <input id="password2" type="password" required autocomplete="new-password">
+            <div class="pw-campo">
+                <input id="password2" type="password" required autocomplete="new-password">
+                <button type="button" class="pw-ojo" data-ver="password2" aria-label="Mostrar contraseña">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/><line class="ojo-tacha" x1="3" y1="3" x2="21" y2="21"/></svg>
+                </button>
+            </div>
 
             <p id="msg-error" class="login-error oculto"></p>
             <p id="msg-ok" class="login-ok oculto"></p>
@@ -33,6 +44,7 @@
     </main>
 
     <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/pw-form.js"></script>
     <script src="/assets/js/verificar.js"></script>
 </body>
 </html>

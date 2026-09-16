@@ -1,14 +1,16 @@
-// Restablecer contraseña con el token del correo.
+// Restablecer contraseña (staff) con el token del correo.
 
-const form  = document.getElementById('form-restablecer');
-const error = document.getElementById('msg-error');
-const ok    = document.getElementById('msg-ok');
+const form   = document.getElementById('form-restablecer');
+const error  = document.getElementById('msg-error');
+const ok     = document.getElementById('msg-ok');
+const enviar = form.querySelector('button[type=submit]');
+const validarPw = pwCampos(8);   // ojo + pista en vivo; staff = mínimo 8
 
 const token = new URLSearchParams(window.location.search).get('token');
 if (!token) {
     error.textContent = 'Enlace inválido (falta el token).';
     error.classList.remove('oculto');
-    form.querySelector('button').disabled = true;
+    enviar.disabled = true;
 }
 
 form.addEventListener('submit', async (e) => {
@@ -17,14 +19,12 @@ form.addEventListener('submit', async (e) => {
 
     const p1 = document.getElementById('password').value;
     const p2 = document.getElementById('password2').value;
-    if (p1 !== p2) {
-        error.textContent = 'Las contraseñas no coinciden.';
-        error.classList.remove('oculto');
-        return;
-    }
+    const problema = validarPw(p1, p2);
+    if (problema) { error.textContent = problema; error.classList.remove('oculto'); return; }
 
-    const boton = form.querySelector('button');
-    boton.disabled = true;
+    const txt = enviar.textContent;
+    enviar.disabled = true;
+    enviar.textContent = 'Guardando…';
     try {
         await api.post('/api/restablecer', { token, password: p1 });
         form.classList.add('oculto');
@@ -33,6 +33,7 @@ form.addEventListener('submit', async (e) => {
     } catch (err) {
         error.textContent = err.message;
         error.classList.remove('oculto');
-        boton.disabled = false;
+        enviar.disabled = false;
+        enviar.textContent = txt;
     }
 });
