@@ -19,7 +19,8 @@ async function renderReposicion() {
     repoProv = r.proveedores || [];
     repoItems = (r.items || []).map((it) => ({
         ...it,
-        qty: Number(it.sugerido) || 1,
+        // Si ya se pidió hace poco, arranca en 0 para no re-avisar (el admin lo sube si quiere).
+        qty: it.dias_ultimo_pedido != null ? 0 : (Number(it.sugerido) || 1),
         provSel: it.proveedor_id ? String(it.proveedor_id) : '',   // proveedor elegido (editable)
     }));
 
@@ -102,8 +103,12 @@ function filaProducto(it) {
         .concat(repoProv.map((p) => `<option value="${p.id}" ${String(p.id) === it.provSel ? 'selected' : ''}>${esc(p.nombre)}</option>`))
         .join('');
     const sub = it.qty * (Number(it.costo) || 0);
-    return `<div class="repo-fila">
-        <span class="repo-nom">${esc(it.nombre)}${it.sku ? `<small>${esc(it.sku)}</small>` : ''}</span>
+    const yaPedido = it.dias_ultimo_pedido != null;
+    const chip = yaPedido
+        ? `<span class="repo-yapedido">Pedido ${it.dias_ultimo_pedido === 0 ? 'hoy' : 'hace ' + it.dias_ultimo_pedido + 'd'}</span>`
+        : '';
+    return `<div class="repo-fila${yaPedido ? ' ya' : ''}">
+        <span class="repo-nom">${esc(it.nombre)}${it.sku ? `<small>${esc(it.sku)}</small>` : ''}${chip}</span>
         <span class="repo-stock"><b class="${it.stock <= 0 ? 'sin' : 'bajo'}">${it.stock}</b> / ${it.stock_minimo}</span>
         <span>${it.costo === null ? '—' : money.format(it.costo)}</span>
         <span><input type="number" min="0" data-qty="${it.id}" value="${it.qty}" class="repo-qty"></span>
@@ -134,7 +139,7 @@ function mensajePedido(prov, items) {
     return lineas.join('\n');
 }
 
-function enviarPedidoProveedor(clave) {
+async function enviarPedidoProveedor(clave) {
     const prov = proveedorDe(clave);
     if (!prov) return;
     const items = repoItems.filter((it) => it.provSel === clave && it.qty > 0);
@@ -142,4 +147,16 @@ function enviarPedidoProveedor(clave) {
     const tel = telWhatsapp(prov.telefono);
     const texto = encodeURIComponent(mensajePedido(prov, items));
     window.open(tel ? `https://wa.me/${tel}?text=${texto}` : `https://wa.me/?text=${texto}`, '_blank');
+
+    // Registra el pedido (historial) para no volver a avisar estos productos.
+    try {
+        await api.post('/api/admin/reposicion', {
+            proveedor_id: Number(clave) || null,
+            items: items.map((it) => ({ producto_id: it.id, cantidad: it.qty })),
+        });
+        toast('✓ Pedido registrado');
+        renderReposicion();   // refresca: los enviados quedan marcados "ya pedido"
+    } catch {
+        toast('⚠ No se pudo registrar el pedido');
+    }
 }

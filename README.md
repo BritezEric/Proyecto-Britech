@@ -56,6 +56,7 @@ El primero crea la base `britech_v2`; el resto hace `USE britech_v2`.
 19. database/schema_notificaciones.sql   (campana de notificaciones del admin)
 20. database/schema_cliente_perfil.sql   (perfil de cliente: provincia + código postal)
 21. database/schema_reposicion.sql       (costo + stock mínimo en producto → pedido a proveedor)
+22. database/schema_reposicion_pedidos.sql (historial de pedidos de reposición → no re-avisar)
 ```
 
 Desde la terminal (uno por uno, o encadenados):
@@ -82,6 +83,7 @@ mysql -u root britech_v2 < database/schema_envio_venta.sql
 mysql -u root britech_v2 < database/schema_notificaciones.sql
 mysql -u root britech_v2 < database/schema_cliente_perfil.sql
 mysql -u root britech_v2 < database/schema_reposicion.sql
+mysql -u root britech_v2 < database/schema_reposicion_pedidos.sql
 ```
 
 **3. Variables de entorno** — copiar la plantilla y completar:

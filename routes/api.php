@@ -120,7 +120,8 @@ $router->post('/api/admin/envios/derivar',       [RepartidorController::class, '
 $router->post('/api/admin/envios/estado',        [RepartidorController::class, 'estado'],     true);
 
 // Reposición: productos con stock bajo + pedido a proveedor — solo admin
-$router->get('/api/admin/reposicion', [ReposicionController::class, 'index'], true);
+$router->get('/api/admin/reposicion',  [ReposicionController::class, 'index'],     true);
+$router->post('/api/admin/reposicion', [ReposicionController::class, 'registrar'], true);
 
 // Barrios del Moto Express (ABM admin)
 $router->get('/api/admin/barrios',          [BarrioController::class, 'admin'],   true);

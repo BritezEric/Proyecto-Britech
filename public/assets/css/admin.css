@@ -650,6 +650,9 @@ td.acciones { text-align: right; white-space: nowrap; }
 .repo-fila:last-child { border-bottom: none; }
 .repo-nom { display: flex; flex-direction: column; font-weight: 600; }
 .repo-nom small { color: var(--ink-muted); font-weight: 500; font-size: var(--text-xs); }
+.repo-yapedido { align-self: flex-start; margin-top: 2px; padding: 1px 7px; border-radius: 999px;
+    background: var(--primary-tint); color: var(--primary-strong); font-size: var(--text-xs); font-weight: 700; }
+.repo-fila.ya { background: var(--surface-sunk); }
 .repo-stock b { font-weight: 800; }
 .repo-stock b.sin { color: var(--danger, #d33); }
 .repo-stock b.bajo { color: #c77700; }
