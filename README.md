@@ -8,6 +8,9 @@ Proyecto de la materia *Prácticas Profesionalizantes*.
 - **Arquitectura:** MVC por capas → `Front Controller → Router → Controller → Service → Repository → PDO`
 - **Front:** HTML + CSS + JS puro (sin frameworks), consumiendo la API JSON.
 
+> 📌 **Estado del proyecto y qué falta** (entregas + producción): ver
+> [`docs/ESTADO-DEL-PROYECTO.md`](docs/ESTADO-DEL-PROYECTO.md).
+
 ### ¿Qué hace?
 
 - **POS**: venta con scanner, stock en vivo, medios de pago, envío en el ticket, anulación con motivo.
