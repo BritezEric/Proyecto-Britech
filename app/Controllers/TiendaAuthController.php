@@ -94,8 +94,25 @@ class TiendaAuthController
 
     public function logout(): void
     {
+        // Si entró por Google, además de cerrar nuestra sesión hay que cerrar la de
+        // Auth0: devolvemos la URL de /v2/logout para que el front navegue ahí. Sin
+        // esto, el próximo "Continuar con Google" re-loguea solo (SSO), sin preguntar.
+        $viaGoogle = !empty($_SESSION['cliente_via_google']);
         Session::logoutCliente();
-        Response::json(['ok' => true]);
+
+        $redirect = null;
+        if ($viaGoogle) {
+            $cfg = (require dirname(__DIR__, 2) . '/config/config.php')['auth0'];
+            if (\App\Core\Auth0Factory::configurado($cfg)) {
+                try {
+                    $auth0 = \App\Core\Auth0Factory::crear($cfg);
+                    $redirect = $auth0->logout($cfg['logout_uri']);
+                } catch (\Throwable $e) {
+                    error_log('[Auth0] logout: ' . $e->getMessage());
+                }
+            }
+        }
+        Response::json(['ok' => true, 'redirect' => $redirect]);
     }
 
     public function yo(): void

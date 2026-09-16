@@ -86,7 +86,7 @@ class Session
 
     public static function logoutCliente(): void
     {
-        unset($_SESSION['cliente_id'], $_SESSION['cliente'], $_SESSION['cliente_modo']);
+        unset($_SESSION['cliente_id'], $_SESSION['cliente'], $_SESSION['cliente_modo'], $_SESSION['cliente_via_google']);
     }
 
     /** Modo de navegación de la tienda: 'minorista' (default) o 'mayorista'. */

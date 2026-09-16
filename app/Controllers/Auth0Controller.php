@@ -66,6 +66,9 @@ class Auth0Controller
 
             $cliente = (new TiendaAuthService())->loginConGoogle($email, $nombre);
             Session::loginCliente($cliente['id'], $cliente);
+            // Marca que esta sesión entró por Google: al salir, cerramos también la
+            // sesión de Auth0 (si no, el próximo login re-loguea solo, sin elegir cuenta).
+            $_SESSION['cliente_via_google'] = true;
             header('Location: /tienda.html'); exit;
         } catch (\Throwable $e) {
             error_log('[Auth0] ' . $e->getMessage());

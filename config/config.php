@@ -54,5 +54,8 @@ return [
         'cookie_secret' => $leer('AUTH0_COOKIE_SECRET', ''),
         'redirect_uri'  => $leer('AUTH0_REDIRECT_URI',
             $leer('APP_URL', 'http://127.0.0.1:8123') . '/api/tienda/auth0/callback'),
+        // A dónde vuelve Auth0 tras cerrar su sesión (debe estar en "Allowed Logout URLs").
+        'logout_uri'    => $leer('AUTH0_LOGOUT_URI',
+            $leer('APP_URL', 'http://127.0.0.1:8123') . '/tienda.html'),
     ],
 ];

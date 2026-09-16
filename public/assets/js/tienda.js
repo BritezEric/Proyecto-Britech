@@ -823,7 +823,10 @@ async function registro(e) {
 }
 
 async function salir() {
-    try { await api.post('/api/tienda/logout', {}); } catch {}
+    let redirect = null;
+    try { redirect = (await api.post('/api/tienda/logout', {})).redirect; } catch {}
+    // Si entró por Google, Auth0 nos da una URL para cerrar también SU sesión.
+    if (redirect) { location.href = redirect; return; }
     cliente = null; favoritos = new Set();
     aplicarTemaModo('minorista');          // al salir, vuelve al tema claro
     pintarCuenta(); pintarMayorista();
