@@ -17,6 +17,16 @@ class NotificacionRepository
         } catch (\Throwable $e) { /* una notificación nunca debe frenar la acción real */ }
     }
 
+    /** ¿Ya hay una notificación NO leída de este tipo para esa referencia? (evita repetir). */
+    public function existeNoLeida(string $tipo, int $refId): bool
+    {
+        $st = Database::conexion()->prepare(
+            "SELECT 1 FROM notificacion WHERE leida = 0 AND tipo = ? AND ref_id = ? LIMIT 1"
+        );
+        $st->execute([$tipo, $refId]);
+        return (bool) $st->fetchColumn();
+    }
+
     public function contarNoLeidas(): int
     {
         return (int) Database::conexion()->query("SELECT COUNT(*) FROM notificacion WHERE leida = 0")->fetchColumn();

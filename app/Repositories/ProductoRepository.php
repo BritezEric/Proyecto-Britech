@@ -267,6 +267,27 @@ class ProductoRepository
         return Database::conexion()->query($sql)->fetchAll();
     }
 
+    /**
+     * De una lista de ids, cuáles quedaron en o por debajo de su stock mínimo
+     * (activos, no sobre pedido, con stock_minimo > 0). Para avisar tras una venta.
+     */
+    public function enAlerta(array $ids): array
+    {
+        if ($ids === []) return [];
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "SELECT p.id, p.nombre, COALESCE(i.cantidad, 0) AS stock, p.stock_minimo
+                FROM producto p
+                LEFT JOIN inventario i ON i.producto_id = p.id
+                WHERE p.id IN ($in)
+                  AND p.activo = 1
+                  AND p.es_sobre_pedido = 0
+                  AND p.stock_minimo > 0
+                  AND COALESCE(i.cantidad, 0) <= p.stock_minimo";
+        $st = Database::conexion()->prepare($sql);
+        $st->execute(array_map('intval', array_values($ids)));
+        return $st->fetchAll();
+    }
+
     // ===== Catálogo de la tienda online =====
 
     /**

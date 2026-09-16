@@ -30,6 +30,7 @@ use App\Controllers\EmpresaEnvioController;
 use App\Controllers\RepartidorController;
 use App\Controllers\BarrioController;
 use App\Controllers\ReposicionController;
+use App\Controllers\CompraController;
 use App\Controllers\Auth0Controller;
 
 /** @var App\Core\Router $router */
@@ -122,6 +123,14 @@ $router->post('/api/admin/envios/estado',        [RepartidorController::class, '
 // Reposición: productos con stock bajo + pedido a proveedor — solo admin
 $router->get('/api/admin/reposicion',  [ReposicionController::class, 'index'],     true);
 $router->post('/api/admin/reposicion', [ReposicionController::class, 'registrar'], true);
+
+// Compras: órdenes de compra + recepción de mercadería — solo admin
+$router->get('/api/admin/compras',          [CompraController::class, 'listar'],     true);
+$router->get('/api/admin/compras/detalle',  [CompraController::class, 'detalle'],    true);
+$router->get('/api/admin/compras/nueva',    [CompraController::class, 'datosNueva'], true);
+$router->post('/api/admin/compras',         [CompraController::class, 'crear'],      true);
+$router->post('/api/admin/compras/recibir', [CompraController::class, 'recibir'],    true);
+$router->post('/api/admin/compras/anular',  [CompraController::class, 'anular'],     true);
 
 // Barrios del Moto Express (ABM admin)
 $router->get('/api/admin/barrios',          [BarrioController::class, 'admin'],   true);

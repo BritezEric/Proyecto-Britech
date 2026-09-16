@@ -1047,7 +1047,7 @@ async function renderInicio() {
 
 // ---- Init ----
 // ---- Novedades / avisos (campana con bandeja de leídas) ----
-const NOTI_IC = { pedido_nuevo: '🛒', comprobante: '🧾', solicitud: '📨' };
+const NOTI_IC = { pedido_nuevo: '🛒', comprobante: '🧾', solicitud: '📨', stock_bajo: '⚠️', compra_recibida: '📦' };
 
 function fechaCorta(s) {
     const d = new Date(String(s).replace(' ', 'T'));

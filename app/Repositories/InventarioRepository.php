@@ -51,6 +51,16 @@ class InventarioRepository
             ->execute([$cantidad, $productoId]);
     }
 
+    /** Suma stock creando la fila si no existía (al recibir mercadería de una compra). */
+    public function aumentar(int $productoId, int $cantidad): void
+    {
+        Database::conexion()
+            ->prepare("INSERT INTO inventario (producto_id, cantidad, actualizado_en)
+                       VALUES (?, ?, NOW())
+                       ON DUPLICATE KEY UPDATE cantidad = cantidad + VALUES(cantidad), actualizado_en = NOW()")
+            ->execute([$productoId, $cantidad]);
+    }
+
     /** Registra un movimiento en el historial (ingreso/egreso/ajuste). */
     public function registrarMovimiento(
         int $productoId,

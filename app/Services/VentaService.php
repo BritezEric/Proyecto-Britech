@@ -7,6 +7,7 @@ use App\Repositories\ClienteRepository;
 use App\Repositories\ProductoRepository;
 use App\Repositories\VentaRepository;
 use App\Repositories\InventarioRepository;
+use App\Repositories\NotificacionRepository;
 use App\Repositories\EmpresaEnvioRepository;
 use App\Repositories\BarrioRepository;
 use App\Repositories\EnvioRepository;
@@ -163,7 +164,29 @@ class VentaService
             throw $e;
         }
 
+        // Aviso de stock bajo: fuera de la transacción (una notificación nunca
+        // debe frenar ni deshacer la venta ya confirmada).
+        $this->avisarStockBajo(array_column($lineas, 'producto_id'));
+
         return ['venta_id' => $ventaId, 'numero' => $numero, 'total' => $total, 'envio_costo' => $envioCosto];
+    }
+
+    /**
+     * Crea una notificación por cada producto vendido que quedó en o bajo su
+     * stock mínimo. No repite si ya hay un aviso sin leer para ese producto.
+     */
+    private function avisarStockBajo(array $productoIds): void
+    {
+        $notif = new NotificacionRepository();
+        foreach ((new ProductoRepository())->enAlerta($productoIds) as $p) {
+            if ($notif->existeNoLeida('stock_bajo', (int) $p['id'])) continue;
+            $notif->crear(
+                'stock_bajo',
+                "Stock bajo: {$p['nombre']} ({$p['stock']} u.)",
+                'reposicion',
+                (int) $p['id']
+            );
+        }
     }
 
     /**
