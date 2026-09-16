@@ -243,8 +243,10 @@ async function crearOrdenCompra() {
     } catch (err) { toast('⚠ ' + err.message); }
 }
 
-// El botón "+ Nueva orden" vive en el header de la vista (fuera de #compras-cont).
+// Botones del header de la vista (fuera de #compras-cont, estáticos en admin.html).
 (function () {
     const b = document.getElementById('compras-nueva');
     if (b) b.addEventListener('click', abrirNuevaCompra);
+    const volver = document.querySelector('#vista-compras [data-ir-inicio]');
+    if (volver) volver.addEventListener('click', () => seleccionar('inicio'));
 })();

@@ -162,6 +162,12 @@ function mensajePedido(prov, items) {
     return lineas.join('\n');
 }
 
+// Botón "‹ Panel" del header de la vista (estático en admin.html, fuera del cont).
+(function () {
+    const volver = document.querySelector('#vista-reposicion [data-ir-inicio]');
+    if (volver) volver.addEventListener('click', () => seleccionar('inicio'));
+})();
+
 async function enviarPedidoProveedor(clave) {
     const prov = proveedorDe(clave);
     if (!prov) return;
