@@ -62,6 +62,25 @@ function pintarReposicion() {
     // Enviar pedido por WhatsApp.
     cont.querySelectorAll('button[data-enviar]').forEach((btn) => btn.addEventListener('click', () =>
         enviarPedidoProveedor(btn.dataset.enviar)));
+    // Crear orden de compra formal (módulo Compras) con el grupo.
+    cont.querySelectorAll('button[data-orden]').forEach((btn) => btn.addEventListener('click', () =>
+        crearOrdenDesdeRepo(btn.dataset.orden)));
+}
+
+// Crea una orden de compra en el módulo Compras a partir de un grupo de reposición.
+async function crearOrdenDesdeRepo(clave) {
+    const prov = proveedorDe(clave);
+    if (!prov) return;
+    const items = repoItems.filter((it) => it.provSel === clave && it.qty > 0);
+    if (!items.length) { toast('⚠ Poné una cantidad mayor a 0'); return; }
+    try {
+        const r = await api.post('/api/admin/compras', {
+            proveedor_id: Number(clave),
+            observacion: 'Generada desde Reposición',
+            items: items.map((it) => ({ producto_id: it.id, cantidad: it.qty, costo_unitario: Number(it.costo) || 0 })),
+        });
+        toast('✓ Orden ' + r.orden.numero + ' creada');
+    } catch (err) { toast('⚠ ' + err.message); }
 }
 
 function proveedorDe(clave) { return repoProv.find((p) => String(p.id) === String(clave)) || null; }
@@ -81,6 +100,9 @@ function tarjetaGrupo(clave, items) {
     const btnEnviar = (!sinProv && prov.telefono)
         ? `<button class="btn-primary repo-enviar" data-enviar="${clave}">Enviar pedido por WhatsApp</button>`
         : `<button class="btn-primary repo-enviar" disabled title="${sinProv ? 'Asigná un proveedor' : 'El proveedor no tiene teléfono'}">Enviar pedido por WhatsApp</button>`;
+    const btnOrden = !sinProv
+        ? `<button class="btn-ghost repo-orden" data-orden="${clave}">Crear orden de compra</button>`
+        : '';
 
     return `<div class="repo-grupo">
         ${cabecera}
@@ -93,6 +115,7 @@ function tarjetaGrupo(clave, items) {
         <div class="repo-foot">
             <span class="repo-total-lbl">Total estimado del pedido</span>
             <span class="repo-total" data-total="${clave}">${money.format(total)}</span>
+            ${btnOrden}
             ${btnEnviar}
         </div>
     </div>`;

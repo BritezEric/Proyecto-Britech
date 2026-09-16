@@ -342,7 +342,7 @@ const PADRE = {
     empleados: 'tablas', repartidores: 'tablas', barrios: 'tablas',
     envios: 'pedidos', pedidos: 'inicio',
 };
-const NOMBRE_VISTA = { tablas: 'Tablas', pedidos: 'Gestor de envíos', inicio: 'Panel' };
+const NOMBRE_VISTA = { tablas: 'Tablas', pedidos: 'Gestor de envíos', inicio: 'Panel', compras: 'Compras' };
 
 // Cuadritos de la vista "Tablas" (Empresas de envío ya NO está acá: vive en el gestor).
 const TABLAS_CARDS = [
@@ -405,8 +405,8 @@ async function seleccionar(ent) {
     document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('activo', b.dataset.ent === navKey));
     const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados'),
           vistaTablas = $('vista-tablas'), vistaAjustes = $('vista-ajustes'), vistaRepartos = $('vista-repartos'),
-          vistaReposicion = $('vista-reposicion');
-    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas, vistaAjustes, vistaRepartos, vistaReposicion]
+          vistaReposicion = $('vista-reposicion'), vistaCompras = $('vista-compras');
+    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas, vistaAjustes, vistaRepartos, vistaReposicion, vistaCompras]
         .forEach((v) => v.classList.add('oculto'));
     if (ent === 'inicio')   { ocultarTodo(); vistaInicio.classList.remove('oculto');   return renderInicio(); }
     if (ent === 'tablas')   { ocultarTodo(); vistaTablas.classList.remove('oculto');   return renderTablas(); }
@@ -414,6 +414,7 @@ async function seleccionar(ent) {
     if (ent === 'empleados'){ ocultarTodo(); vistaEmpleados.classList.remove('oculto'); return renderEmpleados(); }
     if (ent === 'repartos') { ocultarTodo(); vistaRepartos.classList.remove('oculto'); return renderRepartos(); }
     if (ent === 'reposicion'){ ocultarTodo(); vistaReposicion.classList.remove('oculto'); return renderReposicion(); }
+    if (ent === 'compras')   { ocultarTodo(); vistaCompras.classList.remove('oculto');    return renderCompras(); }
     if (ent === 'ajustes')  { ocultarTodo(); vistaAjustes.classList.remove('oculto');  return renderAjustes(); }
     entActual = ent; cfg = ENTIDADES[ent];
     page = 1; q = ''; filtros = {};
@@ -911,6 +912,7 @@ async function renderInicio() {
         <button class="acceso-btn" data-ir="pedidos"><span class="acceso-ic">📦</span> Envíos</button>
         <button class="acceso-btn" data-ir="repartos"><span class="acceso-ic">🛵</span> Repartos${sinAsignar > 0 ? `<span class="acceso-badge">${sinAsignar}</span>` : ''}</button>
         <button class="acceso-btn" data-ir="reposicion"><span class="acceso-ic">🛒</span> Reposición${faltantes > 0 ? `<span class="acceso-badge">${faltantes}</span>` : ''}</button>
+        <button class="acceso-btn" data-ir="compras"><span class="acceso-ic">📥</span> Compras</button>
         <a class="acceso-btn" href="/pos.html"><span class="acceso-ic">🧾</span> Ir al POS</a>`;
     $('dash-accesos').querySelectorAll('[data-ir]').forEach((b) =>
         b.addEventListener('click', () => seleccionar(b.dataset.ir)));

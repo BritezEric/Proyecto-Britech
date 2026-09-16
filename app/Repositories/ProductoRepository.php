@@ -44,6 +44,7 @@ class ProductoRepository
                        p.codigo_barras,
                        p.nombre,
                        p.es_sobre_pedido,
+                       p.costo,
                        COALESCE(i.cantidad, 0) AS stock,
                        pr.precio
                 FROM producto p
