@@ -20,6 +20,7 @@
             <nav class="side-nav" id="nav">
                 <button data-ent="inicio"    class="nav-item" data-admin>Inicio</button>
                 <button data-ent="pedidos"   class="nav-item">Pedidos</button>
+                <button data-ent="cajas"     class="nav-item" data-admin>Cajas</button>
                 <button data-ent="tablas"    class="nav-item" data-admin>Tablas</button>
                 <button data-ent="bloques"   class="nav-item" data-admin>Inicio tienda</button>
                 <button data-ent="ajustes"   class="nav-item" data-admin>Ajustes</button>
@@ -153,6 +154,18 @@
                 <div id="reposicion-cont"></div>
             </section>
 
+            <!-- Vista: Cajas (supervisión de aperturas/cierres del vendedor) -->
+            <section id="vista-cajas" class="oculto">
+                <header class="content-top">
+                    <div>
+                        <button class="volver-link" data-ir-inicio>‹ Panel</button>
+                        <h1>Cajas</h1>
+                        <p class="sub">Historial de cajas: aperturas, cierres y arqueos de cada vendedor.</p>
+                    </div>
+                </header>
+                <div id="cajas-cont"></div>
+            </section>
+
             <!-- Vista: Compras (órdenes de compra + recepción de mercadería) -->
             <section id="vista-compras" class="oculto">
                 <header class="content-top">
@@ -273,5 +286,6 @@
     <script src="/assets/js/admin-repartidores.js"></script>
     <script src="/assets/js/admin-reposicion.js"></script>
     <script src="/assets/js/admin-compras.js"></script>
+    <script src="/assets/js/admin-cajas.js"></script>
 </body>
 </html>

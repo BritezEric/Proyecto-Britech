@@ -463,3 +463,16 @@ body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 .pos-envio-grid .pos-env-ancho { grid-column: 1 / -1; }
 .pos-envio-hint { font-size: var(--text-xs); color: var(--ink-muted); margin: 0; }
 @media (max-width: 480px) { .pos-envio-grid { grid-template-columns: 1fr; } }
+
+/* ===== Caja (POS) ===== */
+#btn-caja.caja-cerrada { background: var(--danger, #d33); color: #fff; }
+.caja-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin: 12px 0; }
+.caja-grid > div { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: var(--text-sm); }
+.caja-grid > div span { color: var(--ink-muted); }
+.caja-grid .caja-esperado { grid-column: 1 / -1; border-bottom: none; border-top: 2px solid var(--line); padding-top: 10px; font-size: 1.05rem; }
+.caja-grid .caja-esperado strong { color: var(--primary-strong, #6b21a8); }
+.caja-mov, .caja-cerrar { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.caja-mov-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.caja-mov-row select, .caja-mov-row input { padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 8px; font: inherit; background: var(--surface, #fff); color: var(--ink); }
+.caja-mov-row input { flex: 1; min-width: 120px; }
+#caja-dif { margin-top: 8px; font-weight: 600; }

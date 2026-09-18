@@ -740,3 +740,13 @@ td.acciones { text-align: right; white-space: nowrap; }
     border: none; border-bottom: 1px solid var(--line); font: inherit; font-size: var(--text-sm); cursor: pointer; color: var(--ink); }
 .compra-sug-it:hover { background: var(--surface-sunk); }
 .compra-sug-vacio, .compra-vacio-l { padding: var(--sp-3); color: var(--ink-muted); font-size: var(--text-sm); }
+
+/* ===== Cajas (admin) ===== */
+.caja-fila { grid-template-columns: 0.6fr 1.4fr 1fr 1fr 1.2fr auto; }
+.caja-dif-cell.ok { color: #1a7f43; font-weight: 700; }
+.caja-dif-cell.mal { color: var(--danger, #d33); font-weight: 700; }
+.compra-detalle .caja-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; margin: 14px 0; }
+.compra-detalle .caja-grid > div { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: var(--text-sm); }
+.compra-detalle .caja-grid > div span { color: var(--ink-muted); }
+.compra-detalle .caja-grid .caja-esperado { grid-column: 1 / -1; border-bottom: none; border-top: 2px solid var(--line); padding-top: 10px; font-size: 1.05rem; }
+.compra-detalle .caja-grid .caja-esperado strong { color: var(--primary-strong); }

@@ -16,6 +16,7 @@
             <span class="brand-word">Britech · POS</span></span>
         <div class="barra-derecha">
             <span class="vendedor">Vendedor: <span id="vendedor-nombre">…</span></span>
+            <button id="btn-caja" class="btn-logout"><span id="caja-pill">🧰 Caja</span></button>
             <a id="link-panel" class="btn-logout oculto" href="/admin.html">Panel</a>
             <a id="link-ventas" class="btn-logout oculto" href="/ventas.html">Ventas</a>
             <a id="link-usuarios" class="btn-logout oculto" href="/usuarios.html">Usuarios</a>
@@ -93,6 +94,16 @@
             <div class="modal-botones">
                 <button id="btn-cancelar" class="btn-secundario">Cancelar</button>
                 <button id="btn-confirmar" class="btn-cobrar" disabled>Confirmar venta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CAJA (apertura / movimientos / cierre) -->
+    <div id="modal-caja-ov" class="modal oculto">
+        <div class="modal-caja">
+            <div id="caja-cont"></div>
+            <div class="modal-botones">
+                <button id="btn-caja-cerrar-modal" class="btn-secundario">Cerrar</button>
             </div>
         </div>
     </div>

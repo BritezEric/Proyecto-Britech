@@ -12,16 +12,16 @@ use App\Core\Database;
 class VentaRepository
 {
     /** Crea la cabecera de la venta y devuelve su id. */
-    public function crear(int $clienteId, int $usuarioId, float $subtotal, float $descuento, float $total): int
+    public function crear(int $clienteId, int $usuarioId, float $subtotal, float $descuento, float $total, ?int $cajaId = null): int
     {
         $pdo = Database::conexion();
         // numero temporal corto y único; lo reemplazamos por el definitivo con el id.
         $temporal = 'T' . bin2hex(random_bytes(6));
 
         $pdo->prepare("INSERT INTO venta
-                       (numero, cliente_id, usuario_id, subtotal, descuento, total)
-                       VALUES (?, ?, ?, ?, ?, ?)")
-            ->execute([$temporal, $clienteId, $usuarioId, $subtotal, $descuento, $total]);
+                       (numero, cliente_id, usuario_id, caja_id, subtotal, descuento, total)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)")
+            ->execute([$temporal, $clienteId, $usuarioId, $cajaId, $subtotal, $descuento, $total]);
 
         return (int) $pdo->lastInsertId();
     }

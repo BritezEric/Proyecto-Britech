@@ -245,6 +245,7 @@ descTotalIn.addEventListener('input', () => {
 
 btnCobrar.addEventListener('click', () => {
     if (carrito.length === 0) return;
+    if (!cajaAbierta) { abrirModalCaja(); return; }   // sin caja abierta no se vende
     cobroError.classList.add('oculto');
     const total = r2(calcularTotal() + costoEnvioPOS());
     // arranca con un pago por el total (productos + envío), en el primer medio
@@ -328,6 +329,7 @@ btnConfirmar.addEventListener('click', async () => {
         ['pos-env-destinatario', 'pos-env-telefono', 'pos-env-calle', 'pos-env-altura', 'pos-env-ref']
             .forEach((id) => { document.getElementById(id).value = ''; });
         renderCarrito();
+        cargarCaja();   // actualiza el resumen del turno (efectivo esperado)
         modalCobro.classList.add('oculto');
         modalTicket.classList.remove('oculto');
     } catch (e) {
@@ -416,8 +418,8 @@ input.addEventListener('keydown', async (e) => {
         window.location.href = '/login.html';
     });
 
-    // En paralelo (antes iba una tras otra): clientes, medios de pago y envío.
-    await Promise.all([cargarClientes(), cargarTiposPago(), configurarEnvio()]);
+    // En paralelo (antes iba una tras otra): clientes, medios de pago, envío y caja.
+    await Promise.all([cargarClientes(), cargarTiposPago(), configurarEnvio(), cargarCaja()]);
     renderCarrito();
     input.focus();
 })();
@@ -505,3 +507,137 @@ function envioPayloadPOS() {
         referencia: g('pos-env-ref'),
     };
 }
+
+// ================= CAJA (apertura / movimientos / cierre) =================
+let cajaAbierta = false;
+let cajaInfo = null;   // { caja, resumen, esperado } cuando está abierta
+
+async function cargarCaja() {
+    try {
+        const r = await api.get('/api/caja/estado');
+        cajaAbierta = !!r.abierta;
+        cajaInfo = r.abierta ? r : null;
+    } catch { cajaAbierta = false; cajaInfo = null; }
+    pintarCaja();
+}
+
+function pintarCaja() {
+    const pill = document.getElementById('caja-pill');
+    if (pill) pill.textContent = cajaAbierta ? '🧰 Caja abierta' : '🔒 Caja cerrada';
+    document.getElementById('btn-caja').classList.toggle('caja-cerrada', !cajaAbierta);
+    // Si el modal de caja está abierto, re-pintar su contenido.
+    if (!document.getElementById('modal-caja-ov').classList.contains('oculto')) pintarModalCaja();
+}
+
+function abrirModalCaja() {
+    pintarModalCaja();
+    document.getElementById('modal-caja-ov').classList.remove('oculto');
+}
+function cerrarModalCaja() {
+    document.getElementById('modal-caja-ov').classList.add('oculto');
+}
+
+function pintarModalCaja() {
+    const cont = document.getElementById('caja-cont');
+    if (!cajaAbierta) {
+        cont.innerHTML = `
+            <h2>Abrir caja</h2>
+            <p class="td-mute">Ingresá el efectivo con el que arranca la caja para poder vender.</p>
+            <label class="etiqueta">Monto de apertura</label>
+            <input id="caja-apertura" class="input-desc" type="number" min="0" step="0.01" value="0">
+            <p id="caja-error" class="cobro-error oculto"></p>
+            <button id="caja-abrir" class="btn-cobrar" style="width:100%;margin-top:12px">Abrir caja</button>`;
+        document.getElementById('caja-abrir').addEventListener('click', accionAbrirCaja);
+        return;
+    }
+
+    const c = cajaInfo.caja, res = cajaInfo.resumen;
+    cont.innerHTML = `
+        <h2>Caja abierta</h2>
+        <div class="caja-grid">
+            <div><span>Apertura</span><strong>${money.format(c.monto_apertura)}</strong></div>
+            <div><span>Ventas efectivo</span><strong>${money.format(res.efectivo)}</strong></div>
+            <div><span>Ventas transferencia</span><strong>${money.format(res.transferencia)}</strong></div>
+            <div><span>Retiros</span><strong>−${money.format(res.retiros)}</strong></div>
+            <div><span>Ingresos</span><strong>${money.format(res.ingresos)}</strong></div>
+            <div class="caja-esperado"><span>Efectivo esperado</span><strong>${money.format(cajaInfo.esperado)}</strong></div>
+        </div>
+        <p class="td-mute">${res.ventas} venta(s) en este turno.</p>
+
+        <div class="caja-mov">
+            <label class="etiqueta">Movimiento de efectivo</label>
+            <div class="caja-mov-row">
+                <select id="caja-mov-tipo"><option value="retiro">Retiro</option><option value="ingreso">Ingreso</option></select>
+                <input id="caja-mov-monto" type="number" min="0" step="0.01" placeholder="Monto">
+                <input id="caja-mov-motivo" type="text" placeholder="Motivo (opcional)">
+                <button id="caja-mov-btn" class="btn-secundario">Registrar</button>
+            </div>
+        </div>
+
+        <div class="caja-cerrar">
+            <label class="etiqueta">Cerrar caja (arqueo)</label>
+            <div class="caja-mov-row">
+                <input id="caja-contado" type="number" min="0" step="0.01" placeholder="Efectivo contado">
+                <input id="caja-obs" type="text" placeholder="Observación (opcional)">
+                <button id="caja-cerrar-btn" class="btn-cobrar">Cerrar caja</button>
+            </div>
+            <p id="caja-dif" class="td-mute"></p>
+        </div>
+        <p id="caja-error" class="cobro-error oculto"></p>`;
+
+    document.getElementById('caja-mov-btn').addEventListener('click', accionMovimientoCaja);
+    document.getElementById('caja-cerrar-btn').addEventListener('click', accionCerrarCaja);
+    // Muestra la diferencia en vivo al tipear el contado.
+    const contado = document.getElementById('caja-contado');
+    contado.addEventListener('input', () => {
+        const val = parseFloat(contado.value);
+        const dif = document.getElementById('caja-dif');
+        if (isNaN(val)) { dif.textContent = ''; return; }
+        const d = Math.round((val - cajaInfo.esperado) * 100) / 100;
+        dif.textContent = d === 0 ? '✔ Coincide con lo esperado'
+            : (d > 0 ? `Sobra ${money.format(d)}` : `Falta ${money.format(-d)}`);
+        dif.style.color = d === 0 ? 'var(--ok, green)' : 'var(--danger, #d33)';
+    });
+}
+
+function cajaError(msg) {
+    const e = document.getElementById('caja-error');
+    if (e) { e.textContent = msg; e.classList.remove('oculto'); }
+}
+
+async function accionAbrirCaja() {
+    const monto = parseFloat(document.getElementById('caja-apertura').value) || 0;
+    try {
+        await api.post('/api/caja/abrir', { monto });
+        await cargarCaja();
+    } catch (e) { cajaError(e.message); }
+}
+
+async function accionMovimientoCaja() {
+    const tipo = document.getElementById('caja-mov-tipo').value;
+    const monto = parseFloat(document.getElementById('caja-mov-monto').value) || 0;
+    const motivo = document.getElementById('caja-mov-motivo').value;
+    try {
+        await api.post('/api/caja/movimiento', { tipo, monto, motivo });
+        await cargarCaja();
+    } catch (e) { cajaError(e.message); }
+}
+
+async function accionCerrarCaja() {
+    const contado = parseFloat(document.getElementById('caja-contado').value);
+    if (isNaN(contado)) { cajaError('Ingresá el efectivo contado.'); return; }
+    const observacion = document.getElementById('caja-obs').value;
+    try {
+        const r = await api.post('/api/caja/cerrar', { contado, observacion });
+        const d = r.cierre.diferencia;
+        alert(`Caja cerrada.\nEsperado: ${money.format(r.cierre.esperado)}\nContado: ${money.format(r.cierre.contado)}\nDiferencia: ${money.format(d)}`);
+        await cargarCaja();
+        cerrarModalCaja();
+    } catch (e) { cajaError(e.message); }
+}
+
+document.getElementById('btn-caja').addEventListener('click', abrirModalCaja);
+document.getElementById('btn-caja-cerrar-modal').addEventListener('click', cerrarModalCaja);
+document.getElementById('modal-caja-ov').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('modal-caja-ov')) cerrarModalCaja();
+});

@@ -31,6 +31,7 @@ use App\Controllers\RepartidorController;
 use App\Controllers\BarrioController;
 use App\Controllers\ReposicionController;
 use App\Controllers\CompraController;
+use App\Controllers\CajaController;
 use App\Controllers\Auth0Controller;
 
 /** @var App\Core\Router $router */
@@ -123,6 +124,14 @@ $router->post('/api/admin/envios/estado',        [RepartidorController::class, '
 // Reposición: productos con stock bajo + pedido a proveedor — solo admin
 $router->get('/api/admin/reposicion',  [ReposicionController::class, 'index'],     true);
 $router->post('/api/admin/reposicion', [ReposicionController::class, 'registrar'], true);
+
+// Caja del vendedor (apertura / movimientos / cierre) — staff; historial admin
+$router->get('/api/caja/estado',       [CajaController::class, 'estado'],     true);
+$router->post('/api/caja/abrir',       [CajaController::class, 'abrir'],      true);
+$router->post('/api/caja/movimiento',  [CajaController::class, 'movimiento'], true);
+$router->post('/api/caja/cerrar',      [CajaController::class, 'cerrar'],     true);
+$router->get('/api/admin/cajas',         [CajaController::class, 'adminListar'],  true);
+$router->get('/api/admin/cajas/detalle', [CajaController::class, 'adminDetalle'], true);
 
 // Compras: órdenes de compra + recepción de mercadería — solo admin
 $router->get('/api/admin/compras',          [CompraController::class, 'listar'],     true);

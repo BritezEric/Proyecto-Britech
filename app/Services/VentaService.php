@@ -8,6 +8,7 @@ use App\Repositories\ProductoRepository;
 use App\Repositories\VentaRepository;
 use App\Repositories\InventarioRepository;
 use App\Repositories\NotificacionRepository;
+use App\Repositories\CajaRepository;
 use App\Repositories\EmpresaEnvioRepository;
 use App\Repositories\BarrioRepository;
 use App\Repositories\EnvioRepository;
@@ -36,6 +37,13 @@ class VentaService
 
         if (!is_array($items) || count($items) === 0) {
             throw new ValidacionException('El carrito está vacío.');
+        }
+
+        // 0) Caja abierta obligatoria (flujo estricto): sin caja no se puede vender,
+        //    y la venta queda ligada a esa caja para el arqueo del cierre.
+        $caja = (new CajaRepository())->abiertaDe($usuarioId);
+        if ($caja === null) {
+            throw new ValidacionException('Tenés que abrir la caja antes de registrar una venta.');
         }
 
         // 1) Cliente válido → define la lista de precios.
@@ -124,7 +132,7 @@ class VentaService
         try {
             $pdo->beginTransaction();
 
-            $ventaId = $ventaRepo->crear($clienteId, $usuarioId, $subtotal, $descuento, $total);
+            $ventaId = $ventaRepo->crear($clienteId, $usuarioId, $subtotal, $descuento, $total, (int) $caja['id']);
             $numero  = 'V-' . str_pad((string) $ventaId, 6, '0', STR_PAD_LEFT);
             $ventaRepo->actualizarNumero($ventaId, $numero);
 
