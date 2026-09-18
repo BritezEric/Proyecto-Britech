@@ -219,6 +219,11 @@ function renderProducto(p, relacionados) {
     const esMay = cliente && cliente.modo === 'mayorista';
     const min = esMay ? (Number(p.min_mayorista) || 1) : 1;
     const agotado = Number(p.es_sobre_pedido) !== 1 && Number(p.stock) <= 0;
+    // La ficha no filtra por precio (a diferencia del catálogo): un producto puede
+    // no tener precio para el modo actual (ej: sin precio mayorista). En ese caso no
+    // se puede comprar → deshabilitamos "Agregar" y avisamos.
+    const sinPrecio = p.precio === null || p.precio === undefined || Number(p.precio) <= 0;
+    const noComprable = agotado || sinPrecio;
     const hayAnt = Number(p.precio_anterior) > Number(p.precio);
     const off = hayAnt ? Math.round((1 - p.precio / p.precio_anterior) * 100) : 0;
     const favOn = favoritos.has(Number(p.id));
@@ -263,10 +268,13 @@ function renderProducto(p, relacionados) {
                 </div>
 
                 <div class="pp-precio-box">
-                    ${hayAnt ? `<div class="pp-ant"><s>${money.format(p.precio_anterior)}</s> <span class="pp-off">-${off}%</span></div>` : ''}
-                    <div class="pp-precio">${money.format(p.precio)}</div>
-                    <div class="pp-cuotas">3 cuotas sin interés de <strong>${money.format(cuota)}</strong></div>
-                    <div class="pp-lista">${esMay ? 'Precio mayorista' : 'Precio minorista'}</div>
+                    ${sinPrecio
+                        ? `<div class="pp-precio pp-sin-precio">Sin precio ${esMay ? 'mayorista' : ''}</div>
+                           <div class="pp-lista">${esMay ? 'Este producto no tiene precio mayorista cargado' : 'Precio no disponible'}</div>`
+                        : `${hayAnt ? `<div class="pp-ant"><s>${money.format(p.precio_anterior)}</s> <span class="pp-off">-${off}%</span></div>` : ''}
+                           <div class="pp-precio">${money.format(p.precio)}</div>
+                           <div class="pp-cuotas">3 cuotas sin interés de <strong>${money.format(cuota)}</strong></div>
+                           <div class="pp-lista">${esMay ? 'Precio mayorista' : 'Precio minorista'}</div>`}
                 </div>
 
                 <div class="pp-stock ${agotado ? 'agotado' : ''}">
@@ -280,7 +288,7 @@ function renderProducto(p, relacionados) {
                         <span id="pp-cant">${min}</span>
                         <button id="pp-mas" type="button">+</button>
                     </div>
-                    <button class="btn-primary pp-add" id="pp-add" ${agotado ? 'disabled' : ''}>Agregar al carrito</button>
+                    <button class="btn-primary pp-add" id="pp-add" ${noComprable ? 'disabled' : ''} title="${sinPrecio ? 'Sin precio para este modo' : (agotado ? 'Sin stock' : 'Agregar al carrito')}">Agregar al carrito</button>
                     <button class="pp-fav ${favOn ? 'activo' : ''}" id="pp-fav" aria-label="Favorito">${favOn ? '❤️' : '🤍'}</button>
                 </div>
 

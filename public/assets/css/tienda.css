@@ -699,6 +699,7 @@ body { min-height: 100vh; }
 .pp-ant { font-size: var(--text-sm); color: var(--ink-muted); margin-bottom: 2px; }
 .pp-off { background: var(--danger); color: #fff; font-weight: 800; font-size: var(--text-xs); padding: 1px 8px; border-radius: var(--r-full); margin-left: 6px; }
 .pp-precio { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.03em; color: var(--primary-strong); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.pp-precio.pp-sin-precio { font-size: 1.4rem; color: var(--ink-muted); }
 .pp-cuotas { font-size: var(--text-sm); color: var(--ink); margin-top: 4px; }
 .pp-lista { font-size: var(--text-xs); color: var(--ink-muted); margin-top: 4px; }
 .pp-stock { font-weight: 700; font-size: var(--text-sm); color: var(--primary-strong); margin-bottom: var(--sp-2); }
