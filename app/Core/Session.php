@@ -57,6 +57,12 @@ class Session
         return (self::usuario()['rol'] ?? '') === 'admin';
     }
 
+    /** ¿Hay staff logueado? (admin o vendedor). Para lo operativo (pedidos, envíos). */
+    public static function esStaff(): bool
+    {
+        return self::usuarioId() !== null;
+    }
+
     public static function logout(): void
     {
         $_SESSION = [];

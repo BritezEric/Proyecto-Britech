@@ -103,7 +103,7 @@ class PedidoController
 
     public function adminListar(): void
     {
-        if (!Session::esAdmin()) { Response::json(['ok' => false, 'error' => 'Solo admin.'], 403); return; }
+        if (!Session::esStaff()) { Response::json(['ok' => false, 'error' => 'Solo staff.'], 403); return; }
         [$page, $perPage, $offset] = Paginacion::desde();
         $r = (new PedidoRepository())->listarPaginado(
             Request::query('q'), Request::query('estado'), $perPage, $offset
@@ -113,7 +113,7 @@ class PedidoController
 
     public function adminDetalle(): void
     {
-        if (!Session::esAdmin()) { Response::json(['ok' => false, 'error' => 'Solo admin.'], 403); return; }
+        if (!Session::esStaff()) { Response::json(['ok' => false, 'error' => 'Solo staff.'], 403); return; }
         $id = (int) Request::query('id', '0');
         $p = (new PedidoRepository())->buscarPorId($id);
         Response::json([
@@ -132,7 +132,7 @@ class PedidoController
 
     public function adminEstado(): void
     {
-        if (!Session::esAdmin()) { Response::json(['ok' => false, 'error' => 'Solo admin.'], 403); return; }
+        if (!Session::esStaff()) { Response::json(['ok' => false, 'error' => 'Solo staff.'], 403); return; }
         $d = Request::json();
         try {
             (new PedidoService())->cambiarEstado((int) ($d['id'] ?? 0), $d['estado'] ?? '');
@@ -145,7 +145,7 @@ class PedidoController
     /** Aprueba o rechaza el pago de un pedido (revisión del comprobante). Solo admin. */
     public function adminEstadoPago(): void
     {
-        if (!Session::esAdmin()) { Response::json(['ok' => false, 'error' => 'Solo admin.'], 403); return; }
+        if (!Session::esStaff()) { Response::json(['ok' => false, 'error' => 'Solo staff.'], 403); return; }
         $d = Request::json();
         $estado = $d['estado_pago'] ?? '';
         if (!in_array($estado, ['pendiente', 'en_revision', 'pagado', 'rechazado'], true)) {
@@ -162,7 +162,7 @@ class PedidoController
     /** Actualiza el estado/seguimiento del envío de un pedido. Solo admin. */
     public function adminEnvio(): void
     {
-        if (!Session::esAdmin()) { Response::json(['ok' => false, 'error' => 'Solo admin.'], 403); return; }
+        if (!Session::esStaff()) { Response::json(['ok' => false, 'error' => 'Solo staff.'], 403); return; }
         $d = Request::json();
         try {
             // repartidor_id presente → se reasigna (0/'' = sin asignar); ausente → no se toca.

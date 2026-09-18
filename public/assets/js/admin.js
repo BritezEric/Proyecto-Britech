@@ -430,8 +430,9 @@ async function seleccionar(ent) {
 
     // Botón de acción extra (ej: desde el gestor de envíos, ir a "Empresas de envío").
     const accion = $('btn-ent-accion');
-    accion.classList.toggle('oculto', !cfg.accionExtra);
-    if (cfg.accionExtra) { accion.textContent = cfg.accionExtra.label; accion.onclick = () => seleccionar(cfg.accionExtra.ent); }
+    // La acción extra lleva a un ABM admin (ej: Empresas de envío) → solo admin.
+    accion.classList.toggle('oculto', !cfg.accionExtra || !ES_ADMIN);
+    if (cfg.accionExtra && ES_ADMIN) { accion.textContent = cfg.accionExtra.label; accion.onclick = () => seleccionar(cfg.accionExtra.ent); }
 
     ocultarTodo(); vistaAbm.classList.remove('oculto');
     await renderFiltros();
@@ -1179,17 +1180,21 @@ function wire() {
     });
 }
 
+let ES_ADMIN = true;   // el vendedor entra con acceso acotado (solo Pedidos)
+
 (async function iniciar() {
     let sesion;
     try { sesion = await api.get('/api/yo'); }
     catch { window.location.href = '/login.html'; return; }
-    if (sesion.usuario.rol !== 'admin') {
-        alert('El panel admin es solo para administradores.');
-        window.location.href = '/pos.html';
-        return;
-    }
+    ES_ADMIN = sesion.usuario.rol === 'admin';
     wire();
-    seleccionar('inicio');
+    if (ES_ADMIN) {
+        seleccionar('inicio');
+    } else {
+        // Vendedor: solo lo operativo (pedidos + envíos). Oculta lo admin-only.
+        document.querySelectorAll('[data-admin]').forEach((el) => el.classList.add('oculto'));
+        seleccionar('pedidos');
+    }
     cargarNotificaciones();
     setInterval(cargarNotificaciones, 60000);   // refresca cada 60s
 })();
