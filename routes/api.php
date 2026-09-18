@@ -32,6 +32,7 @@ use App\Controllers\BarrioController;
 use App\Controllers\ReposicionController;
 use App\Controllers\CompraController;
 use App\Controllers\CajaController;
+use App\Controllers\ReclamoController;
 use App\Controllers\Auth0Controller;
 
 /** @var App\Core\Router $router */
@@ -132,6 +133,16 @@ $router->post('/api/caja/movimiento',  [CajaController::class, 'movimiento'], tr
 $router->post('/api/caja/cerrar',      [CajaController::class, 'cerrar'],     true);
 $router->get('/api/admin/cajas',         [CajaController::class, 'adminListar'],  true);
 $router->get('/api/admin/cajas/detalle', [CajaController::class, 'adminDetalle'], true);
+
+// Reclamos — cliente (tienda) abre/sigue; staff (panel) gestiona
+$router->post('/api/tienda/reclamos',          [ReclamoController::class, 'crear']);
+$router->get('/api/tienda/reclamos',           [ReclamoController::class, 'mis']);
+$router->get('/api/tienda/reclamos/detalle',   [ReclamoController::class, 'detalle']);
+$router->post('/api/tienda/reclamos/mensaje',  [ReclamoController::class, 'mensaje']);
+$router->get('/api/admin/reclamos',            [ReclamoController::class, 'adminListar'],  true);
+$router->get('/api/admin/reclamos/detalle',    [ReclamoController::class, 'adminDetalle'], true);
+$router->post('/api/admin/reclamos/mensaje',   [ReclamoController::class, 'adminMensaje'], true);
+$router->post('/api/admin/reclamos/estado',    [ReclamoController::class, 'adminEstado'],  true);
 
 // Compras: órdenes de compra + recepción de mercadería — solo admin
 $router->get('/api/admin/compras',          [CompraController::class, 'listar'],     true);

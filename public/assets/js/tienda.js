@@ -902,11 +902,15 @@ async function verMisPedidos() {
                     <span class="cart-sub">${money.format(total)}</span>
                     ${pago}
                     ${subir}
+                    <button class="badge-link" data-reclamar="${p.id}" data-num="${esc(p.numero)}">📣 Reclamar</button>
                 </div>
             </div>
             <div class="mp-envio">${seguimiento}</div>
         </div>`;
     }).join('');
+    // Abrir un reclamo sobre el pedido.
+    cont.querySelectorAll('[data-reclamar]').forEach((b) => b.addEventListener('click', () =>
+        abrirNuevoReclamo(Number(b.dataset.reclamar), b.dataset.num)));
 }
 
 // Progreso del envío como pasos claros. "cancelado" se muestra aparte.
@@ -1086,6 +1090,10 @@ async function iniciar() {
     $('auth-cerrar').addEventListener('click', () => cerrar('modal-auth'));
     $('menu-salir').addEventListener('click', salir);
     $('menu-pedidos').addEventListener('click', verMisPedidos);
+    $('menu-reclamos').addEventListener('click', verMisReclamos);
+    $('reclamos-cli-cerrar').addEventListener('click', () => cerrar('modal-reclamos'));
+    $('reclamo-nuevo-cancelar').addEventListener('click', () => cerrar('modal-reclamo-nuevo'));
+    $('reclamo-nuevo-enviar').addEventListener('click', enviarReclamo);
     $('menu-perfil').addEventListener('click', abrirPerfil);
     $('perfil-cerrar').addEventListener('click', () => cerrar('modal-perfil'));
     $('form-perfil').addEventListener('submit', guardarPerfil);
@@ -1143,3 +1151,85 @@ async function pintarStaff() {
 }
 
 iniciar();
+
+// ============ Reclamos (cliente) ============
+const RECLAMO_EST_CLI = { abierto: 'Abierto', en_revision: 'En revisión', resuelto: 'Resuelto', rechazado: 'Rechazado' };
+let reclamoPedidoId = null;
+
+function abrirNuevoReclamo(pedidoId, numero) {
+    reclamoPedidoId = pedidoId;
+    $('reclamo-pedido-ref').textContent = 'Pedido ' + numero;
+    $('reclamo-asunto').value = '';
+    $('reclamo-desc').value = '';
+    $('reclamo-nuevo-error').classList.add('oculto');
+    cerrar('modal-pedidos');
+    abrir('modal-reclamo-nuevo');
+}
+
+async function enviarReclamo() {
+    const asunto = $('reclamo-asunto').value.trim();
+    const descripcion = $('reclamo-desc').value.trim();
+    const err = $('reclamo-nuevo-error');
+    try {
+        await api.post('/api/tienda/reclamos', { pedido_id: reclamoPedidoId, asunto, descripcion });
+        cerrar('modal-reclamo-nuevo');
+        toast('✓ Reclamo enviado');
+    } catch (e) { err.textContent = e.message; err.classList.remove('oculto'); }
+}
+
+async function verMisReclamos() {
+    cerrar('cuenta-menu');
+    const cont = $('reclamos-cli-cont');
+    cont.innerHTML = '<h2>Mis reclamos</h2><p class="cart-vacio">Cargando…</p>';
+    abrir('modal-reclamos');
+    let r;
+    try { r = await api.get('/api/tienda/reclamos'); }
+    catch { cont.innerHTML = '<h2>Mis reclamos</h2><p class="cart-vacio">No se pudieron cargar.</p>'; return; }
+    if (!r.reclamos.length) { cont.innerHTML = '<h2>Mis reclamos</h2><p class="cart-vacio">No tenés reclamos.</p>'; return; }
+    cont.innerHTML = '<h2>Mis reclamos</h2>' + r.reclamos.map((x) => `
+        <button class="rec-item" data-rec="${x.id}">
+            <div class="rec-item-top">
+                <strong>${esc(x.numero || ('#' + x.id))}</strong>
+                <span class="badge rec-${esc(x.estado)}">${esc(RECLAMO_EST_CLI[x.estado] || x.estado)}</span>
+            </div>
+            <div class="rec-item-sub">${esc(x.asunto)} · pedido ${esc(x.pedido_numero)}</div>
+        </button>`).join('');
+    cont.querySelectorAll('[data-rec]').forEach((b) => b.addEventListener('click', () => abrirReclamoCli(Number(b.dataset.rec))));
+}
+
+async function abrirReclamoCli(id) {
+    const cont = $('reclamos-cli-cont');
+    cont.innerHTML = '<p class="cart-vacio">Cargando…</p>';
+    let r;
+    try { r = await api.get('/api/tienda/reclamos/detalle?id=' + id); }
+    catch { cont.innerHTML = '<p class="cart-vacio">No se pudo cargar.</p>'; return; }
+    const x = r.reclamo;
+    const cerrado = x.estado === 'resuelto' || x.estado === 'rechazado';
+    cont.innerHTML = `
+        <button class="badge-link" id="rec-volver">‹ Mis reclamos</button>
+        <h2 style="margin-top:8px">${esc(x.numero)} · ${esc(x.asunto)}</h2>
+        <p class="td-mute">Estado: ${esc(RECLAMO_EST_CLI[x.estado] || x.estado)} · pedido ${esc(x.pedido_numero)}</p>
+        <div class="reclamo-hilo">${r.mensajes.map(pintarMsgCli).join('')}</div>
+        ${cerrado ? '<p class="td-mute">Este reclamo está cerrado.</p>' : `
+        <div class="reclamo-responder">
+            <textarea id="rec-cli-msg" rows="2" placeholder="Escribí un mensaje…"></textarea>
+            <button class="btn-primary" id="rec-cli-enviar">Enviar</button>
+        </div>`}`;
+    $('rec-volver').addEventListener('click', verMisReclamos);
+    if (!cerrado) $('rec-cli-enviar').addEventListener('click', async () => {
+        const msg = $('rec-cli-msg').value.trim();
+        if (!msg) return;
+        try { await api.post('/api/tienda/reclamos/mensaje', { reclamo_id: id, mensaje: msg }); abrirReclamoCli(id); }
+        catch (e) { toast('⚠ ' + e.message); }
+    });
+}
+
+function pintarMsgCli(m) {
+    const mio = m.autor === 'cliente';
+    const quien = mio ? 'Vos' : (m.usuario ? esc(m.usuario) : 'Britech');
+    const fecha = new Date(String(m.creado_en).replace(' ', 'T')).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    return `<div class="reclamo-msg ${mio ? 'cliente' : 'staff'}">
+        <div class="reclamo-msg-head">${quien} · ${fecha}</div>
+        <div class="reclamo-msg-txt">${esc(m.mensaje)}</div>
+    </div>`;
+}

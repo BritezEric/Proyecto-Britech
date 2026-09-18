@@ -127,6 +127,7 @@
         <button id="menu-perfil">👤 Mi perfil</button>
         <button id="menu-favoritos">❤️ Mis favoritos</button>
         <button id="menu-pedidos">📦 Mis pedidos</button>
+        <button id="menu-reclamos">📣 Mis reclamos</button>
         <button id="menu-salir">Cerrar sesión</button>
     </div>
 
@@ -302,6 +303,31 @@
             <h2>Mis pedidos</h2>
             <div id="pedidos-lista"></div>
             <button id="pedidos-cerrar" class="btn-secundario" style="margin-top:12px">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Nuevo reclamo (sobre un pedido) -->
+    <div id="modal-reclamo-nuevo" class="modal oculto">
+        <div class="modal-caja">
+            <h2>Abrir un reclamo</h2>
+            <p class="td-mute" id="reclamo-pedido-ref"></p>
+            <label class="etiqueta">Asunto</label>
+            <input id="reclamo-asunto" type="text" maxlength="150" placeholder="Ej: Llegó dañado">
+            <label class="etiqueta">¿Qué pasó?</label>
+            <textarea id="reclamo-desc" rows="4" placeholder="Contanos el problema con el mayor detalle posible…"></textarea>
+            <p id="reclamo-nuevo-error" class="form-error oculto"></p>
+            <div class="modal-botones">
+                <button id="reclamo-nuevo-cancelar" class="btn-secundario">Cancelar</button>
+                <button id="reclamo-nuevo-enviar" class="btn-primary">Enviar reclamo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mis reclamos (lista + hilo) -->
+    <div id="modal-reclamos" class="modal oculto">
+        <div class="modal-caja">
+            <div id="reclamos-cli-cont"></div>
+            <button id="reclamos-cli-cerrar" class="btn-secundario" style="margin-top:12px">Cerrar</button>
         </div>
     </div>
 

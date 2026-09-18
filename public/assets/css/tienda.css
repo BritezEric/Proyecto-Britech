@@ -801,3 +801,23 @@ body { min-height: 100vh; }
 .drawer-x:hover { color: var(--ink); background: var(--surface-sunk); }
 .drawer-body { flex: 1; overflow-y: auto; padding: var(--sp-5); }
 @media (max-width: 520px) { .drawer-panel { width: 100%; } }
+
+/* ===== Reclamos (cliente) ===== */
+.rec-item { display: block; width: 100%; text-align: left; background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; font: inherit; color: var(--ink); }
+.rec-item:hover { border-color: var(--primary); }
+.rec-item-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.rec-item-sub { color: var(--ink-muted); font-size: var(--text-sm); margin-top: 4px; }
+.badge.rec-abierto { background: var(--primary-tint); color: var(--primary-strong); }
+.badge.rec-en_revision { background: #fde8c8; color: #b06a00; }
+.badge.rec-resuelto { background: #d6f3df; color: #1a7f43; }
+.badge.rec-rechazado { background: var(--surface-sunk); color: var(--ink-muted); }
+.reclamo-hilo { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; max-height: 46vh; overflow-y: auto; }
+.reclamo-msg { max-width: 82%; padding: 8px 12px; border-radius: 12px; font-size: var(--text-sm); }
+.reclamo-msg.cliente { align-self: flex-end; background: var(--primary-tint); border-bottom-right-radius: 3px; }
+.reclamo-msg.staff { align-self: flex-start; background: var(--surface-sunk); border-bottom-left-radius: 3px; }
+.reclamo-msg-head { font-size: var(--text-xs); color: var(--ink-muted); font-weight: 700; margin-bottom: 3px; }
+.reclamo-msg-txt { white-space: pre-wrap; word-break: break-word; }
+.reclamo-responder { display: flex; gap: 8px; align-items: flex-end; margin-top: 6px; }
+.reclamo-responder textarea { flex: 1; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 8px; font: inherit; font-size: var(--text-sm); background: var(--surface); color: var(--ink); resize: vertical; }
+#modal-reclamo-nuevo textarea, #modal-reclamo-nuevo input { width: 100%; padding: 9px 11px; border: 1.5px solid var(--line); border-radius: 8px; font: inherit; background: var(--surface); color: var(--ink); margin-bottom: 6px; }

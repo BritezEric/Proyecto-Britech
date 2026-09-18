@@ -20,6 +20,7 @@
             <nav class="side-nav" id="nav">
                 <button data-ent="inicio"    class="nav-item" data-admin>Inicio</button>
                 <button data-ent="pedidos"   class="nav-item">Pedidos</button>
+                <button data-ent="reclamos"  class="nav-item">Reclamos</button>
                 <button data-ent="cajas"     class="nav-item" data-admin>Cajas</button>
                 <button data-ent="tablas"    class="nav-item" data-admin>Tablas</button>
                 <button data-ent="bloques"   class="nav-item" data-admin>Inicio tienda</button>
@@ -152,6 +153,18 @@
                     </div>
                 </header>
                 <div id="reposicion-cont"></div>
+            </section>
+
+            <!-- Vista: Reclamos (gestión de reclamos de clientes) -->
+            <section id="vista-reclamos" class="oculto">
+                <header class="content-top">
+                    <div>
+                        <button class="volver-link" data-ir-inicio>‹ Panel</button>
+                        <h1>Reclamos</h1>
+                        <p class="sub">Reclamos de clientes sobre sus pedidos. Respondé y cambiá el estado.</p>
+                    </div>
+                </header>
+                <div id="reclamos-cont"></div>
             </section>
 
             <!-- Vista: Cajas (supervisión de aperturas/cierres del vendedor) -->
@@ -287,5 +300,6 @@
     <script src="/assets/js/admin-reposicion.js"></script>
     <script src="/assets/js/admin-compras.js"></script>
     <script src="/assets/js/admin-cajas.js"></script>
+    <script src="/assets/js/admin-reclamos.js"></script>
 </body>
 </html>
