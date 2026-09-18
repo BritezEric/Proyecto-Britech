@@ -557,14 +557,13 @@ async function confirmarPedido() {
     }
 }
 
-// Según el método: transferencia muestra alias/CBU + comprobante; el resto, un aviso.
+// Según el método: transferencia muestra alias/CBU + comprobante; efectivo, un aviso.
 async function mostrarPago(metodo, pedidoId, total) {
     if (metodo === 'transferencia') { await mostrarPagoTransferencia(pedidoId, total); return; }
     pedidoPagoId = null;
-    const nombre = metodo === 'mercadopago' ? 'Mercado Pago' : 'tarjeta';
     $('pago-datos').innerHTML =
         `<div class="pago-total"><span>Total</span><strong>${money.format(total)}</strong></div>
-         <p class="pago-pie">Elegiste pagar con <strong>${esc(nombre)}</strong>. Te vamos a contactar para coordinar el pago.</p>`;
+         <p class="pago-pie">Elegiste pagar en <strong>efectivo</strong>. Abonás al recibir o retirar tu pedido.</p>`;
     $('pago-drop').classList.add('oculto');
     $('pago-estado').classList.add('oculto');
     $('ok-pago').classList.remove('oculto');

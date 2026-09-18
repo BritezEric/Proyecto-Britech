@@ -31,7 +31,7 @@ class PedidoService
     /** Crea un pedido (con su envío) a partir del carrito del cliente. */
     public function crear(int $clienteId, int $listaId, array $items, ?string $observacion, array $envio, string $metodoPago = 'transferencia'): array
     {
-        $metodosOk = ['transferencia', 'mercadopago', 'tarjeta'];
+        $metodosOk = ['transferencia', 'efectivo'];
         if (!in_array($metodoPago, $metodosOk, true)) {
             $metodoPago = 'transferencia';
         }
