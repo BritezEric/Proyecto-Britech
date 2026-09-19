@@ -20,8 +20,12 @@ HTML/CSS/JS puro consumiendo una API JSON.
 | 1 | 🔐 Seguridad | 12-may-2026 | ✅ **Funcional** (ver salvedad de permisos) |
 | 2 | 🗂️ Tablas Maestras | 23-jun-2026 | 🟡 **Parcial** (faltan varias tablas del enunciado) |
 | 3 | 📥 Entrada de Datos | 25-ago-2026 | ✅ **Completo** |
-| 4 | ⚙️ Procesos | 27-oct-2026 | 🟢 **Casi completo** (Ventas + Compras + Notificaciones) |
-| 5 | 📊 Salidas del Sistema | a definir | ❌ **No iniciado** (solo dashboard con KPIs) |
+| 4 | ⚙️ Procesos | 27-oct-2026 | 🟢 **Casi completo** (Ventas + Compras + Caja + Notificaciones) |
+| 5 | 📊 Salidas del Sistema | a definir | 🟡 **Iniciado** (cierre de caja ✓; faltan reportes y auditoría) |
+
+> Extras recientes: **Caja del vendedor** (apertura/arqueo/cierre — cubre el *cierre de caja*
+> del Módulo 5), **permisos de vendedor** (accede al panel solo para pedidos/envíos),
+> **reclamos de clientes** con seguimiento, y pagos limitados a **transferencia + efectivo**.
 
 ### Qué funciona hoy (probado)
 
