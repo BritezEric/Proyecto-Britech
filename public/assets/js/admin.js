@@ -904,6 +904,20 @@ function renderBarrasFin(serie) {
     }).join('');
 }
 
+// Barras horizontales genéricas (comparación de valores de un vistazo).
+// opts: value(x), label(x), fmt(v), cls?(x), max?
+function hbarList(items, opts) {
+    const max = Number(opts.max) || Math.max(1, ...items.map((x) => Number(opts.value(x))));
+    return `<div class="hbars">${items.map((x) => {
+        const v = Number(opts.value(x));
+        const w = Math.max(3, Math.round(v / max * 100));
+        return `<div class="hbar-row">
+            <span class="hbar-label" title="${esc(opts.label(x))}">${esc(opts.label(x))}</span>
+            <div class="hbar-track"><div class="hbar-fill ${opts.cls ? opts.cls(x) : ''}" style="width:${w}%"></div></div>
+            <span class="hbar-val">${opts.fmt(v)}</span></div>`;
+    }).join('')}</div>`;
+}
+
 async function renderInicio() {
     let d;
     try { d = await api.get('/api/admin/dashboard'); }
@@ -992,13 +1006,9 @@ async function renderInicio() {
 
     // --- Ventas por categoría (90 días) ---
     const cats = d.ventas_categoria || [];
-    const maxCat = Math.max(1, ...cats.map((c) => Number(c.monto)));
     $('dash-categorias').innerHTML = `<h3>Ventas por categoría · 90 días</h3>` + (cats.length === 0
         ? `<p class="dash-vacio">Sin ventas en el período.</p>`
-        : `<div class="hbars">${cats.map((c) => `<div class="hbar-row">
-            <span class="hbar-label">${esc(c.categoria)}</span>
-            <div class="hbar-track"><div class="hbar-fill" style="width:${Math.max(3, Math.round(Number(c.monto) / maxCat * 100))}%"></div></div>
-            <span class="hbar-val">${money.format(c.monto)}</span></div>`).join('')}</div>`);
+        : hbarList(cats, { value: (c) => c.monto, label: (c) => c.categoria, fmt: (v) => money.format(v) }));
 
     // --- Gráfico rotable: físicas vs online ---
     $('dash-ventas7').innerHTML = `
@@ -1030,20 +1040,21 @@ async function renderInicio() {
     // --- Stock bajo ---
     $('dash-stock').innerHTML = `<h3>Stock bajo (≤ 5)</h3>` + (d.stock_bajo.length === 0
         ? `<p class="dash-vacio">Todo con stock suficiente 👍</p>`
-        : `<ul class="dash-lista">${d.stock_bajo.map((p) =>
-            `<li><span>${esc(p.nombre)}</span><span class="dash-num ${Number(p.stock) === 0 ? 'cero' : ''}">${Number(p.stock)}</span></li>`).join('')}</ul>`);
+        : hbarList(d.stock_bajo, {
+            value: (p) => p.stock, label: (p) => p.nombre, max: 5,
+            cls: (p) => Number(p.stock) === 0 ? 'bajo' : (Number(p.stock) <= 2 ? 'medio' : ''),
+            fmt: (v) => v + ' u',
+        }));
 
     // --- Top productos ---
     $('dash-top').innerHTML = `<h3>Top productos (30 días)</h3>` + (d.top_productos.length === 0
         ? `<p class="dash-vacio">Sin ventas en el período.</p>`
-        : `<ul class="dash-lista">${d.top_productos.map((p) =>
-            `<li><span>${esc(p.nombre)}</span><span class="dash-num">${Number(p.unidades)} u</span></li>`).join('')}</ul>`);
+        : hbarList(d.top_productos, { value: (p) => p.unidades, label: (p) => p.nombre, fmt: (v) => v + ' u' }));
 
     // --- Ventas por vendedor (mes) ---
     $('dash-vendedores').innerHTML = `<h3>Ventas por vendedor (mes)</h3>` + ((d.por_vendedor || []).length === 0
         ? `<p class="dash-vacio">Sin ventas este mes.</p>`
-        : `<ul class="dash-lista">${d.por_vendedor.map((v) =>
-            `<li><span>${esc(v.vendedor)}</span><span class="dash-num">${money.format(v.monto)}</span></li>`).join('')}</ul>`);
+        : hbarList(d.por_vendedor, { value: (v) => v.monto, label: (v) => v.vendedor, fmt: (v) => money.format(v) }));
 
     // --- Productos sin movimiento (30 días) ---
     const sm = d.sin_movimiento || { total: 0, lista: [] };

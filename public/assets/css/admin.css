@@ -244,6 +244,8 @@ td.acciones { text-align: right; white-space: nowrap; }
 .hbar-track { height: 10px; background: var(--surface-sunk); border-radius: var(--r-full); overflow: hidden; }
 .hbar-fill { height: 100%; border-radius: var(--r-full); background: linear-gradient(90deg, var(--primary), var(--primary-strong));
     transition: width var(--dur-slow) var(--ease-out); }
+.hbar-fill.medio { background: linear-gradient(90deg, var(--warn, #d97706), var(--warn-strong, #b45309)); }
+.hbar-fill.bajo  { background: linear-gradient(90deg, var(--danger), var(--danger-strong)); }
 .hbar-val { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink-muted); }
 
 /* Botones chicos en cabecera de panel (gastos) */
