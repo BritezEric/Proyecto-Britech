@@ -126,6 +126,7 @@ class PedidoController
                 'estado_pago'     => $p['estado_pago'],
                 'metodo_pago'     => $p['metodo_pago'],
                 'comprobante_url' => $p['comprobante_url'],
+                'mp_payment_id'   => $p['mp_payment_id'] ?? null,
             ] : null,
         ]);
     }

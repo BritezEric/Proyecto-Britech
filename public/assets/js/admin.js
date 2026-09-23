@@ -799,7 +799,9 @@ async function verPedido(id, numero) {
     }
 
     const pg = r.pago || {};
-    const compro = pg.comprobante_url
+    const compro = pg.mp_payment_id
+        ? `<p class="td-mute">💳 Cobrado con Mercado Pago · pago #${esc(pg.mp_payment_id)}</p>`
+        : pg.comprobante_url
         ? `<a class="envio-seg" href="${esc(pg.comprobante_url)}" target="_blank" rel="noopener">📄 Ver comprobante</a>`
         : `<p class="td-mute">El cliente todavía no subió comprobante.</p>`;
     const metodoLbl = { transferencia: 'Transferencia', efectivo: 'Efectivo', mercadopago: 'Mercado Pago', tarjeta: 'Tarjeta' }[pg.metodo_pago] || pg.metodo_pago || '—';

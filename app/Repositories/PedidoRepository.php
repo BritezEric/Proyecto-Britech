@@ -122,4 +122,12 @@ class PedidoRepository
     {
         Database::conexion()->prepare("UPDATE pedido SET estado_pago = ? WHERE id = ?")->execute([$estadoPago, $id]);
     }
+
+    /** Pago aprobado por Mercado Pago: deja el pedido 'pagado' y guarda el id del pago. */
+    public function pagarConMercadoPago(int $id, string $paymentId): void
+    {
+        Database::conexion()
+            ->prepare("UPDATE pedido SET estado_pago = 'pagado', mp_payment_id = ? WHERE id = ?")
+            ->execute([$paymentId, $id]);
+    }
 }

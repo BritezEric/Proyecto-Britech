@@ -577,6 +577,14 @@ async function mostrarPagoTransferencia(pedidoId, total) {
     const box = $('ok-pago');
     try {
         const r = await api.get('/api/tienda/pago-info');
+        // Mercado Pago activo → cobramos online: mandamos al cliente al checkout de MP.
+        if (r.mp) {
+            try {
+                const mp = await api.post('/api/tienda/pago/iniciar', { pedido_id: pedidoId });
+                window.location.assign(mp.init_point);
+                return;
+            } catch (e) { /* si MP falla, caemos al flujo manual de abajo */ }
+        }
         const p = r.pago || {};
         if (!p.alias && !p.cbu) { box.classList.add('oculto'); return; }
         // Total protagonista + alias/CBU en una sola línea, tap para copiar.
@@ -1130,7 +1138,26 @@ async function iniciar() {
         seleccionarTab('registro');
     }
 
+    await procesarRetornoPago();   // vuelta desde Mercado Pago
     await pintarStaff();   // botón "Ir al POS / Panel" si además sos del equipo
+}
+
+// Vuelta desde el checkout de Mercado Pago (back_url): confirmamos el pago con el
+// payment_id que MP agrega a la URL y avisamos el resultado. La verificación real
+// la hace el backend re-consultando el pago a MP.
+async function procesarRetornoPago() {
+    const q = new URLSearchParams(location.search);
+    if (q.get('pago') !== 'retorno') return;
+    const paymentId = q.get('payment_id') || q.get('collection_id');
+    // Limpiamos la URL para no re-confirmar al recargar.
+    history.replaceState(null, '', location.pathname);
+    if (!paymentId) { toast('El pago no se completó.'); return; }
+    try {
+        const r = await api.post('/api/tienda/pago/confirmar', { payment_id: paymentId });
+        const msg = { pagado: '✓ Pago acreditado, ¡gracias!', rechazado: 'El pago fue rechazado.' };
+        toast(msg[r.estado_pago] || 'Pago en proceso de acreditación.');
+    } catch (e) { toast('No pudimos confirmar el pago.'); }
+    if (cliente) verMisPedidos();
 }
 
 // Si hay un usuario del equipo logueado (admin/vendedor) y NO hay sesión de

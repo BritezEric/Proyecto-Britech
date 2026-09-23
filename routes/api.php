@@ -20,6 +20,7 @@ use App\Controllers\ConfigController;
 use App\Controllers\TiendaAuthController;
 use App\Controllers\CatalogoController;
 use App\Controllers\PedidoController;
+use App\Controllers\PagoController;
 use App\Controllers\MayoristaController;
 use App\Controllers\FavoritoController;
 use App\Controllers\HomeController;
@@ -181,6 +182,10 @@ $router->get('/api/tienda/barrios',    [RepartidorController::class, 'barrios'])
 $router->post('/api/tienda/pedidos',     [PedidoController::class, 'crear']);
 $router->get('/api/tienda/mis-pedidos',  [PedidoController::class, 'mis']);
 $router->post('/api/tienda/comprobante', [PedidoController::class, 'subirComprobante']);
+// Pago online con Mercado Pago (Checkout Pro). webhook = notificación pública de MP.
+$router->post('/api/tienda/pago/iniciar',   [PagoController::class, 'iniciar']);
+$router->post('/api/tienda/pago/confirmar', [PagoController::class, 'confirmar']);
+$router->post('/api/tienda/pago/webhook',   [PagoController::class, 'webhook']);
 // Datos de transferencia que ve el cliente (público)
 $router->get('/api/tienda/pago-info',    [ConfigController::class, 'pagoInfo']);
 // Modo de navegación (minorista/mayorista) y solicitud de acceso mayorista

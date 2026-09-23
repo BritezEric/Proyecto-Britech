@@ -16,12 +16,16 @@ class ConfigController
     public function pagoInfo(): void
     {
         $c = (new ConfigRepository())->todos();
-        Response::json(['ok' => true, 'pago' => [
-            'alias'   => $c['pago_alias']   ?? '',
-            'titular' => $c['pago_titular'] ?? '',
-            'cbu'     => $c['pago_cbu']     ?? '',
-            'banco'   => $c['pago_banco']   ?? '',
-        ]]);
+        Response::json(['ok' => true,
+            // Si Mercado Pago está configurado, el checkout cobra online (y no
+            // hace falta mostrar alias/CBU ni subir comprobante a mano).
+            'mp' => (new \App\Services\MercadoPagoService())->configurado(),
+            'pago' => [
+                'alias'   => $c['pago_alias']   ?? '',
+                'titular' => $c['pago_titular'] ?? '',
+                'cbu'     => $c['pago_cbu']     ?? '',
+                'banco'   => $c['pago_banco']   ?? '',
+            ]]);
     }
 
     /** Admin: toda la config (para el formulario de ajustes). */

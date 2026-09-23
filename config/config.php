@@ -58,4 +58,9 @@ return [
         'logout_uri'    => $leer('AUTH0_LOGOUT_URI',
             $leer('APP_URL', 'http://127.0.0.1:8123') . '/tienda.html'),
     ],
+    // Mercado Pago (Checkout Pro) para el pago online — opcional: si el access
+    // token queda vacío, el checkout usa el flujo manual de transferencia + comprobante.
+    'mercadopago' => [
+        'access_token' => $leer('MERCADOPAGO_ACCESS_TOKEN', ''),
+    ],
 ];

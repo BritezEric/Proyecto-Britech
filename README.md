@@ -63,6 +63,7 @@ El primero crea la base `britech_v2`; el resto hace `USE britech_v2`.
 23. database/schema_compras.sql          (órdenes de compra + recepción de mercadería)
 24. database/schema_caja.sql             (caja del vendedor: apertura, movimientos, cierre)
 25. database/schema_reclamos.sql         (reclamos de clientes sobre pedidos + seguimiento)
+26. database/schema_mercadopago.sql      (id del pago de Mercado Pago en el pedido)
 ```
 
 Desde la terminal (uno por uno, o encadenados):
@@ -93,6 +94,7 @@ mysql -u root britech_v2 < database/schema_reposicion_pedidos.sql
 mysql -u root britech_v2 < database/schema_compras.sql
 mysql -u root britech_v2 < database/schema_caja.sql
 mysql -u root britech_v2 < database/schema_reclamos.sql
+mysql -u root britech_v2 < database/schema_mercadopago.sql
 ```
 
 **3. Variables de entorno** — copiar la plantilla y completar:
@@ -126,6 +128,30 @@ El SDK se instala solo con `composer install` (paquete `auth0/auth0-php`).
 
 El login con Google es **solo para clientes de la tienda**: si el email no tenía
 cuenta, se registra automáticamente. El staff entra siempre con email + contraseña.
+
+### Pago online con Mercado Pago (Checkout Pro) — opcional
+
+El pago del pedido puede cobrarse con **Mercado Pago**. Si no lo configurás, el
+checkout usa el flujo manual (mostrar alias/CBU + subir comprobante + aprobación
+del admin). Para activarlo:
+
+1. Entrar a [mercadopago.com.ar/developers](https://www.mercadopago.com.ar/developers/es/reference),
+   crear una aplicación y copiar el **Access Token** (Credenciales).
+   Para probar, usar el de **prueba** (empieza con `TEST-`) y las
+   [tarjetas de prueba](https://www.mercadopago.com.ar/developers/es/docs/checkout-pro/additional-content/test-cards).
+2. Pegarlo en el `.env`:
+   ```
+   MERCADOPAGO_ACCESS_TOKEN=APP_USR-...    # o TEST-... para pruebas
+   ```
+3. Listo. En el checkout, al elegir pago online, el cliente va al checkout de
+   Mercado Pago y vuelve a la tienda; el pedido se marca **pagado** solo.
+
+**Cómo confirma el pago:** cuando MP cobra, avisa por dos vías — la vuelta del
+cliente a la tienda (`back_url`) y un **webhook** (`/api/tienda/pago/webhook`).
+En ambos casos el backend **re-consulta el pago a MP** con el access token antes
+de marcarlo pagado (nunca confía en el navegador). En `localhost` el webhook no
+es alcanzable desde internet, así que la confirmación llega por la vuelta del
+cliente; en producción, poné el sitio con HTTPS para que el webhook funcione.
 
 ## Levantar el proyecto
 
