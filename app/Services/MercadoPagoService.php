@@ -48,8 +48,13 @@ class MercadoPagoService
                 'pending' => $this->appUrl . '/tienda.html?pago=retorno',
                 'failure' => $this->appUrl . '/tienda.html?pago=retorno',
             ],
-            'notification_url' => $this->appUrl . '/api/tienda/pago/webhook',
         ];
+        // El webhook solo sirve con una URL pública: MP rechaza localhost/127.0.0.1.
+        // En producción (dominio real) se agrega; en local se confía en la vuelta del cliente.
+        $host = parse_url($this->appUrl, PHP_URL_HOST) ?: '';
+        if (!in_array($host, ['localhost', '127.0.0.1', '::1', ''], true)) {
+            $body['notification_url'] = $this->appUrl . '/api/tienda/pago/webhook';
+        }
         if ($emailCliente) {
             $body['payer'] = ['email' => $emailCliente];
         }
@@ -93,6 +98,15 @@ class MercadoPagoService
             $headers[] = 'Content-Type: application/json';
         }
         $opts[CURLOPT_HTTPHEADER] = $headers;
+        // Bundle de certificados TLS: muchos PHP de Windows traen un curl.cainfo
+        // roto/apuntando a otra ruta. Usamos el de composer/ca-bundle (o CURL_CA_BUNDLE).
+        $ca = getenv('CURL_CA_BUNDLE') ?: null;
+        if (!$ca && class_exists(\Composer\CaBundle\CaBundle::class)) {
+            $ca = \Composer\CaBundle\CaBundle::getSystemCaRootBundlePath();
+        }
+        if ($ca) {
+            $opts[is_dir($ca) ? CURLOPT_CAPATH : CURLOPT_CAINFO] = $ca;
+        }
         curl_setopt_array($ch, $opts);
 
         $raw  = curl_exec($ch);
