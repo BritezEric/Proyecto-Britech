@@ -44,9 +44,9 @@ class MercadoPagoService
             ]],
             'external_reference' => (string) $pedidoId,
             'back_urls' => [
-                'success' => $this->appUrl . '/tienda.html?pago=retorno',
-                'pending' => $this->appUrl . '/tienda.html?pago=retorno',
-                'failure' => $this->appUrl . '/tienda.html?pago=retorno',
+                'success' => $this->appUrl . '/tienda.html?pago=exito',
+                'pending' => $this->appUrl . '/tienda.html?pago=pendiente',
+                'failure' => $this->appUrl . '/tienda.html?pago=error',
             ],
         ];
         // El webhook solo sirve con una URL pública: MP rechaza localhost/127.0.0.1.

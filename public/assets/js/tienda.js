@@ -1113,6 +1113,8 @@ async function iniciar() {
         if (inp) subirComprobantePedido(inp.files[0], Number(inp.dataset.pago));
     });
     $('ok-cerrar').addEventListener('click', () => cerrar('modal-ok'));
+    $('pago-res-cerrar').addEventListener('click', () => cerrar('modal-pago-resultado'));
+    $('pago-res-pedidos').addEventListener('click', () => { cerrar('modal-pago-resultado'); if (cliente) verMisPedidos(); });
     const subir = (file) => subirComprobante(file, pedidoPagoId, $('pago-file-label'), $('pago-estado'));
     $('pago-file').addEventListener('change', (e) => subir(e.target.files[0]));
     // Drag & drop sobre el dropzone (0 clicks).
@@ -1145,19 +1147,43 @@ async function iniciar() {
 // Vuelta desde el checkout de Mercado Pago (back_url): confirmamos el pago con el
 // payment_id que MP agrega a la URL y avisamos el resultado. La verificación real
 // la hace el backend re-consultando el pago a MP.
+// Variantes de resultado según el estado de pago verificado por el backend.
+const PAGO_RES = {
+    pagado:      { ic: '✓', cls: 'ok',   titulo: '¡Pago acreditado!',   texto: 'Recibimos tu pago. Ya estamos preparando tu pedido. ¡Gracias!' },
+    en_revision: { ic: '⏳', cls: 'wait', titulo: 'Pago en proceso',      texto: 'Mercado Pago todavía está acreditando el pago. Te avisamos cuando se confirme.' },
+    rechazado:   { ic: '✕', cls: 'err',  titulo: 'El pago fue rechazado', texto: 'No se pudo completar el pago. Podés intentar de nuevo desde Mis pedidos.' },
+    pendiente:   { ic: '⏳', cls: 'wait', titulo: 'Pago pendiente',        texto: 'Tu pedido quedó registrado y el pago está pendiente.' },
+};
+
+function mostrarResultadoPago(estado) {
+    const v = PAGO_RES[estado] || PAGO_RES.pendiente;
+    const ic = $('pago-res-ic');
+    ic.textContent = v.ic;
+    ic.className = 'pago-res-ic ' + v.cls;
+    $('pago-res-titulo').textContent = v.titulo;
+    $('pago-res-texto').textContent = v.texto;
+    abrir('modal-pago-resultado');
+}
+
+// Vuelta desde el checkout de Mercado Pago. La URL trae ?pago=exito|pendiente|error
+// (según la back_url que eligió MP) + payment_id. El estado REAL lo decide el
+// backend re-consultando el pago a MP; el ?pago solo da la pantalla inicial.
 async function procesarRetornoPago() {
     const q = new URLSearchParams(location.search);
-    if (q.get('pago') !== 'retorno') return;
+    const pago = q.get('pago');
+    if (!['exito', 'pendiente', 'error', 'retorno'].includes(pago)) return;
     const paymentId = q.get('payment_id') || q.get('collection_id');
-    // Limpiamos la URL para no re-confirmar al recargar.
-    history.replaceState(null, '', location.pathname);
-    if (!paymentId) { toast('El pago no se completó.'); return; }
-    try {
-        const r = await api.post('/api/tienda/pago/confirmar', { payment_id: paymentId });
-        const msg = { pagado: '✓ Pago acreditado, ¡gracias!', rechazado: 'El pago fue rechazado.' };
-        toast(msg[r.estado_pago] || 'Pago en proceso de acreditación.');
-    } catch (e) { toast('No pudimos confirmar el pago.'); }
-    if (cliente) verMisPedidos();
+    history.replaceState(null, '', location.pathname);   // no re-confirmar al recargar
+
+    // Estado inicial según la back_url de MP (por si no hay payment_id que verificar).
+    let estado = { exito: 'pagado', pendiente: 'pendiente', error: 'rechazado', retorno: 'pendiente' }[pago];
+    if (paymentId) {
+        try {
+            const r = await api.post('/api/tienda/pago/confirmar', { payment_id: paymentId });
+            if (r.estado_pago) estado = r.estado_pago;   // fuente de verdad (verificada)
+        } catch (e) { /* dejamos el estado según la back_url */ }
+    }
+    mostrarResultadoPago(estado);
 }
 
 // Si hay un usuario del equipo logueado (admin/vendedor) y NO hay sesión de

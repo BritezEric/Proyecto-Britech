@@ -27,8 +27,12 @@ devuelve `mp:false` y el checkout sigue con transferencia manual.
    redirige ahí.
 3. **Cobro en MP**: el cliente paga en el checkout de Mercado Pago.
 4. **Confirmación** (dos vías, ambas terminan en el mismo `procesar()`):
-   - **Vuelta del cliente** (`back_url` → `tienda.html?pago=retorno&payment_id=...`):
-     el front llama `POST /api/tienda/pago/confirmar {payment_id}`.
+   - **Vuelta del cliente** (`back_url`): MP redirige a una de tres URLs según el
+     resultado — `tienda.html?pago=exito | pendiente | error` (+ `payment_id`).
+     El front llama `POST /api/tienda/pago/confirmar {payment_id}` para verificar
+     y muestra la **pantalla de resultado** correspondiente (`#modal-pago-resultado`:
+     acreditado ✓ / pendiente ⏳ / rechazado ✕). El `?pago` solo elige la pantalla
+     inicial; el estado real lo decide el backend.
    - **Webhook** (`POST /api/tienda/pago/webhook`, público): notificación
      server-to-server de MP.
    En ambos, el backend consulta el pago a MP: si `approved` → pedido `pagado`

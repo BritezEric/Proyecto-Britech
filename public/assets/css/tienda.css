@@ -410,6 +410,15 @@ body { min-height: 100vh; }
 .form-ok .tick { width: 56px; height: 56px; border-radius: var(--r-full); background: var(--primary-tint);
     color: var(--primary-strong); display: grid; place-items: center; margin: 0 auto var(--sp-3); font-size: 28px; }
 
+/* Resultado del pago (vuelta de Mercado Pago) */
+.pago-res { text-align: center; margin-bottom: var(--sp-4); }
+.pago-res-ic { width: 64px; height: 64px; border-radius: var(--r-full); display: grid; place-items: center;
+    margin: 0 auto var(--sp-3); font-size: 32px; }
+.pago-res-ic.ok   { background: var(--primary-tint); color: var(--primary-strong); }
+.pago-res-ic.wait { background: #fef3c7; color: #b45309; }
+.pago-res-ic.err  { background: #fee2e2; color: #b91c1c; }
+.pago-res h2 { margin: 0 0 var(--sp-2); }
+
 /* Menú de cuenta — fixed para que quede bajo el header sticky en cualquier scroll */
 .cuenta-menu { position: fixed; top: 64px; right: var(--sp-5); background: var(--surface);
     border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--shadow-lg); padding: var(--sp-2);
