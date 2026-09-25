@@ -920,6 +920,30 @@ function hbarList(items, opts) {
     }).join('')}</div>`;
 }
 
+// Gráfico de dona (SVG). segs: [{label, valor, color}]. opts: {c1, c2} = texto centro.
+function donut(segs, opts = {}) {
+    const total = segs.reduce((s, x) => s + Number(x.valor), 0) || 1;
+    const r = 45, c = 2 * Math.PI * r;
+    let off = 0;
+    const arcs = segs.map((s) => {
+        const len = Number(s.valor) / total * c;
+        const el = `<circle r="${r}" cx="60" cy="60" fill="none" stroke="${s.color}" stroke-width="15"
+            stroke-dasharray="${len} ${c - len}" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"></circle>`;
+        off += len;
+        return el;
+    }).join('');
+    return `<div class="donut-wrap">
+        <svg viewBox="0 0 120 120" class="donut">
+            <circle r="${r}" cx="60" cy="60" fill="none" stroke="var(--surface-sunk)" stroke-width="15"></circle>
+            ${arcs}
+            <text x="60" y="58" class="donut-c1">${esc(opts.c1 || '')}</text>
+            <text x="60" y="74" class="donut-c2">${esc(opts.c2 || '')}</text>
+        </svg>
+        <div class="donut-leg">${segs.map((s) =>
+            `<span class="lg"><i class="sw" style="background:${s.color}"></i>${esc(s.label)} · <b>${Math.round(Number(s.valor) / total * 100)}%</b></span>`).join('')}</div>
+    </div>`;
+}
+
 async function renderInicio() {
     let d;
     try { d = await api.get('/api/admin/dashboard'); }
@@ -1007,6 +1031,15 @@ async function renderInicio() {
     $('dash-gastos').querySelector('[data-ver-gastos]').addEventListener('click', () => seleccionar('gastos'));
 
     // --- Ventas por categoría (90 días) ---
+    // --- Dona: ventas del mes físicas vs online ---
+    const vf = Number(d.ventas_mes || 0), vo = Number(d.ventas_online_mes || 0);
+    $('dash-split').innerHTML = `<h3>Ventas del mes · físicas vs online</h3>` + ((vf + vo) === 0
+        ? `<p class="dash-vacio">Sin ventas este mes.</p>`
+        : donut([
+            { label: 'Físicas', valor: vf, color: 'var(--primary)' },
+            { label: 'Online', valor: vo, color: 'var(--accent)' },
+        ], { c1: money.format(vf + vo), c2: 'total' }));
+
     const cats = d.ventas_categoria || [];
     $('dash-categorias').innerHTML = `<h3>Ventas por categoría · 90 días</h3>` + (cats.length === 0
         ? `<p class="dash-vacio">Sin ventas en el período.</p>`
