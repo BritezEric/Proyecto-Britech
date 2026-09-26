@@ -850,6 +850,13 @@ body { min-height: 100vh; }
 .reclamo-msg.staff { align-self: flex-start; background: var(--surface-sunk); border-bottom-left-radius: 3px; }
 .reclamo-msg-head { font-size: var(--text-xs); color: var(--ink-muted); font-weight: 700; margin-bottom: 3px; }
 .reclamo-msg-txt { white-space: pre-wrap; word-break: break-word; }
+.reclamo-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.reclamo-tit { margin: 8px 0 2px; font-size: var(--text-lg); }
+.reclamo-vacio { text-align: center; color: var(--ink-muted); font-size: var(--text-sm); padding: 16px 0; }
+.reclamo-cerrado { text-align: center; color: var(--ink-muted); font-size: var(--text-sm); background: var(--surface-sunk);
+    border-radius: 8px; padding: 10px; margin-top: 8px; }
 .reclamo-responder { display: flex; gap: 8px; align-items: flex-end; margin-top: 6px; }
-.reclamo-responder textarea { flex: 1; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 8px; font: inherit; font-size: var(--text-sm); background: var(--surface); color: var(--ink); resize: vertical; }
+.reclamo-responder textarea { flex: 1; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 8px; font: inherit; font-size: var(--text-sm); background: var(--surface); color: var(--ink); resize: vertical; max-height: 120px; }
+.reclamo-responder .rec-enviar { flex: 0 0 auto; width: 44px; height: 40px; padding: 0; border-radius: 10px; font-size: 18px; line-height: 1; }
+.reclamo-responder .rec-enviar:disabled { opacity: 0.6; cursor: default; }
 #modal-reclamo-nuevo textarea, #modal-reclamo-nuevo input { width: 100%; padding: 9px 11px; border: 1.5px solid var(--line); border-radius: 8px; font: inherit; background: var(--surface); color: var(--ink); margin-bottom: 6px; }

@@ -196,6 +196,11 @@ class PedidoController
                     "Tu pedido {$p['numero']} {$envioMsg[$estado]}", 'mis-pedidos', $pedidoId,
                     $estado === 'entregado' ? 'exito' : 'info'
                 );
+                // Email en los hitos del envío (evitamos spamear en cada cambio menor).
+                if (in_array($estado, ['despachado', 'entregado'], true)) {
+                    \App\Services\AvisoService::email((int) $p['cliente_id'], "Tu pedido {$p['numero']}",
+                        "<p>Tu pedido <strong>{$p['numero']}</strong> {$envioMsg[$estado]}.</p>");
+                }
             }
             Response::json(['ok' => true]);
         } catch (ValidacionException $e) {

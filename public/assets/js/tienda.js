@@ -1275,23 +1275,46 @@ async function abrirReclamoCli(id) {
     catch { cont.innerHTML = '<p class="cart-vacio">No se pudo cargar.</p>'; return; }
     const x = r.reclamo;
     const cerrado = x.estado === 'resuelto' || x.estado === 'rechazado';
+    const hilo = r.mensajes.length
+        ? r.mensajes.map(pintarMsgCli).join('')
+        : '<p class="reclamo-vacio">Todavía no hay mensajes.</p>';
     cont.innerHTML = `
-        <button class="badge-link" id="rec-volver">‹ Mis reclamos</button>
-        <h2 style="margin-top:8px">${esc(x.numero)} · ${esc(x.asunto)}</h2>
-        <p class="td-mute">Estado: ${esc(RECLAMO_EST_CLI[x.estado] || x.estado)} · pedido ${esc(x.pedido_numero)}</p>
-        <div class="reclamo-hilo">${r.mensajes.map(pintarMsgCli).join('')}</div>
-        ${cerrado ? '<p class="td-mute">Este reclamo está cerrado.</p>' : `
+        <div class="reclamo-cab">
+            <button class="badge-link" id="rec-volver">‹ Mis reclamos</button>
+            <span class="badge rec-${esc(x.estado)}">${esc(RECLAMO_EST_CLI[x.estado] || x.estado)}</span>
+        </div>
+        <h2 class="reclamo-tit">${esc(x.numero)} · ${esc(x.asunto)}</h2>
+        <p class="td-mute">Pedido ${esc(x.pedido_numero)}</p>
+        <div class="reclamo-hilo" id="rec-hilo">${hilo}</div>
+        ${cerrado ? '<p class="reclamo-cerrado">🔒 Este reclamo está cerrado.</p>' : `
         <div class="reclamo-responder">
-            <textarea id="rec-cli-msg" rows="2" placeholder="Escribí un mensaje…"></textarea>
-            <button class="btn-primary" id="rec-cli-enviar">Enviar</button>
+            <textarea id="rec-cli-msg" rows="1" placeholder="Escribí un mensaje… (Enter para enviar)"></textarea>
+            <button class="btn-primary rec-enviar" id="rec-cli-enviar" aria-label="Enviar">➤</button>
         </div>`}`;
     $('rec-volver').addEventListener('click', verMisReclamos);
-    if (!cerrado) $('rec-cli-enviar').addEventListener('click', async () => {
-        const msg = $('rec-cli-msg').value.trim();
-        if (!msg) return;
-        try { await api.post('/api/tienda/reclamos/mensaje', { reclamo_id: id, mensaje: msg }); abrirReclamoCli(id); }
-        catch (e) { toast('⚠ ' + e.message); }
-    });
+
+    // Chat: auto-scroll al último mensaje.
+    const hiloEl = $('rec-hilo');
+    if (hiloEl) hiloEl.scrollTop = hiloEl.scrollHeight;
+
+    if (!cerrado) {
+        const ta = $('rec-cli-msg'), btn = $('rec-cli-enviar');
+        ta.focus();
+        const enviar = async () => {
+            const msg = ta.value.trim();
+            if (!msg) return;
+            btn.disabled = true;
+            try {
+                await api.post('/api/tienda/reclamos/mensaje', { reclamo_id: id, mensaje: msg });
+                await abrirReclamoCli(id);   // recarga el hilo (y baja al final)
+            } catch (e) { toast('⚠ ' + e.message); btn.disabled = false; }
+        };
+        btn.addEventListener('click', enviar);
+        // Enter envía, Shift+Enter hace salto de línea.
+        ta.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
+        });
+    }
 }
 
 function pintarMsgCli(m) {

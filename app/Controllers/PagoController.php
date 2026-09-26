@@ -104,6 +104,8 @@ class PagoController
                 $notif = new NotificacionRepository();
                 $notif->crear('comprobante', "Pago aprobado (Mercado Pago) · pedido {$pedido['numero']}", 'pedidos', $pedidoId, 'exito');
                 $notif->crearCliente((int) $pedido['cliente_id'], 'pago_aprobado', "¡Pago acreditado! Pedido {$pedido['numero']}", 'mis-pedidos', $pedidoId, 'exito');
+                \App\Services\AvisoService::email((int) $pedido['cliente_id'], "Pago acreditado · pedido {$pedido['numero']}",
+                    "<p>¡Recibimos tu pago del pedido <strong>{$pedido['numero']}</strong>! Ya lo estamos preparando.</p>");
             }
             return 'pagado';
         }

@@ -72,6 +72,8 @@ class ReclamoService
             (int) $r['cliente_id'], 'reclamo_respuesta',
             "Te respondimos el reclamo {$r['numero']}", 'reclamos', $reclamoId, 'info'
         );
+        AvisoService::email((int) $r['cliente_id'], "Respondimos tu reclamo {$r['numero']}",
+            "<p>Tenés una nueva respuesta en tu reclamo <strong>{$r['numero']}</strong>. Entrá a <em>Mis reclamos</em> en la tienda para verla.</p>");
     }
 
     /** El staff cambia el estado del reclamo. */
