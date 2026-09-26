@@ -430,6 +430,29 @@ body { min-height: 100vh; }
     font-family: inherit; font-size: var(--text-sm); color: var(--ink); border-radius: var(--r-sm); cursor: pointer; }
 .cuenta-menu button:hover { background: var(--surface-2); }
 
+/* Campana de notificaciones del cliente */
+.t-ico.tiene { box-shadow: 0 0 0 2px var(--accent, #e11d48) inset; }
+.noti-cli-panel { position: fixed; top: 64px; right: var(--sp-5); width: 320px; max-width: calc(100vw - 2 * var(--sp-5));
+    max-height: 70vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-md); box-shadow: var(--shadow-lg); padding: var(--sp-2); z-index: calc(var(--z-sticky) + 1);
+    animation: menu-in var(--dur-fast) var(--ease-out) both; }
+.noti-cli-head { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3);
+    padding: var(--sp-2) var(--sp-3); font-weight: 700; font-size: var(--text-sm); color: var(--ink); }
+.noti-cli-head button { border: none; background: none; color: var(--accent, #e11d48); font-family: inherit;
+    font-size: var(--text-xs); font-weight: 600; cursor: pointer; }
+.noti-cli-item { display: flex; gap: var(--sp-3); align-items: flex-start; width: 100%; text-align: left;
+    padding: var(--sp-3); border: none; background: none; border-radius: var(--r-sm); cursor: pointer;
+    border-left: 3px solid transparent; }
+.noti-cli-item:hover { background: var(--surface-2); }
+.noti-cli-item.nivel-exito { border-left-color: #16a34a; }
+.noti-cli-item.nivel-alerta { border-left-color: #d97706; }
+.noti-cli-item.nivel-error { border-left-color: #dc2626; }
+.noti-cli-item.nivel-info { border-left-color: var(--line); }
+.noti-cli-ic { font-size: 18px; line-height: 1.2; }
+.noti-cli-tx { font-size: var(--text-sm); color: var(--ink); display: flex; flex-direction: column; gap: 2px; }
+.noti-cli-fecha { font-size: var(--text-xs); color: var(--ink-muted); }
+.noti-cli-vacio { padding: var(--sp-4); text-align: center; color: var(--ink-muted); font-size: var(--text-sm); }
+
 /* Estados de "mis pedidos" */
 .badge { font-size: var(--text-xs); font-weight: 600; padding: 2px var(--sp-2); border-radius: var(--r-full); }
 .badge-link { font-size: var(--text-xs); font-weight: 700; padding: 2px var(--sp-2); border-radius: var(--r-full);

@@ -676,6 +676,7 @@ async function refrescarCliente() {
     aplicarTemaModo(cliente && cliente.modo === 'mayorista' ? 'mayorista' : 'minorista', false);
     pintarCuenta();
     pintarMayorista();
+    cargarNotisCliente();
 }
 
 // ============ Acceso mayorista (B2B) ============
@@ -837,6 +838,7 @@ async function salir() {
     cliente = null; favoritos = new Set();
     aplicarTemaModo('minorista');          // al salir, vuelve al tema claro
     pintarCuenta(); pintarMayorista();
+    cargarNotisCliente();                  // oculta la campana (ya no hay cliente)
     cerrar('cuenta-menu');
     await pintarStaff();                   // si además hay sesión de staff, vuelve a mostrarse
     await refrescarVista();
@@ -1085,6 +1087,21 @@ async function iniciar() {
     $('may-enviar').addEventListener('click', enviarSolicitudMayorista);
     $('may-cerrar').addEventListener('click', () => cerrar('modal-mayorista'));
 
+    // campana de notificaciones del cliente
+    $('btn-noti-cli').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const p = $('noti-cli-panel');
+        const abriendo = p.classList.contains('oculto');
+        p.classList.toggle('oculto');
+        if (abriendo) cargarNotisCliente();
+    });
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#noti-cli-panel') && !e.target.closest('#btn-noti-cli')) {
+            $('noti-cli-panel').classList.add('oculto');
+        }
+    });
+    setInterval(cargarNotisCliente, 60000);   // refresca cada 60s
+
     // cuenta
     $('btn-cuenta').addEventListener('click', () => {
         if (cliente) $('cuenta-menu').classList.toggle('oculto');
@@ -1285,4 +1302,55 @@ function pintarMsgCli(m) {
         <div class="reclamo-msg-head">${quien} · ${fecha}</div>
         <div class="reclamo-msg-txt">${esc(m.mensaje)}</div>
     </div>`;
+}
+
+// ============ Notificaciones del cliente (campana) ============
+const NOTI_IC_CLI = {
+    pedido_confirmado: '🛍️', pago_aprobado: '💳', pedido_estado: '📦',
+    envio_estado: '🚚', reclamo_respuesta: '📣', reclamo_estado: '📣', mayorista_resuelta: '⭐',
+};
+
+function notiFecha(s) {
+    const d = new Date(String(s).replace(' ', 'T'));
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) + ' ' +
+           d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function cargarNotisCliente() {
+    const btn = $('btn-noti-cli');
+    if (!cliente) { btn.classList.add('oculto'); $('noti-cli-panel').classList.add('oculto'); return; }
+    btn.classList.remove('oculto');
+    let r;
+    try { r = await api.get('/api/tienda/notificaciones'); } catch { return; }
+    const badge = $('noti-cli-badge');
+    badge.textContent = r.no_leidas > 99 ? '99+' : r.no_leidas;
+    badge.classList.toggle('oculto', !r.no_leidas);
+    btn.classList.toggle('tiene', !!r.no_leidas);
+
+    const lista = r.items.length
+        ? r.items.map((n) => `<button class="noti-cli-item nivel-${esc(n.nivel || 'info')}" data-id="${n.id}" data-ir="${esc(n.ir || '')}" data-ref="${n.ref_id || ''}">
+              <span class="noti-cli-ic">${NOTI_IC_CLI[n.tipo] || '🔔'}</span>
+              <span class="noti-cli-tx">${esc(n.titulo)}<span class="noti-cli-fecha">${notiFecha(n.creado_en)}</span></span>
+           </button>`).join('')
+        : '<p class="noti-cli-vacio">No tenés novedades ✓</p>';
+    $('noti-cli-panel').innerHTML = `<div class="noti-cli-head">Notificaciones
+            ${r.no_leidas ? '<button id="noti-cli-todas">Marcar leídas</button>' : ''}
+        </div>${lista}`;
+
+    const todas = $('noti-cli-todas');
+    if (todas) todas.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try { await api.post('/api/tienda/notificaciones/leer-todas', {}); } catch {}
+        cargarNotisCliente();
+    });
+    $('noti-cli-panel').querySelectorAll('.noti-cli-item').forEach((b) => b.addEventListener('click', async () => {
+        $('noti-cli-panel').classList.add('oculto');
+        if (b.dataset.id) {
+            try { await api.post('/api/tienda/notificaciones/leer', { id: Number(b.dataset.id) }); } catch {}
+            cargarNotisCliente();
+        }
+        if (b.dataset.ir === 'mis-pedidos') verMisPedidos();
+        else if (b.dataset.ir === 'reclamos') verMisReclamos();
+    }));
 }

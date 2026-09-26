@@ -1,4 +1,4 @@
-<?php
+ <?php
 /**
  * Configuracion central de la aplicacion.
  * Lee las credenciales del entorno:

@@ -186,6 +186,10 @@ $router->post('/api/tienda/comprobante', [PedidoController::class, 'subirComprob
 $router->post('/api/tienda/pago/iniciar',   [PagoController::class, 'iniciar']);
 $router->post('/api/tienda/pago/confirmar', [PagoController::class, 'confirmar']);
 $router->post('/api/tienda/pago/webhook',   [PagoController::class, 'webhook']);
+// Notificaciones del cliente (campana en la tienda)
+$router->get('/api/tienda/notificaciones',            [NotificacionController::class, 'listarCliente']);
+$router->post('/api/tienda/notificaciones/leer',      [NotificacionController::class, 'leerCliente']);
+$router->post('/api/tienda/notificaciones/leer-todas',[NotificacionController::class, 'leerTodasCliente']);
 // Datos de transferencia que ve el cliente (público)
 $router->get('/api/tienda/pago-info',    [ConfigController::class, 'pagoInfo']);
 // Modo de navegación (minorista/mayorista) y solicitud de acceso mayorista
