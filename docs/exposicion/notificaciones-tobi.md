@@ -79,6 +79,24 @@ Los 6 tipos y de dónde salen:
 | `reclamo_respuesta` / `reclamo_estado` | `ReclamoService` | el staff responde o cambia el estado del reclamo |
 | `mayorista_resuelta` | `MayoristaService` | se aprueba/rechaza su solicitud mayorista |
 
+## Canal email (Fase 2)
+Además de la campana in-app, algunos hitos del cliente mandan **email** (canal
+in-app + email; no hay push del navegador). Lo hace un helper reusable:
+- [`app/Services/AvisoService.php`](../../app/Services/AvisoService.php) —
+  `AvisoService::email($clienteId, $asunto, $cuerpoHtml)`: busca el correo del
+  cliente, lo envuelve en una plantilla y lo manda con el `Mailer` (PHPMailer/SMTP).
+  Si el correo falla, **no rompe** la acción (se traga el error).
+
+Se dispara junto a la notificación in-app en:
+| Evento | Dónde |
+|---|---|
+| Pago aprobado (Mercado Pago) | `PagoController` |
+| Reclamo respondido por el staff | `ReclamoService::mensajeStaff` |
+| Envío **despachado** / **entregado** | `PedidoController::adminEnvio` |
+
+> Se mandan solo en hitos importantes para **no spamear** en cada cambio menor.
+> El correo sale por el SMTP configurado en `.env` (`MAIL_USER` / `MAIL_PASSWORD`).
+
 ## Flujo (para explicarlo)
 1. Pasa un evento (ej. un pedido nuevo) → ese servicio llama a `crear(...)`.
 2. La noti queda en la tabla `notificacion` con `leida = 0`.
