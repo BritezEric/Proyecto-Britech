@@ -304,6 +304,9 @@ class VentaService
             throw $e;
         }
 
+        (new \App\Repositories\NotificacionRepository())->crear(
+            'venta_anulada', "Venta {$venta['numero']} anulada · {$motivo}", null, $ventaId, 'alerta'
+        );
         return ['venta_id' => $ventaId, 'numero' => $venta['numero']];
     }
 }

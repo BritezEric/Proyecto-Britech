@@ -11,6 +11,7 @@ use App\Services\PedidoService;
 use App\Repositories\PedidoRepository;
 use App\Repositories\EnvioRepository;
 use App\Repositories\RepartidorRepository;
+use App\Repositories\NotificacionRepository;
 
 /**
  * Pedidos de la tienda.
@@ -126,6 +127,7 @@ class PedidoController
                 'estado_pago'     => $p['estado_pago'],
                 'metodo_pago'     => $p['metodo_pago'],
                 'comprobante_url' => $p['comprobante_url'],
+                'mp_payment_id'   => $p['mp_payment_id'] ?? null,
             ] : null,
         ]);
     }
@@ -135,7 +137,17 @@ class PedidoController
         if (!Session::esStaff()) { Response::json(['ok' => false, 'error' => 'Solo staff.'], 403); return; }
         $d = Request::json();
         try {
-            (new PedidoService())->cambiarEstado((int) ($d['id'] ?? 0), $d['estado'] ?? '');
+            $id = (int) ($d['id'] ?? 0);
+            $estado = $d['estado'] ?? '';
+            (new PedidoService())->cambiarEstado($id, $estado);
+            $p = (new PedidoRepository())->buscarPorId($id);
+            if ($p) {
+                (new NotificacionRepository())->crearCliente(
+                    (int) $p['cliente_id'], 'pedido_estado',
+                    "Tu pedido {$p['numero']} está: {$estado}", 'mis-pedidos', $id,
+                    $estado === 'entregado' ? 'exito' : ($estado === 'cancelado' ? 'alerta' : 'info')
+                );
+            }
             Response::json(['ok' => true]);
         } catch (ValidacionException $e) {
             Response::json(['ok' => false, 'error' => $e->getMessage()], 422);
@@ -167,10 +179,29 @@ class PedidoController
         try {
             // repartidor_id presente → se reasigna (0/'' = sin asignar); ausente → no se toca.
             $rep = array_key_exists('repartidor_id', $d) ? ((int) $d['repartidor_id'] ?: null) : false;
+            $pedidoId = (int) ($d['pedido_id'] ?? 0);
+            $estado = $d['estado'] ?? '';
             (new PedidoService())->actualizarEnvio(
-                (int) ($d['pedido_id'] ?? 0), $d['estado'] ?? '', $d['tracking'] ?? null,
+                $pedidoId, $estado, $d['tracking'] ?? null,
                 is_array($d['datos'] ?? null) ? $d['datos'] : [], $rep
             );
+            $p = (new PedidoRepository())->buscarPorId($pedidoId);
+            $envioMsg = [
+                'despachado' => 'fue despachado 📦', 'en_camino' => 'está en camino 🛵',
+                'entregado' => 'fue entregado ✓', 'cancelado' => 'fue cancelado',
+            ];
+            if ($p && isset($envioMsg[$estado])) {
+                (new NotificacionRepository())->crearCliente(
+                    (int) $p['cliente_id'], 'envio_estado',
+                    "Tu pedido {$p['numero']} {$envioMsg[$estado]}", 'mis-pedidos', $pedidoId,
+                    $estado === 'entregado' ? 'exito' : 'info'
+                );
+                // Email en los hitos del envío (evitamos spamear en cada cambio menor).
+                if (in_array($estado, ['despachado', 'entregado'], true)) {
+                    \App\Services\AvisoService::email((int) $p['cliente_id'], "Tu pedido {$p['numero']}",
+                        "<p>Tu pedido <strong>{$p['numero']}</strong> {$envioMsg[$estado]}.</p>");
+                }
+            }
             Response::json(['ok' => true]);
         } catch (ValidacionException $e) {
             Response::json(['ok' => false, 'error' => $e->getMessage()], 422);

@@ -59,6 +59,13 @@ class MayoristaService
         $this->solic->resolver($id, $estado, $adminId);
         $this->clientes->aprobarMayorista((int) $s['cliente_id'], $estado === 'aprobada' ? 1 : 0);
 
+        // Aviso in-app en la campana de la tienda.
+        (new \App\Repositories\NotificacionRepository())->crearCliente(
+            (int) $s['cliente_id'], 'mayorista_resuelta',
+            $estado === 'aprobada' ? '¡Tu acceso mayorista fue aprobado!' : 'Tu solicitud mayorista fue revisada',
+            null, null, $estado === 'aprobada' ? 'exito' : 'alerta'
+        );
+
         // Avisar al cliente por correo. Si el correo falla, no rompe la resolución.
         $this->notificar((int) $s['cliente_id'], $estado);
     }

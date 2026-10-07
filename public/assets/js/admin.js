@@ -799,7 +799,9 @@ async function verPedido(id, numero) {
     }
 
     const pg = r.pago || {};
-    const compro = pg.comprobante_url
+    const compro = pg.mp_payment_id
+        ? `<p class="td-mute">💳 Cobrado con Mercado Pago · pago #${esc(pg.mp_payment_id)}</p>`
+        : pg.comprobante_url
         ? `<a class="envio-seg" href="${esc(pg.comprobante_url)}" target="_blank" rel="noopener">📄 Ver comprobante</a>`
         : `<p class="td-mute">El cliente todavía no subió comprobante.</p>`;
     const metodoLbl = { transferencia: 'Transferencia', efectivo: 'Efectivo', mercadopago: 'Mercado Pago', tarjeta: 'Tarjeta' }[pg.metodo_pago] || pg.metodo_pago || '—';
@@ -904,6 +906,44 @@ function renderBarrasFin(serie) {
     }).join('');
 }
 
+// Barras horizontales genéricas (comparación de valores de un vistazo).
+// opts: value(x), label(x), fmt(v), cls?(x), max?
+function hbarList(items, opts) {
+    const max = Number(opts.max) || Math.max(1, ...items.map((x) => Number(opts.value(x))));
+    return `<div class="hbars">${items.map((x) => {
+        const v = Number(opts.value(x));
+        const w = Math.max(3, Math.round(v / max * 100));
+        return `<div class="hbar-row">
+            <span class="hbar-label" title="${esc(opts.label(x))}">${esc(opts.label(x))}</span>
+            <div class="hbar-track"><div class="hbar-fill ${opts.cls ? opts.cls(x) : ''}" style="width:${w}%"></div></div>
+            <span class="hbar-val">${opts.fmt(v)}</span></div>`;
+    }).join('')}</div>`;
+}
+
+// Gráfico de dona (SVG). segs: [{label, valor, color}]. opts: {c1, c2} = texto centro.
+function donut(segs, opts = {}) {
+    const total = segs.reduce((s, x) => s + Number(x.valor), 0) || 1;
+    const r = 45, c = 2 * Math.PI * r;
+    let off = 0;
+    const arcs = segs.map((s) => {
+        const len = Number(s.valor) / total * c;
+        const el = `<circle r="${r}" cx="60" cy="60" fill="none" stroke="${s.color}" stroke-width="15"
+            stroke-dasharray="${len} ${c - len}" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"></circle>`;
+        off += len;
+        return el;
+    }).join('');
+    return `<div class="donut-wrap">
+        <svg viewBox="0 0 120 120" class="donut">
+            <circle r="${r}" cx="60" cy="60" fill="none" stroke="var(--surface-sunk)" stroke-width="15"></circle>
+            ${arcs}
+            <text x="60" y="58" class="donut-c1">${esc(opts.c1 || '')}</text>
+            <text x="60" y="74" class="donut-c2">${esc(opts.c2 || '')}</text>
+        </svg>
+        <div class="donut-leg">${segs.map((s) =>
+            `<span class="lg"><i class="sw" style="background:${s.color}"></i>${esc(s.label)} · <b>${Math.round(Number(s.valor) / total * 100)}%</b></span>`).join('')}</div>
+    </div>`;
+}
+
 async function renderInicio() {
     let d;
     try { d = await api.get('/api/admin/dashboard'); }
@@ -991,14 +1031,19 @@ async function renderInicio() {
     $('dash-gastos').querySelector('[data-ver-gastos]').addEventListener('click', () => seleccionar('gastos'));
 
     // --- Ventas por categoría (90 días) ---
+    // --- Dona: ventas del mes físicas vs online ---
+    const vf = Number(d.ventas_mes || 0), vo = Number(d.ventas_online_mes || 0);
+    $('dash-split').innerHTML = `<h3>Ventas del mes · físicas vs online</h3>` + ((vf + vo) === 0
+        ? `<p class="dash-vacio">Sin ventas este mes.</p>`
+        : donut([
+            { label: 'Físicas', valor: vf, color: 'var(--primary)' },
+            { label: 'Online', valor: vo, color: 'var(--accent)' },
+        ], { c1: money.format(vf + vo), c2: 'total' }));
+
     const cats = d.ventas_categoria || [];
-    const maxCat = Math.max(1, ...cats.map((c) => Number(c.monto)));
     $('dash-categorias').innerHTML = `<h3>Ventas por categoría · 90 días</h3>` + (cats.length === 0
         ? `<p class="dash-vacio">Sin ventas en el período.</p>`
-        : `<div class="hbars">${cats.map((c) => `<div class="hbar-row">
-            <span class="hbar-label">${esc(c.categoria)}</span>
-            <div class="hbar-track"><div class="hbar-fill" style="width:${Math.max(3, Math.round(Number(c.monto) / maxCat * 100))}%"></div></div>
-            <span class="hbar-val">${money.format(c.monto)}</span></div>`).join('')}</div>`);
+        : hbarList(cats, { value: (c) => c.monto, label: (c) => c.categoria, fmt: (v) => money.format(v) }));
 
     // --- Gráfico rotable: físicas vs online ---
     $('dash-ventas7').innerHTML = `
@@ -1030,20 +1075,21 @@ async function renderInicio() {
     // --- Stock bajo ---
     $('dash-stock').innerHTML = `<h3>Stock bajo (≤ 5)</h3>` + (d.stock_bajo.length === 0
         ? `<p class="dash-vacio">Todo con stock suficiente 👍</p>`
-        : `<ul class="dash-lista">${d.stock_bajo.map((p) =>
-            `<li><span>${esc(p.nombre)}</span><span class="dash-num ${Number(p.stock) === 0 ? 'cero' : ''}">${Number(p.stock)}</span></li>`).join('')}</ul>`);
+        : hbarList(d.stock_bajo, {
+            value: (p) => p.stock, label: (p) => p.nombre, max: 5,
+            cls: (p) => Number(p.stock) === 0 ? 'bajo' : (Number(p.stock) <= 2 ? 'medio' : ''),
+            fmt: (v) => v + ' u',
+        }));
 
     // --- Top productos ---
     $('dash-top').innerHTML = `<h3>Top productos (30 días)</h3>` + (d.top_productos.length === 0
         ? `<p class="dash-vacio">Sin ventas en el período.</p>`
-        : `<ul class="dash-lista">${d.top_productos.map((p) =>
-            `<li><span>${esc(p.nombre)}</span><span class="dash-num">${Number(p.unidades)} u</span></li>`).join('')}</ul>`);
+        : hbarList(d.top_productos, { value: (p) => p.unidades, label: (p) => p.nombre, fmt: (v) => v + ' u' }));
 
     // --- Ventas por vendedor (mes) ---
     $('dash-vendedores').innerHTML = `<h3>Ventas por vendedor (mes)</h3>` + ((d.por_vendedor || []).length === 0
         ? `<p class="dash-vacio">Sin ventas este mes.</p>`
-        : `<ul class="dash-lista">${d.por_vendedor.map((v) =>
-            `<li><span>${esc(v.vendedor)}</span><span class="dash-num">${money.format(v.monto)}</span></li>`).join('')}</ul>`);
+        : hbarList(d.por_vendedor, { value: (v) => v.monto, label: (v) => v.vendedor, fmt: (v) => money.format(v) }));
 
     // --- Productos sin movimiento (30 días) ---
     const sm = d.sin_movimiento || { total: 0, lista: [] };
@@ -1055,7 +1101,8 @@ async function renderInicio() {
 
 // ---- Init ----
 // ---- Novedades / avisos (campana con bandeja de leídas) ----
-const NOTI_IC = { pedido_nuevo: '🛒', comprobante: '🧾', solicitud: '📨', stock_bajo: '⚠️', compra_recibida: '📦', reclamo: '📣' };
+const NOTI_IC = { pedido_nuevo: '🛒', comprobante: '🧾', solicitud: '📨', stock_bajo: '⚠️', compra_recibida: '📦', reclamo: '📣',
+    venta_anulada: '🚫', compra_creada: '📝', compra_anulada: '🚫', caja_cierre: '🧰' };
 
 function fechaCorta(s) {
     const d = new Date(String(s).replace(' ', 'T'));

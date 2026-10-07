@@ -99,8 +99,10 @@ Esto es lo que separa un TP funcional de un sistema que un negocio real pueda us
 - [ ] Auditoría (ver Módulo 5) también cumple función de seguridad.
 
 ### Comercial / negocio
-- [ ] **Pasarela de pago real** (Mercado Pago / tarjeta). Hoy el pago online es transferencia
-      + comprobante subido a mano y revisión manual del admin.
+- [x] **Pasarela de pago real**: **Mercado Pago (Checkout Pro)** integrado (opcional por
+      `.env`). Con el access token cargado, el pedido se cobra online y se marca pagado
+      solo (webhook + vuelta del cliente, con verificación server-to-server). Sin token,
+      queda el flujo manual de transferencia + comprobante. Ver `docs/modulos/mercadopago.md`.
 - [ ] Facturación / integración AFIP si se factura formalmente.
 - [ ] Textos legales: **términos y condiciones, política de privacidad**, tratamiento de datos
       personales (Ley 25.326). Necesario si maneja datos de clientes reales.

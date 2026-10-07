@@ -577,6 +577,14 @@ async function mostrarPagoTransferencia(pedidoId, total) {
     const box = $('ok-pago');
     try {
         const r = await api.get('/api/tienda/pago-info');
+        // Mercado Pago activo → cobramos online: mandamos al cliente al checkout de MP.
+        if (r.mp) {
+            try {
+                const mp = await api.post('/api/tienda/pago/iniciar', { pedido_id: pedidoId });
+                window.location.assign(mp.init_point);
+                return;
+            } catch (e) { /* si MP falla, caemos al flujo manual de abajo */ }
+        }
         const p = r.pago || {};
         if (!p.alias && !p.cbu) { box.classList.add('oculto'); return; }
         // Total protagonista + alias/CBU en una sola línea, tap para copiar.
@@ -668,6 +676,7 @@ async function refrescarCliente() {
     aplicarTemaModo(cliente && cliente.modo === 'mayorista' ? 'mayorista' : 'minorista', false);
     pintarCuenta();
     pintarMayorista();
+    cargarNotisCliente();
 }
 
 // ============ Acceso mayorista (B2B) ============
@@ -829,6 +838,7 @@ async function salir() {
     cliente = null; favoritos = new Set();
     aplicarTemaModo('minorista');          // al salir, vuelve al tema claro
     pintarCuenta(); pintarMayorista();
+    cargarNotisCliente();                  // oculta la campana (ya no hay cliente)
     cerrar('cuenta-menu');
     await pintarStaff();                   // si además hay sesión de staff, vuelve a mostrarse
     await refrescarVista();
@@ -1077,6 +1087,21 @@ async function iniciar() {
     $('may-enviar').addEventListener('click', enviarSolicitudMayorista);
     $('may-cerrar').addEventListener('click', () => cerrar('modal-mayorista'));
 
+    // campana de notificaciones del cliente
+    $('btn-noti-cli').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const p = $('noti-cli-panel');
+        const abriendo = p.classList.contains('oculto');
+        p.classList.toggle('oculto');
+        if (abriendo) cargarNotisCliente();
+    });
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#noti-cli-panel') && !e.target.closest('#btn-noti-cli')) {
+            $('noti-cli-panel').classList.add('oculto');
+        }
+    });
+    setInterval(cargarNotisCliente, 60000);   // refresca cada 60s
+
     // cuenta
     $('btn-cuenta').addEventListener('click', () => {
         if (cliente) $('cuenta-menu').classList.toggle('oculto');
@@ -1105,6 +1130,8 @@ async function iniciar() {
         if (inp) subirComprobantePedido(inp.files[0], Number(inp.dataset.pago));
     });
     $('ok-cerrar').addEventListener('click', () => cerrar('modal-ok'));
+    $('pago-res-cerrar').addEventListener('click', () => cerrar('modal-pago-resultado'));
+    $('pago-res-pedidos').addEventListener('click', () => { cerrar('modal-pago-resultado'); if (cliente) verMisPedidos(); });
     const subir = (file) => subirComprobante(file, pedidoPagoId, $('pago-file-label'), $('pago-estado'));
     $('pago-file').addEventListener('change', (e) => subir(e.target.files[0]));
     // Drag & drop sobre el dropzone (0 clicks).
@@ -1130,7 +1157,50 @@ async function iniciar() {
         seleccionarTab('registro');
     }
 
+    await procesarRetornoPago();   // vuelta desde Mercado Pago
     await pintarStaff();   // botón "Ir al POS / Panel" si además sos del equipo
+}
+
+// Vuelta desde el checkout de Mercado Pago (back_url): confirmamos el pago con el
+// payment_id que MP agrega a la URL y avisamos el resultado. La verificación real
+// la hace el backend re-consultando el pago a MP.
+// Variantes de resultado según el estado de pago verificado por el backend.
+const PAGO_RES = {
+    pagado:      { ic: '✓', cls: 'ok',   titulo: '¡Pago acreditado!',   texto: 'Recibimos tu pago. Ya estamos preparando tu pedido. ¡Gracias!' },
+    en_revision: { ic: '⏳', cls: 'wait', titulo: 'Pago en proceso',      texto: 'Mercado Pago todavía está acreditando el pago. Te avisamos cuando se confirme.' },
+    rechazado:   { ic: '✕', cls: 'err',  titulo: 'El pago fue rechazado', texto: 'No se pudo completar el pago. Podés intentar de nuevo desde Mis pedidos.' },
+    pendiente:   { ic: '⏳', cls: 'wait', titulo: 'Pago pendiente',        texto: 'Tu pedido quedó registrado y el pago está pendiente.' },
+};
+
+function mostrarResultadoPago(estado) {
+    const v = PAGO_RES[estado] || PAGO_RES.pendiente;
+    const ic = $('pago-res-ic');
+    ic.textContent = v.ic;
+    ic.className = 'pago-res-ic ' + v.cls;
+    $('pago-res-titulo').textContent = v.titulo;
+    $('pago-res-texto').textContent = v.texto;
+    abrir('modal-pago-resultado');
+}
+
+// Vuelta desde el checkout de Mercado Pago. La URL trae ?pago=exito|pendiente|error
+// (según la back_url que eligió MP) + payment_id. El estado REAL lo decide el
+// backend re-consultando el pago a MP; el ?pago solo da la pantalla inicial.
+async function procesarRetornoPago() {
+    const q = new URLSearchParams(location.search);
+    const pago = q.get('pago');
+    if (!['exito', 'pendiente', 'error', 'retorno'].includes(pago)) return;
+    const paymentId = q.get('payment_id') || q.get('collection_id');
+    history.replaceState(null, '', location.pathname);   // no re-confirmar al recargar
+
+    // Estado inicial según la back_url de MP (por si no hay payment_id que verificar).
+    let estado = { exito: 'pagado', pendiente: 'pendiente', error: 'rechazado', retorno: 'pendiente' }[pago];
+    if (paymentId) {
+        try {
+            const r = await api.post('/api/tienda/pago/confirmar', { payment_id: paymentId });
+            if (r.estado_pago) estado = r.estado_pago;   // fuente de verdad (verificada)
+        } catch (e) { /* dejamos el estado según la back_url */ }
+    }
+    mostrarResultadoPago(estado);
 }
 
 // Si hay un usuario del equipo logueado (admin/vendedor) y NO hay sesión de
@@ -1205,23 +1275,46 @@ async function abrirReclamoCli(id) {
     catch { cont.innerHTML = '<p class="cart-vacio">No se pudo cargar.</p>'; return; }
     const x = r.reclamo;
     const cerrado = x.estado === 'resuelto' || x.estado === 'rechazado';
+    const hilo = r.mensajes.length
+        ? r.mensajes.map(pintarMsgCli).join('')
+        : '<p class="reclamo-vacio">Todavía no hay mensajes.</p>';
     cont.innerHTML = `
-        <button class="badge-link" id="rec-volver">‹ Mis reclamos</button>
-        <h2 style="margin-top:8px">${esc(x.numero)} · ${esc(x.asunto)}</h2>
-        <p class="td-mute">Estado: ${esc(RECLAMO_EST_CLI[x.estado] || x.estado)} · pedido ${esc(x.pedido_numero)}</p>
-        <div class="reclamo-hilo">${r.mensajes.map(pintarMsgCli).join('')}</div>
-        ${cerrado ? '<p class="td-mute">Este reclamo está cerrado.</p>' : `
+        <div class="reclamo-cab">
+            <button class="badge-link" id="rec-volver">‹ Mis reclamos</button>
+            <span class="badge rec-${esc(x.estado)}">${esc(RECLAMO_EST_CLI[x.estado] || x.estado)}</span>
+        </div>
+        <h2 class="reclamo-tit">${esc(x.numero)} · ${esc(x.asunto)}</h2>
+        <p class="td-mute">Pedido ${esc(x.pedido_numero)}</p>
+        <div class="reclamo-hilo" id="rec-hilo">${hilo}</div>
+        ${cerrado ? '<p class="reclamo-cerrado">🔒 Este reclamo está cerrado.</p>' : `
         <div class="reclamo-responder">
-            <textarea id="rec-cli-msg" rows="2" placeholder="Escribí un mensaje…"></textarea>
-            <button class="btn-primary" id="rec-cli-enviar">Enviar</button>
+            <textarea id="rec-cli-msg" rows="1" placeholder="Escribí un mensaje… (Enter para enviar)"></textarea>
+            <button class="btn-primary rec-enviar" id="rec-cli-enviar" aria-label="Enviar">➤</button>
         </div>`}`;
     $('rec-volver').addEventListener('click', verMisReclamos);
-    if (!cerrado) $('rec-cli-enviar').addEventListener('click', async () => {
-        const msg = $('rec-cli-msg').value.trim();
-        if (!msg) return;
-        try { await api.post('/api/tienda/reclamos/mensaje', { reclamo_id: id, mensaje: msg }); abrirReclamoCli(id); }
-        catch (e) { toast('⚠ ' + e.message); }
-    });
+
+    // Chat: auto-scroll al último mensaje.
+    const hiloEl = $('rec-hilo');
+    if (hiloEl) hiloEl.scrollTop = hiloEl.scrollHeight;
+
+    if (!cerrado) {
+        const ta = $('rec-cli-msg'), btn = $('rec-cli-enviar');
+        ta.focus();
+        const enviar = async () => {
+            const msg = ta.value.trim();
+            if (!msg) return;
+            btn.disabled = true;
+            try {
+                await api.post('/api/tienda/reclamos/mensaje', { reclamo_id: id, mensaje: msg });
+                await abrirReclamoCli(id);   // recarga el hilo (y baja al final)
+            } catch (e) { toast('⚠ ' + e.message); btn.disabled = false; }
+        };
+        btn.addEventListener('click', enviar);
+        // Enter envía, Shift+Enter hace salto de línea.
+        ta.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
+        });
+    }
 }
 
 function pintarMsgCli(m) {
@@ -1232,4 +1325,55 @@ function pintarMsgCli(m) {
         <div class="reclamo-msg-head">${quien} · ${fecha}</div>
         <div class="reclamo-msg-txt">${esc(m.mensaje)}</div>
     </div>`;
+}
+
+// ============ Notificaciones del cliente (campana) ============
+const NOTI_IC_CLI = {
+    pedido_confirmado: '🛍️', pago_aprobado: '💳', pedido_estado: '📦',
+    envio_estado: '🚚', reclamo_respuesta: '📣', reclamo_estado: '📣', mayorista_resuelta: '⭐',
+};
+
+function notiFecha(s) {
+    const d = new Date(String(s).replace(' ', 'T'));
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) + ' ' +
+           d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function cargarNotisCliente() {
+    const btn = $('btn-noti-cli');
+    if (!cliente) { btn.classList.add('oculto'); $('noti-cli-panel').classList.add('oculto'); return; }
+    btn.classList.remove('oculto');
+    let r;
+    try { r = await api.get('/api/tienda/notificaciones'); } catch { return; }
+    const badge = $('noti-cli-badge');
+    badge.textContent = r.no_leidas > 99 ? '99+' : r.no_leidas;
+    badge.classList.toggle('oculto', !r.no_leidas);
+    btn.classList.toggle('tiene', !!r.no_leidas);
+
+    const lista = r.items.length
+        ? r.items.map((n) => `<button class="noti-cli-item nivel-${esc(n.nivel || 'info')}" data-id="${n.id}" data-ir="${esc(n.ir || '')}" data-ref="${n.ref_id || ''}">
+              <span class="noti-cli-ic">${NOTI_IC_CLI[n.tipo] || '🔔'}</span>
+              <span class="noti-cli-tx">${esc(n.titulo)}<span class="noti-cli-fecha">${notiFecha(n.creado_en)}</span></span>
+           </button>`).join('')
+        : '<p class="noti-cli-vacio">No tenés novedades ✓</p>';
+    $('noti-cli-panel').innerHTML = `<div class="noti-cli-head">Notificaciones
+            ${r.no_leidas ? '<button id="noti-cli-todas">Marcar leídas</button>' : ''}
+        </div>${lista}`;
+
+    const todas = $('noti-cli-todas');
+    if (todas) todas.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try { await api.post('/api/tienda/notificaciones/leer-todas', {}); } catch {}
+        cargarNotisCliente();
+    });
+    $('noti-cli-panel').querySelectorAll('.noti-cli-item').forEach((b) => b.addEventListener('click', async () => {
+        $('noti-cli-panel').classList.add('oculto');
+        if (b.dataset.id) {
+            try { await api.post('/api/tienda/notificaciones/leer', { id: Number(b.dataset.id) }); } catch {}
+            cargarNotisCliente();
+        }
+        if (b.dataset.ir === 'mis-pedidos') verMisPedidos();
+        else if (b.dataset.ir === 'reclamos') verMisReclamos();
+    }));
 }

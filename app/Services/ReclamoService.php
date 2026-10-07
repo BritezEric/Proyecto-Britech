@@ -65,15 +65,28 @@ class ReclamoService
     {
         $mensaje = trim($mensaje);
         if ($mensaje === '') throw new ValidacionException('Escribí una respuesta.');
-        if ($this->repo->buscarPorId($reclamoId) === null) throw new ValidacionException('El reclamo no existe.');
+        $r = $this->repo->buscarPorId($reclamoId);
+        if ($r === null) throw new ValidacionException('El reclamo no existe.');
         $this->repo->agregarMensaje($reclamoId, 'staff', $usuarioId, $mensaje);
+        (new NotificacionRepository())->crearCliente(
+            (int) $r['cliente_id'], 'reclamo_respuesta',
+            "Te respondimos el reclamo {$r['numero']}", 'reclamos', $reclamoId, 'info'
+        );
+        AvisoService::email((int) $r['cliente_id'], "Respondimos tu reclamo {$r['numero']}",
+            "<p>Tenés una nueva respuesta en tu reclamo <strong>{$r['numero']}</strong>. Entrá a <em>Mis reclamos</em> en la tienda para verla.</p>");
     }
 
     /** El staff cambia el estado del reclamo. */
     public function cambiarEstado(int $reclamoId, string $estado): void
     {
         if (!in_array($estado, self::ESTADOS, true)) throw new ValidacionException('Estado inválido.');
-        if ($this->repo->buscarPorId($reclamoId) === null) throw new ValidacionException('El reclamo no existe.');
+        $r = $this->repo->buscarPorId($reclamoId);
+        if ($r === null) throw new ValidacionException('El reclamo no existe.');
         $this->repo->fijarEstado($reclamoId, $estado);
+        $nivel = $estado === 'resuelto' ? 'exito' : ($estado === 'rechazado' ? 'alerta' : 'info');
+        (new NotificacionRepository())->crearCliente(
+            (int) $r['cliente_id'], 'reclamo_estado',
+            "Tu reclamo {$r['numero']} pasó a: {$estado}", 'reclamos', $reclamoId, $nivel
+        );
     }
 }

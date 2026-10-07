@@ -68,6 +68,14 @@ class CajaService
 
         $this->repo->cerrar((int) $caja['id'], $contado, $esperado, $diferencia, trim((string) $observacion) ?: null);
 
+        // Aviso a los admin: se cerró una caja (marcamos alerta si no cuadra).
+        $dif = number_format($diferencia, 2, ',', '.');
+        (new \App\Repositories\NotificacionRepository())->crearRol(
+            1, 'caja_cierre',
+            $diferencia == 0.0 ? 'Caja cerrada y cuadrada ✓' : "Caja cerrada · diferencia \$ {$dif}",
+            'cajas', (int) $caja['id'], $diferencia == 0.0 ? 'exito' : 'alerta'
+        );
+
         return [
             'caja_id'    => (int) $caja['id'],
             'esperado'   => $esperado,

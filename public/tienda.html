@@ -23,6 +23,9 @@
         <div class="t-acciones">
             <div id="mayorista-zona" class="mayorista-zona"></div>
             <div id="staff-zona"></div>
+            <button id="btn-noti-cli" class="t-ico oculto" aria-label="Notificaciones" title="Notificaciones">🔔
+                <span id="noti-cli-badge" class="t-cart-count oculto">0</span>
+            </button>
             <button id="btn-favoritos-header" class="t-ico" aria-label="Favoritos" title="Favoritos">🤍</button>
             <button id="btn-cuenta" class="t-btn">Ingresar</button>
             <button id="btn-carrito" class="t-ico t-carrito" aria-label="Carrito" title="Carrito">🛒
@@ -30,6 +33,9 @@
             </button>
         </div>
     </header>
+
+    <!-- Campana de notificaciones del cliente -->
+    <div id="noti-cli-panel" class="noti-cli-panel oculto"></div>
 
     <!-- Menú de categorías -->
     <nav id="cat-menu" class="cat-menu"></nav>
@@ -276,6 +282,19 @@
             </div>
 
             <button id="ok-cerrar" class="btn-primary">Listo</button>
+        </div>
+    </div>
+
+    <!-- Resultado del pago (vuelta desde Mercado Pago) -->
+    <div id="modal-pago-resultado" class="modal oculto">
+        <div class="modal-caja">
+            <div class="pago-res">
+                <div id="pago-res-ic" class="pago-res-ic">✓</div>
+                <h2 id="pago-res-titulo">Pago acreditado</h2>
+                <p id="pago-res-texto" class="cuenta-info"></p>
+            </div>
+            <button id="pago-res-pedidos" class="btn-primary">Ver mis pedidos</button>
+            <button id="pago-res-cerrar" class="btn-secundario" style="margin-top:12px">Seguir comprando</button>
         </div>
     </div>
 

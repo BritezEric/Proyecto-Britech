@@ -137,9 +137,10 @@ class PedidoService
             throw $e;
         }
 
-        // Aviso para el admin (bandeja de notificaciones).
-        (new \App\Repositories\NotificacionRepository())
-            ->crear('pedido_nuevo', "Nuevo pedido {$numero} · " . number_format($totalFinal, 0, ',', '.'), 'pedidos', $pedidoId);
+        // Avisos: al staff (bandeja del panel) y al cliente (bandeja de la tienda).
+        $notif = new \App\Repositories\NotificacionRepository();
+        $notif->crear('pedido_nuevo', "Nuevo pedido {$numero} · " . number_format($totalFinal, 0, ',', '.'), 'pedidos', $pedidoId);
+        $notif->crearCliente($clienteId, 'pedido_confirmado', "Registramos tu pedido {$numero}. ¡Gracias!", 'mis-pedidos', $pedidoId, 'exito');
 
         // Correo de confirmación (el pedido ya está guardado: si el mail falla, no importa).
         try {

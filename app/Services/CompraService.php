@@ -77,6 +77,9 @@ class CompraService
             throw $e;
         }
 
+        (new NotificacionRepository())->crear(
+            'compra_creada', "Orden de compra {$numero} generada", 'compras', $ordenId, 'info'
+        );
         return ['orden_id' => $ordenId, 'numero' => $numero, 'total' => $total];
     }
 
@@ -163,6 +166,9 @@ class CompraService
         if ($orden['estado'] === 'recibida') { throw new ValidacionException('No se puede anular una orden ya recibida.'); }
 
         $repo->fijarEstado($ordenId, 'anulada');
+        (new NotificacionRepository())->crear(
+            'compra_anulada', "Orden de compra {$orden['numero']} anulada", 'compras', $ordenId, 'alerta'
+        );
         return ['orden_id' => $ordenId, 'numero' => $orden['numero']];
     }
 }
