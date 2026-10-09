@@ -11,6 +11,7 @@ Proyecto de la materia *Prácticas Profesionalizantes*.
 > 📌 **Estado del proyecto y qué falta** (entregas + producción): ver
 > [`docs/ESTADO-DEL-PROYECTO.md`](docs/ESTADO-DEL-PROYECTO.md).
 > 🔌 **Mapa de la API** (todos los endpoints): ver [`docs/ENDPOINTS.md`](docs/ENDPOINTS.md).
+> 📚 **Índice de toda la documentación**: ver [`docs/README.md`](docs/README.md).
 
 ### ¿Qué hace?
 
