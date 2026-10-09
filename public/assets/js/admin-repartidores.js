@@ -136,6 +136,7 @@ function pintarRepartidor(r) {
             ${r.repartidor.telefono ? `<span class="rep-tel">📞 ${esc(r.repartidor.telefono)}</span>` : '<span></span>'}
             <div class="rep-head-acc">
                 <a class="btn-wa" href="${esc(linkWhatsapp(r))}" target="_blank" rel="noopener">WhatsApp</a>
+                ${r.repartidor.token ? `<button class="btn-secundario btn-sm" id="rep-link">🔗 Link GPS</button>` : ''}
                 <button class="btn-secundario btn-sm" id="rep-ticket">🎫 Ticket</button>
             </div>
         </div>
@@ -156,6 +157,12 @@ function pintarRepartidor(r) {
     `;
 
     $('rep-ticket').addEventListener('click', () => imprimirTicket(repDetalle));
+    const btnLink = $('rep-link');
+    if (btnLink) btnLink.addEventListener('click', async () => {
+        const url = `${location.origin}/repartidor.html?token=${r.repartidor.token}`;
+        try { await navigator.clipboard.writeText(url); toast('✓ Link de seguimiento copiado'); }
+        catch (e) { prompt('Link de seguimiento para el repartidor:', url); }
+    });
     const fInp = $('rep-fecha');
     fInp.addEventListener('change', (ev) => { ev.stopPropagation(); cargarRepartidor(repId, ev.target.value); });
     fInp.addEventListener('click', (ev) => ev.stopPropagation());   // no togglea el <details>

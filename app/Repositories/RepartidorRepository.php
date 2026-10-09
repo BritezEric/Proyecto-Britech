@@ -26,7 +26,7 @@ class RepartidorRepository
         $total = (int) $stC->fetchColumn();
 
         // Métricas de la tarjeta: entregados HOY + a pagar hoy + envíos ACTIVOS (a repartir).
-        $sql = "SELECT r.id, r.nombre, r.telefono, r.activo, r.creado_en,
+        $sql = "SELECT r.id, r.nombre, r.telefono, r.activo, r.creado_en, r.token,
                        COALESCE(hoy.envios, 0)  AS envios_hoy,
                        COALESCE(hoy.total, 0)   AS pago_hoy,
                        COALESCE(act.activos, 0) AS activos

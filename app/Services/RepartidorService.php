@@ -68,7 +68,7 @@ class RepartidorService
         $total = 0.0; $envios = 0;
         foreach ($porBarrio as $b) { $total += (float) $b['subtotal']; $envios += (int) $b['cantidad']; }
         return [
-            'repartidor'  => ['id' => (int) $rep['id'], 'nombre' => $rep['nombre'], 'telefono' => $rep['telefono']],
+            'repartidor'  => ['id' => (int) $rep['id'], 'nombre' => $rep['nombre'], 'telefono' => $rep['telefono'], 'token' => $rep['token'] ?? null],
             'fecha'       => $fecha,
             'por_barrio'  => $porBarrio,
             'envios'      => $envios,
