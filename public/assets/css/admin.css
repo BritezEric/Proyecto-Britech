@@ -773,3 +773,17 @@ td.acciones { text-align: right; white-space: nowrap; }
 .reclamo-msg-txt { white-space: pre-wrap; word-break: break-word; }
 .reclamo-responder { display: flex; gap: 8px; align-items: flex-end; margin-top: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
 .reclamo-responder textarea { flex: 1; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 8px; font: inherit; font-size: var(--text-sm); background: var(--surface); color: var(--ink); resize: vertical; }
+
+/* ===== Mapa de envíos en tiempo real ===== */
+.mapa-wrap { display: grid; grid-template-columns: 1fr 300px; gap: var(--sp-3); align-items: stretch; }
+.mapa-envios { height: 72vh; min-height: 420px; border-radius: var(--r-md); border: 1px solid var(--line); overflow: hidden; z-index: 0; }
+.mapa-lista { height: 72vh; min-height: 420px; overflow-y: auto; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-md); padding: var(--sp-2); display: flex; flex-direction: column; gap: 4px; }
+.mapa-item { display: flex; gap: var(--sp-2); align-items: center; width: 100%; text-align: left; border: none;
+    background: var(--surface-2); border-radius: var(--r-sm); padding: var(--sp-2) var(--sp-3); cursor: pointer; }
+.mapa-item:hover { background: var(--surface-sunk); }
+.mapa-item-ic { font-size: 20px; }
+.mapa-item-tx { display: flex; flex-direction: column; }
+.mapa-item-tx small { color: var(--ink-muted); }
+.moto-icon, .dest-icon { font-size: 26px; line-height: 1; text-align: center; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+@media (max-width: 820px) { .mapa-wrap { grid-template-columns: 1fr; } .mapa-lista { height: auto; max-height: 240px; } }

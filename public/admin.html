@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="/assets/css/tokens.css">
     <link rel="stylesheet" href="/assets/css/admin.css">
     <script>try { var t = localStorage.getItem('britech_admin_theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+    <!-- Leaflet (mapas, OpenStreetMap) para el seguimiento de envíos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
 <body>
     <div class="admin">
@@ -20,6 +23,7 @@
             <nav class="side-nav" id="nav">
                 <button data-ent="inicio"    class="nav-item" data-admin>Inicio</button>
                 <button data-ent="pedidos"   class="nav-item">Pedidos</button>
+                <button data-ent="mapa"      class="nav-item">Mapa envíos</button>
                 <button data-ent="reclamos"  class="nav-item">Reclamos</button>
                 <button data-ent="cajas"     class="nav-item" data-admin>Cajas</button>
                 <button data-ent="tablas"    class="nav-item" data-admin>Tablas</button>
@@ -168,6 +172,24 @@
                 <div id="reclamos-cont"></div>
             </section>
 
+            <!-- Vista: Mapa de envíos en tiempo real (seguimiento tipo Uber) -->
+            <section id="vista-mapa" class="oculto">
+                <header class="content-top">
+                    <div>
+                        <button class="volver-link" data-ir-inicio>‹ Panel</button>
+                        <h1>Mapa de envíos</h1>
+                        <p class="sub">Seguimiento en vivo de las motos en reparto. Se actualiza solo.</p>
+                    </div>
+                    <div class="content-top-acciones">
+                        <span id="mapa-estado" class="td-mute"></span>
+                    </div>
+                </header>
+                <div class="mapa-wrap">
+                    <div id="mapa-envios" class="mapa-envios"></div>
+                    <aside id="mapa-lista" class="mapa-lista"></aside>
+                </div>
+            </section>
+
             <!-- Vista: Cajas (supervisión de aperturas/cierres del vendedor) -->
             <section id="vista-cajas" class="oculto">
                 <header class="content-top">
@@ -302,5 +324,6 @@
     <script src="/assets/js/admin-compras.js"></script>
     <script src="/assets/js/admin-cajas.js"></script>
     <script src="/assets/js/admin-reclamos.js"></script>
+    <script src="/assets/js/admin-mapa.js"></script>
 </body>
 </html>
