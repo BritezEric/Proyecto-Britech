@@ -860,3 +860,15 @@ body { min-height: 100vh; }
 .reclamo-responder .rec-enviar { flex: 0 0 auto; width: 44px; height: 40px; padding: 0; border-radius: 10px; font-size: 18px; line-height: 1; }
 .reclamo-responder .rec-enviar:disabled { opacity: 0.6; cursor: default; }
 #modal-reclamo-nuevo textarea, #modal-reclamo-nuevo input { width: 100%; padding: 9px 11px; border: 1.5px solid var(--line); border-radius: 8px; font: inherit; background: var(--surface); color: var(--ink); margin-bottom: 6px; }
+
+/* ===== Seguimiento del envío (mapa del cliente) ===== */
+.mp-seguir { margin-top: 8px; border: none; background: linear-gradient(180deg, var(--primary), var(--primary-strong));
+    color: #fff; border-radius: 10px; padding: 9px 14px; font: inherit; font-weight: 700; font-size: var(--text-sm); cursor: pointer; }
+.mp-seguir:hover { filter: brightness(1.05); }
+.modal-seguir-caja { max-width: 560px; width: 94vw; }
+.seg-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.seg-head h2 { margin: 0; font-size: var(--text-lg); }
+.seg-x { border: none; background: var(--surface-2); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 15px; color: var(--ink); }
+.seg-mapa { height: 54vh; min-height: 320px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); z-index: 0; }
+.seg-eta { text-align: center; font-weight: 700; margin: 12px 0 0; color: var(--ink); }
+.moto-icon, .dest-icon { font-size: 26px; line-height: 1; text-align: center; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }

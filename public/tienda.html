@@ -13,6 +13,9 @@
         // pintar para que no haya parpadeo al recargar en modo mayorista.
         try { if (localStorage.getItem('britech_modo') === 'mayorista') document.documentElement.dataset.theme = 'dark'; } catch (e) {}
     </script>
+    <!-- Leaflet (mapa, OpenStreetMap) para el seguimiento del envío -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
 <body>
     <header class="t-header">
@@ -389,6 +392,18 @@
 
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/tienda-home.js"></script>
+    <!-- Seguimiento del envío en vivo (mapa) -->
+    <div id="modal-seguir" class="modal oculto">
+        <div class="modal-caja modal-seguir-caja">
+            <div class="seg-head">
+                <h2 id="seg-titulo">Seguimiento</h2>
+                <button id="seg-cerrar" class="seg-x" aria-label="Cerrar">✕</button>
+            </div>
+            <div id="seg-mapa" class="seg-mapa"></div>
+            <p id="seg-eta" class="seg-eta">Buscando tu moto…</p>
+        </div>
+    </div>
+
     <script src="/assets/js/tienda.js"></script>
 </body>
 </html>

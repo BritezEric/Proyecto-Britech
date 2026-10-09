@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#4c1d95">
+    <title>Britech — Repartidor</title>
+    <style>
+        :root { --bg:#0f0b1e; --card:#1b1530; --line:#2e2648; --ink:#f3f1f9; --muted:#a9a2c4;
+            --primary:#7c3aed; --primary-strong:#6d28d9; --ok:#16a34a; --off:#6b7280; --danger:#dc2626; }
+        * { box-sizing: border-box; }
+        body { margin:0; min-height:100dvh; background:var(--bg); color:var(--ink);
+            font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; display:flex; flex-direction:column; }
+        header { padding:18px 20px calc(18px + env(safe-area-inset-top)); display:flex; align-items:center; gap:10px; }
+        .logo { width:30px; height:30px; background:var(--primary); border-radius:8px; display:grid; place-items:center; font-size:16px; }
+        header b { font-size:18px; letter-spacing:-.02em; } header span { color:var(--muted); font-size:13px; }
+        main { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:22px; padding:20px; text-align:center; }
+        .rep-nombre { font-size:22px; font-weight:800; }
+        .rep-sub { color:var(--muted); margin-top:-14px; }
+        .estado { display:inline-flex; align-items:center; gap:8px; padding:7px 14px; border-radius:999px;
+            background:var(--card); border:1px solid var(--line); font-size:14px; font-weight:600; }
+        .dot { width:10px; height:10px; border-radius:50%; background:var(--off); }
+        .estado.on .dot { background:var(--ok); box-shadow:0 0 0 0 rgba(22,163,74,.6); animation:pulse 1.6s infinite; }
+        @keyframes pulse { to { box-shadow:0 0 0 10px rgba(22,163,74,0); } }
+        .btn { width:min(340px,86vw); border:none; border-radius:16px; padding:20px; font-size:18px; font-weight:800;
+            color:#fff; cursor:pointer; font-family:inherit; }
+        .btn-on { background:linear-gradient(180deg,var(--primary),var(--primary-strong)); }
+        .btn-off { background:#2a2342; }
+        .info { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px;
+            width:min(340px,86vw); font-size:13px; color:var(--muted); display:grid; gap:7px; text-align:left; }
+        .info b { color:var(--ink); }
+        .err { color:var(--danger); font-size:13px; max-width:340px; }
+        footer { padding:14px; text-align:center; color:var(--muted); font-size:12px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">🛵</div>
+        <div><b>Britech</b> <span>Repartidor</span></div>
+    </header>
+
+    <main>
+        <div>
+            <div class="rep-nombre" id="rep-nombre">…</div>
+            <p class="rep-sub">Compartí tu ubicación mientras repartís.</p>
+        </div>
+
+        <div class="estado" id="estado"><span class="dot"></span><span id="estado-txt">Desconectado</span></div>
+
+        <button class="btn btn-on" id="btn-toggle">▶ Ponerme en línea</button>
+
+        <div class="info">
+            <div>Última posición: <b id="i-pos">—</b></div>
+            <div>Precisión: <b id="i-prec">—</b></div>
+            <div>Enviadas: <b id="i-count">0</b></div>
+        </div>
+
+        <p class="err" id="err"></p>
+    </main>
+
+    <footer>Mantené esta pantalla abierta mientras hacés el reparto.</footer>
+
+    <script>
+        const q = new URLSearchParams(location.search);
+        const token = q.get('token') || '';
+        const $ = (id) => document.getElementById(id);
+        let watchId = null, enviadas = 0, ultimoEnvio = 0;
+
+        if (!token) {
+            $('err').textContent = 'Falta el token. Pedí tu link de seguimiento al administrador.';
+            $('btn-toggle').disabled = true;
+        }
+        $('rep-nombre').textContent = token ? 'Repartidor' : 'Sin token';
+
+        function setEstado(on) {
+            $('estado').classList.toggle('on', on);
+            $('estado-txt').textContent = on ? 'En línea' : 'Desconectado';
+            $('btn-toggle').textContent = on ? '⏹ Ponerme fuera de línea' : '▶ Ponerme en línea';
+            $('btn-toggle').className = 'btn ' + (on ? 'btn-off' : 'btn-on');
+        }
+
+        async function enviar(lat, lng) {
+            try {
+                const r = await fetch('/api/repartidor/posicion', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, lat, lng }),
+                });
+                const d = await r.json();
+                if (!d.ok) { $('err').textContent = d.error || 'Error al enviar.'; return; }
+                enviadas++; $('i-count').textContent = enviadas;
+                $('i-pos').textContent = lat.toFixed(5) + ', ' + lng.toFixed(5);
+                $('err').textContent = '';
+            } catch (e) { $('err').textContent = 'Sin conexión. Reintentando…'; }
+        }
+
+        function onPos(p) {
+            $('i-prec').textContent = Math.round(p.coords.accuracy) + ' m';
+            const ahora = Date.now();
+            if (ahora - ultimoEnvio < 4000) return;   // throttle: 1 envío cada ~4s
+            ultimoEnvio = ahora;
+            enviar(p.coords.latitude, p.coords.longitude);
+        }
+        function onErr(e) {
+            $('err').textContent = e.code === 1
+                ? 'Permiso de ubicación denegado. Activalo para compartir tu posición.'
+                : 'No se pudo obtener el GPS.';
+        }
+
+        $('btn-toggle').addEventListener('click', () => {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId); watchId = null; setEstado(false); return;
+            }
+            if (!navigator.geolocation) { $('err').textContent = 'Este dispositivo no tiene GPS.'; return; }
+            watchId = navigator.geolocation.watchPosition(onPos, onErr, {
+                enableHighAccuracy: true, maximumAge: 2000, timeout: 10000,
+            });
+            setEstado(true);
+            $('err').textContent = '';
+        });
+    </script>
+</body>
+</html>

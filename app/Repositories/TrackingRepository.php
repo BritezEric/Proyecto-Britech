@@ -39,7 +39,8 @@ class TrackingRepository
             "SELECT e.id AS envio_id, e.estado, e.dest_lat, e.dest_lng,
                     COALESCE(p.numero, CONCAT('V-', e.venta_id)) AS referencia,
                     r.id AS repartidor_id, r.nombre AS repartidor,
-                    r.ult_lat, r.ult_lng, r.ult_pos_en, r.en_linea
+                    r.ult_lat, r.ult_lng, r.ult_pos_en, r.en_linea,
+                    TIMESTAMPDIFF(SECOND, r.ult_pos_en, NOW()) AS hace_seg
              FROM envio e
              JOIN repartidor r ON r.id = e.repartidor_id
              LEFT JOIN pedido p ON p.id = e.pedido_id
@@ -55,7 +56,8 @@ class TrackingRepository
     {
         $st = Database::conexion()->prepare(
             "SELECT e.id AS envio_id, e.estado, e.dest_lat, e.dest_lng,
-                    r.nombre AS repartidor, r.ult_lat, r.ult_lng, r.ult_pos_en, r.en_linea
+                    r.nombre AS repartidor, r.ult_lat, r.ult_lng, r.ult_pos_en, r.en_linea,
+                    TIMESTAMPDIFF(SECOND, r.ult_pos_en, NOW()) AS hace_seg
              FROM envio e
              LEFT JOIN repartidor r ON r.id = e.repartidor_id
              WHERE e.pedido_id = ?"

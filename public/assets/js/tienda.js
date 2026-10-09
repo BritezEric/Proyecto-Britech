@@ -898,9 +898,13 @@ async function verMisPedidos() {
         const subir = (p.estado_pago === 'pendiente' || p.estado_pago === 'rechazado')
             ? `<label class="badge-link">📎 Comprobante<input type="file" accept="image/*,application/pdf" hidden data-pago="${p.id}"></label>`
             : '';
+        // Seguimiento en vivo cuando la moto ya salió (despachado / en camino).
+        const enVivo = (p.envio_estado === 'despachado' || p.envio_estado === 'en_camino')
+            ? `<button class="mp-seguir" data-seguir="${p.id}" data-num="${esc(p.numero)}">🛵 Seguir en el mapa</button>`
+            : '';
         // El progreso del envío es lo que el cliente quiere ver; si no hay envío, el estado del pedido.
         const seguimiento = p.envio_estado
-            ? envioStepper(p.envio_estado) + (seg ? `<div class="mp-seg">${seg}</div>` : '')
+            ? envioStepper(p.envio_estado) + enVivo + (seg ? `<div class="mp-seg">${seg}</div>` : '')
             : `<span class="badge ${esc(p.estado)}">${esc(p.estado)}</span>`;
         return `<div class="mp-pedido">
             <div class="mp-top">
@@ -921,6 +925,63 @@ async function verMisPedidos() {
     // Abrir un reclamo sobre el pedido.
     cont.querySelectorAll('[data-reclamar]').forEach((b) => b.addEventListener('click', () =>
         abrirNuevoReclamo(Number(b.dataset.reclamar), b.dataset.num)));
+    // Seguir el envío en el mapa.
+    cont.querySelectorAll('[data-seguir]').forEach((b) => b.addEventListener('click', () =>
+        abrirSeguimiento(Number(b.dataset.seguir), b.dataset.num)));
+}
+
+// ===== Seguimiento en vivo del envío (mapa del cliente) =====
+let _segMapa = null, _segMoto = null, _segDest = null, _segInterval = null;
+
+async function abrirSeguimiento(pedidoId, numero) {
+    cerrar('modal-pedidos');
+    // Limpiar marcadores de un seguimiento anterior.
+    if (_segMapa) { if (_segMoto) { _segMapa.removeLayer(_segMoto); _segMoto = null; } if (_segDest) { _segMapa.removeLayer(_segDest); _segDest = null; } }
+    $('seg-titulo').textContent = 'Seguimiento · ' + numero;
+    $('seg-eta').textContent = 'Buscando tu moto…';
+    abrir('modal-seguir');
+    const initMapa = () => {
+        if (!window.L) { setTimeout(initMapa, 300); return; }
+        if (!_segMapa) {
+            _segMapa = L.map('seg-mapa', { zoomControl: true }).setView([-26.1849, -58.1731], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(_segMapa);
+        }
+        setTimeout(() => _segMapa.invalidateSize(), 60);
+        clearInterval(_segInterval);
+        cargarSeguimiento(pedidoId);
+        _segInterval = setInterval(() => {
+            if ($('modal-seguir').classList.contains('oculto')) { clearInterval(_segInterval); return; }
+            cargarSeguimiento(pedidoId);
+        }, 3000);
+    };
+    initMapa();
+}
+
+const segMotoIcon = () => L.divIcon({ className: 'moto-icon', html: '🛵', iconSize: [34, 34], iconAnchor: [17, 17] });
+const segDestIcon = () => L.divIcon({ className: 'dest-icon', html: '🏁', iconSize: [24, 24], iconAnchor: [6, 24] });
+
+async function cargarSeguimiento(pedidoId) {
+    let r;
+    try { r = await api.get('/api/tienda/seguimiento?pedido_id=' + pedidoId); } catch { return; }
+    const e = r.envio;
+    if (!e) return;
+    if (e.dest_lat != null && !_segDest) {
+        _segDest = L.marker([Number(e.dest_lat), Number(e.dest_lng)], { icon: segDestIcon() }).addTo(_segMapa).bindPopup('🏁 Tu dirección');
+    }
+    if (e.ult_lat == null) {
+        $('seg-eta').textContent = e.estado === 'entregado' ? '✓ Entregado' : 'La moto todavía no está emitiendo su ubicación.';
+        return;
+    }
+    const ll = [Number(e.ult_lat), Number(e.ult_lng)];
+    if (_segMoto) { _segMoto.setLatLng(ll); } else { _segMoto = L.marker(ll, { icon: segMotoIcon() }).addTo(_segMapa).bindPopup('🛵 ' + esc(e.repartidor || 'Tu pedido')); }
+    const pts = [ll]; if (_segDest) pts.push(_segDest.getLatLng());
+    _segMapa.fitBounds(pts, { padding: [50, 50], maxZoom: 15 });
+    const viva = e.hace_seg != null && Number(e.hace_seg) <= 30;
+    $('seg-eta').textContent = !viva
+        ? `🛵 ${esc(e.repartidor || 'Tu pedido')} · sin señal por un momento…`
+        : e.eta_min != null
+        ? `🛵 ${esc(e.repartidor || 'Tu pedido')} · llega en ~${e.eta_min} min`
+        : `🛵 ${esc(e.repartidor || 'En camino')}`;
 }
 
 // Progreso del envío como pasos claros. "cancelado" se muestra aparte.
@@ -1125,6 +1186,7 @@ async function iniciar() {
     $('menu-favoritos').addEventListener('click', verFavoritos);
     $('btn-favoritos-header').addEventListener('click', () => cliente ? verFavoritos() : abrirAuth(false));
     $('pedidos-cerrar').addEventListener('click', () => cerrar('modal-pedidos'));
+    $('seg-cerrar').addEventListener('click', () => cerrar('modal-seguir'));
     $('pedidos-lista').addEventListener('change', (e) => {
         const inp = e.target.closest('input[data-pago]');
         if (inp) subirComprobantePedido(inp.files[0], Number(inp.dataset.pago));

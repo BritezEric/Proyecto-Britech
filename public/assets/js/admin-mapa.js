@@ -4,8 +4,11 @@
 
 let _mapa = null, _marcadores = {}, _destinos = {}, _mapaInterval = null;
 
-const motoIcon = () => L.divIcon({ className: 'moto-icon', html: '🛵', iconSize: [34, 34], iconAnchor: [17, 17] });
+const motoIcon = (viva) => L.divIcon({ className: 'moto-icon' + (viva ? '' : ' moto-off'), html: '🛵', iconSize: [34, 34], iconAnchor: [17, 17] });
 const destIcon = () => L.divIcon({ className: 'dest-icon', html: '🏁', iconSize: [24, 24], iconAnchor: [6, 24] });
+// ¿La posición es reciente? (más de 30s sin emitir = sin señal)
+const senal = (e) => (e.hace_seg == null ? false : Number(e.hace_seg) <= 30);
+const haceTxt = (e) => e.hace_seg == null ? 'sin datos' : (Number(e.hace_seg) <= 5 ? 'ahora' : 'hace ' + Number(e.hace_seg) + 's');
 
 function renderMapaEnvios() {
     if (!window.L) { setTimeout(renderMapaEnvios, 300); return; }   // Leaflet carga con defer
@@ -37,10 +40,12 @@ async function cargarMapa() {
         const id = 'e' + e.envio_id;
         vivos.add(id);
         const ll = [Number(e.ult_lat), Number(e.ult_lng)];
+        const viva = senal(e);
         const pop = `<b>🛵 ${esc(e.repartidor)}</b><br>${esc(e.referencia)} · ${esc(e.estado)}`
-            + (e.eta_min != null ? `<br>⏱ ETA ~${e.eta_min} min` : '');
-        if (_marcadores[id]) { _marcadores[id].setLatLng(ll).setPopupContent(pop); }
-        else { _marcadores[id] = L.marker(ll, { icon: motoIcon() }).addTo(_mapa).bindPopup(pop); }
+            + (e.eta_min != null && viva ? `<br>⏱ ETA ~${e.eta_min} min` : '')
+            + (viva ? `<br><small>📍 ${haceTxt(e)}</small>` : `<br><small>⚠ sin señal (${haceTxt(e)})</small>`);
+        if (_marcadores[id]) { _marcadores[id].setLatLng(ll).setIcon(motoIcon(viva)).setPopupContent(pop); }
+        else { _marcadores[id] = L.marker(ll, { icon: motoIcon(viva) }).addTo(_mapa).bindPopup(pop); }
         if (e.dest_lat != null && !_destinos[id]) {
             _destinos[id] = L.marker([Number(e.dest_lat), Number(e.dest_lng)], { icon: destIcon() })
                 .addTo(_mapa).bindPopup('🏁 Destino · ' + esc(e.referencia));
@@ -56,10 +61,11 @@ async function cargarMapa() {
 
     // Lista lateral (clic = centrar en esa moto).
     $('mapa-lista').innerHTML = envios.length
-        ? envios.map((e) => `<button class="mapa-item" data-id="e${e.envio_id}">
+        ? envios.map((e) => `<button class="mapa-item${senal(e) ? '' : ' sin-senal'}" data-id="e${e.envio_id}">
             <span class="mapa-item-ic">🛵</span>
             <span class="mapa-item-tx"><strong>${esc(e.repartidor)}</strong>
-                <small>${esc(e.referencia)} · ${esc(e.estado)}${e.eta_min != null ? ` · ETA ${e.eta_min}′` : ''}</small></span>
+                <small>${esc(e.referencia)} · ${esc(e.estado)}${senal(e) && e.eta_min != null ? ` · ETA ${e.eta_min}′` : ''}
+                ${senal(e) ? '' : '· ⚠ sin señal'}</small></span>
           </button>`).join('')
         : '<p class="dash-vacio">Sin motos en reparto.</p>';
     $('mapa-lista').querySelectorAll('.mapa-item').forEach((b) => b.addEventListener('click', () => {

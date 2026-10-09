@@ -787,3 +787,5 @@ td.acciones { text-align: right; white-space: nowrap; }
 .mapa-item-tx small { color: var(--ink-muted); }
 .moto-icon, .dest-icon { font-size: 26px; line-height: 1; text-align: center; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
 @media (max-width: 820px) { .mapa-wrap { grid-template-columns: 1fr; } .mapa-lista { height: auto; max-height: 240px; } }
+.moto-icon.moto-off { filter: grayscale(1) opacity(0.55); }
+.mapa-item.sin-senal { opacity: 0.6; }
