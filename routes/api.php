@@ -35,6 +35,7 @@ use App\Controllers\CompraController;
 use App\Controllers\CajaController;
 use App\Controllers\ReclamoController;
 use App\Controllers\Auth0Controller;
+use App\Controllers\TrackingController;
 
 /** @var App\Core\Router $router */
 
@@ -118,6 +119,10 @@ $router->get('/api/admin/repartidores',          [RepartidorController::class, '
 $router->get('/api/admin/repartidores/detalle',  [RepartidorController::class, 'detalle'],  true);
 $router->post('/api/admin/repartidores/guardar', [RepartidorController::class, 'guardar'],  true);
 $router->post('/api/admin/repartidores/baja',    [RepartidorController::class, 'baja'],     true);
+// Seguimiento en tiempo real (estilo Uber)
+$router->post('/api/repartidor/posicion', [TrackingController::class, 'posicion']);   // emisor (celular/TrackingTag), token
+$router->get('/api/admin/envios/mapa',    [TrackingController::class, 'adminMapa'], true);
+$router->get('/api/tienda/seguimiento',   [TrackingController::class, 'seguimiento']);   // cliente (valida sesión dentro)
 // Envíos sin repartidor + derivar (dispatch) — solo admin
 $router->get('/api/admin/envios/sin-asignar',    [RepartidorController::class, 'sinAsignar'], true);
 $router->post('/api/admin/envios/derivar',       [RepartidorController::class, 'derivar'],    true);
