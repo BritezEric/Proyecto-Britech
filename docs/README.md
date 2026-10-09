@@ -45,6 +45,7 @@
 - [modulos/mercadopago.md](modulos/mercadopago.md) — integración Mercado Pago (Checkout Pro)
 - [modulos/reclamos.md](modulos/reclamos.md) — reclamos con seguimiento (chat)
 - [modulos/envios-repartidores.md](modulos/envios-repartidores.md) — Moto Express, barrios y repartos
+- [modulos/seguimiento.md](modulos/seguimiento.md) — seguimiento de envíos en tiempo real (estilo Uber)
 - [modulos/finanzas.md](modulos/finanzas.md) — gastos, sueldos y totales
 - [modulos/home-bloques.md](modulos/home-bloques.md) — page builder de la home
 

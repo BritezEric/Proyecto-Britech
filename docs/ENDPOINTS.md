@@ -1,7 +1,7 @@
 # Endpoints de la API — Britech
 
 > **Fuente de verdad:** [`routes/api.php`](../routes/api.php). Este documento es un
-> espejo legible de ese archivo. **Última sincronización: 2026-10-06.**
+> espejo legible de ese archivo. **Última sincronización: 2026-10-09.**
 > Si cambia `routes/api.php`, hay que actualizar esta tabla.
 
 **Auth (columna):**
@@ -136,6 +136,13 @@ Todas las respuestas son JSON (salvo los redirects de Auth0 y el PDF de empleado
 | GET | `/api/admin/barrios` | login (admin) | `BarrioController::admin` |
 | POST | `/api/admin/barrios/guardar` | login (admin) | `BarrioController::guardar` |
 | POST | `/api/admin/barrios/baja` | login (admin) | `BarrioController::baja` |
+
+## Seguimiento de envíos en tiempo real
+| Método | Ruta | Auth | Controlador::acción |
+|---|---|---|---|
+| POST | `/api/repartidor/posicion` | público (token) | `TrackingController::posicion` |
+| GET | `/api/admin/envios/mapa` | login (staff) | `TrackingController::adminMapa` |
+| GET | `/api/tienda/seguimiento` | cliente | `TrackingController::seguimiento` |
 
 ## Reclamos — gestión (admin)
 | Método | Ruta | Auth | Controlador::acción |

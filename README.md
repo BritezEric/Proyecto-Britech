@@ -67,6 +67,7 @@ El primero crea la base `britech_v2`; el resto hace `USE britech_v2`.
 25. database/schema_reclamos.sql         (reclamos de clientes sobre pedidos + seguimiento)
 26. database/schema_mercadopago.sql      (id del pago de Mercado Pago en el pedido)
 27. database/schema_notificaciones_v2.sql (notificaciones por destinatario: staff/rol/usuario/cliente)
+28. database/schema_tracking.sql          (seguimiento de envíos en tiempo real: posición del repartidor)
 ```
 
 Desde la terminal (uno por uno, o encadenados):
@@ -99,6 +100,7 @@ mysql -u root britech_v2 < database/schema_caja.sql
 mysql -u root britech_v2 < database/schema_reclamos.sql
 mysql -u root britech_v2 < database/schema_mercadopago.sql
 mysql -u root britech_v2 < database/schema_notificaciones_v2.sql
+mysql -u root britech_v2 < database/schema_tracking.sql
 ```
 
 **3. Variables de entorno** — copiar la plantilla y completar:

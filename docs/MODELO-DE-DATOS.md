@@ -1,7 +1,7 @@
 # Modelo de datos — Britech (`britech_v2`)
 
 > Base MySQL 8.4, motor **InnoDB**, diseño normalizado a **3FN**, integridad
-> referencial por claves foráneas. **42 tablas**, creadas por **27 scripts SQL**
+> referencial por claves foráneas. **43 tablas**, creadas por **28 scripts SQL**
 > que se importan en orden (ver `README.md`).
 
 ## Tablas por área
@@ -62,7 +62,8 @@
 | `empresa_envio` | Medios de envío (correo, retiro, moto) |
 | `envio` | Envío de un pedido **o** de una venta |
 | `barrio` | Zonas de Moto Express (costo por zona) |
-| `repartidor` | Repartidores (ABM, sin login) |
+| `repartidor` | Repartidores (ABM, sin login; + token y última posición GPS) |
+| `repartidor_posicion` | Historial de posiciones GPS (seguimiento en tiempo real) |
 
 ### Compras
 | Tabla | Para qué |
@@ -111,4 +112,4 @@ Los 27 scripts y su orden exacto están en `README.md`. Resumen:
 `gastos` → `empleados` → `bloques` → `marca_logo` → `metodo_pago` → `moto_barrios` →
 `envio_venta` → `notificaciones` → `cliente_perfil` → `reposicion` →
 `reposicion_pedidos` → `compras` → `caja` → `reclamos` → `mercadopago` →
-`notificaciones_v2`.
+`notificaciones_v2` → `tracking`.
