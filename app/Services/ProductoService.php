@@ -40,8 +40,12 @@ class ProductoService
         $id = (int) ($in['id'] ?? 0);
         $editando = $id > 0;
 
-        if ($editando && $this->repo->buscarCompleto($id) === null) {
-            throw new ValidacionException('El producto no existe.');
+        $antes = null;
+        if ($editando) {
+            $antes = $this->repo->buscarCompleto($id);
+            if ($antes === null) {
+                throw new ValidacionException('El producto no existe.');
+            }
         }
         if ($this->repo->skuOcodigoEnUso($d['sku'], $d['codigo_barras'], $id)) {
             throw new ValidacionException('El SKU o el código de barras ya está en uso por otro producto.');
@@ -90,16 +94,29 @@ class ProductoService
             throw $e;
         }
 
+        // Auditoría: alta = un evento; edición = una fila por campo cambiado.
+        if ($editando) {
+            Auditoria::cambios('producto', $id, $antes, $d, [
+                'nombre', 'descripcion', 'costo', 'precio_minorista', 'precio_mayorista',
+                'precio_anterior', 'stock_minimo', 'min_mayorista', 'categoria_id',
+                'marca_id', 'es_sobre_pedido', 'activo',
+            ]);
+        } else {
+            Auditoria::evento('producto', $id, 'crear', 'Alta: ' . $d['nombre']);
+        }
+
         return $id;
     }
 
     public function baja(int $id): void
     {
-        if ($this->repo->buscarCompleto($id) === null) {
+        $p = $this->repo->buscarCompleto($id);
+        if ($p === null) {
             throw new ValidacionException('El producto no existe.');
         }
         // baja lógica (no borramos: hay ventas que lo referencian)
         $this->repo->actualizar($id, $this->soloEstado($id, 0));
+        Auditoria::evento('producto', $id, 'baja', 'Baja: ' . $p['nombre']);
     }
 
     /** Arma el array de actualización conservando los datos actuales y cambiando activo. */

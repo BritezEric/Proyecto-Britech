@@ -29,17 +29,22 @@ class ProveedorService
                 throw new ValidacionException('El proveedor no existe.');
             }
             $this->repo->actualizar($id, $d);
+            Auditoria::evento('proveedor', $id, 'editar', $d['nombre'] ?? null);
             return $id;
         }
-        return $this->repo->crear($d);
+        $id = $this->repo->crear($d);
+        Auditoria::evento('proveedor', $id, 'crear', 'Alta: ' . ($d['nombre'] ?? ''));
+        return $id;
     }
 
     public function baja(int $id): void
     {
-        if ($this->repo->buscarPorId($id) === null) {
+        $p = $this->repo->buscarPorId($id);
+        if ($p === null) {
             throw new ValidacionException('El proveedor no existe.');
         }
         $this->repo->cambiarEstado($id, 0);
+        Auditoria::evento('proveedor', $id, 'baja', $p['nombre'] ?? null);
     }
 
     private function validar(array $in): array

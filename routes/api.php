@@ -36,6 +36,8 @@ use App\Controllers\CajaController;
 use App\Controllers\ReclamoController;
 use App\Controllers\Auth0Controller;
 use App\Controllers\TrackingController;
+use App\Controllers\PrecioController;
+use App\Controllers\AuditoriaController;
 
 /** @var App\Core\Router $router */
 
@@ -127,6 +129,12 @@ $router->get('/api/tienda/seguimiento',   [TrackingController::class, 'seguimien
 $router->get('/api/admin/envios/sin-asignar',    [RepartidorController::class, 'sinAsignar'], true);
 $router->post('/api/admin/envios/derivar',       [RepartidorController::class, 'derivar'],    true);
 $router->post('/api/admin/envios/estado',        [RepartidorController::class, 'estado'],     true);
+
+// Precios masivos (por marca / categoría / todo) — solo admin
+$router->post('/api/admin/precios/previsualizar', [PrecioController::class, 'previsualizar'], true);
+$router->post('/api/admin/precios/aplicar',       [PrecioController::class, 'aplicar'],       true);
+// Auditoría (quién cambió qué) — solo admin
+$router->get('/api/admin/auditoria', [AuditoriaController::class, 'listar'], true);
 
 // Reposición: productos con stock bajo + pedido a proveedor — solo admin
 $router->get('/api/admin/reposicion',  [ReposicionController::class, 'index'],     true);

@@ -34,17 +34,22 @@ class ClienteService
                 throw new ValidacionException('El cliente no existe.');
             }
             $this->repo->actualizar($id, $d);
+            Auditoria::evento('cliente', $id, 'editar', $d['nombre'] ?? null);
             return $id;
         }
-        return $this->repo->crear($d);
+        $id = $this->repo->crear($d);
+        Auditoria::evento('cliente', $id, 'crear', 'Alta: ' . ($d['nombre'] ?? ''));
+        return $id;
     }
 
     public function baja(int $id): void
     {
-        if ($this->repo->buscarCompleto($id) === null) {
+        $c = $this->repo->buscarCompleto($id);
+        if ($c === null) {
             throw new ValidacionException('El cliente no existe.');
         }
         $this->repo->cambiarEstado($id, 0);
+        Auditoria::evento('cliente', $id, 'baja', $c['nombre'] ?? null);
     }
 
     /** Normaliza y valida los datos. Devuelve el array listo para el repo. */

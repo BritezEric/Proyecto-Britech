@@ -208,6 +208,25 @@ class ProductoRepository
         return $p;
     }
 
+    /** Productos (activos) de un grupo con su precio en una lista. Para el cambio masivo. */
+    public function preciosDeGrupo(string $tipo, ?int $refId, int $listaId): array
+    {
+        $where = 'p.activo = 1';
+        $params = [$listaId];
+        if ($tipo === 'marca')     { $where .= ' AND p.marca_id = ?';     $params[] = $refId; }
+        elseif ($tipo === 'categoria') { $where .= ' AND p.categoria_id = ?'; $params[] = $refId; }
+        // tipo 'todos' => sin filtro extra
+        $st = Database::conexion()->prepare(
+            "SELECT p.id, p.nombre, pr.precio
+             FROM producto p
+             JOIN precio pr ON pr.producto_id = p.id AND pr.lista_precio_id = ?
+             WHERE $where
+             ORDER BY p.nombre"
+        );
+        $st->execute($params);
+        return $st->fetchAll();
+    }
+
     public function skuOcodigoEnUso(?string $sku, ?string $codigo, int $exceptoId = 0): bool
     {
         if ($sku === null && $codigo === null) return false;

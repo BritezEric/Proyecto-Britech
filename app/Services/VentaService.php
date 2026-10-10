@@ -307,6 +307,7 @@ class VentaService
         (new \App\Repositories\NotificacionRepository())->crear(
             'venta_anulada', "Venta {$venta['numero']} anulada · {$motivo}", null, $ventaId, 'alerta'
         );
+        Auditoria::evento('venta', $ventaId, 'anular', "Venta {$venta['numero']} · {$motivo}", $usuarioId);
         return ['venta_id' => $ventaId, 'numero' => $venta['numero']];
     }
 }
