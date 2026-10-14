@@ -523,7 +523,7 @@ async function cargarCaja() {
 
 function pintarCaja() {
     const pill = document.getElementById('caja-pill');
-    if (pill) pill.textContent = cajaAbierta ? '🧰 Caja abierta' : '🔒 Caja cerrada';
+    if (pill) pill.innerHTML = (cajaAbierta ? ICO.wallet + ' Caja abierta' : ICO.lock + ' Caja cerrada');
     document.getElementById('btn-caja').classList.toggle('caja-cerrada', !cajaAbierta);
     // Si el modal de caja está abierto, re-pintar su contenido.
     if (!document.getElementById('modal-caja-ov').classList.contains('oculto')) pintarModalCaja();
@@ -641,3 +641,73 @@ document.getElementById('btn-caja-cerrar-modal').addEventListener('click', cerra
 document.getElementById('modal-caja-ov').addEventListener('click', (e) => {
     if (e.target === document.getElementById('modal-caja-ov')) cerrarModalCaja();
 });
+
+// ================= VOZ (tocar para hablar) =================
+// Reusa las funciones del POS. El cerebro son reglas: entiende "agregá X",
+// "sacá X", "cobrar / vendí / hice una venta", "limpiar". Cuando haya API key,
+// se cambia Voz.procesar por un endpoint con Claude sin tocar estos handlers.
+const NUMEROS = { un: 1, uno: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10 };
+
+// Separa "dos coca", "3 de birra", "una coca" → { qty, nombre }.
+function vozCantNombre(resto) {
+    let r = resto.trim();
+    const tok = r.split(/\s+/);
+    let qty = 1;
+    if (/^\d+$/.test(tok[0])) { qty = parseInt(tok[0], 10); tok.shift(); }
+    else if (NUMEROS[tok[0]] !== undefined) { qty = NUMEROS[tok[0]]; tok.shift(); }
+    if (tok[0] === 'de') tok.shift();
+    return { qty: Math.max(1, qty), nombre: tok.join(' ').trim() };
+}
+
+async function vozAgregar(nombre, qty) {
+    if (!nombre) return 'Decime qué producto agregar.';
+    await buscar(nombre);
+    if (!ultimosResultados.length) return `No encontré "${nombre}".`;
+    const p = ultimosResultados[0];
+    agregarAlCarrito(p.id);
+    const item = carrito.find((i) => i.id == p.id);
+    if (item && qty > 1) { item.cantidad = item.sobrePedido ? qty : Math.min(qty, item.stock); renderCarrito(); }
+    input.value = ''; buscar('');
+    return `Agregué ${qty > 1 ? qty + ' × ' : ''}${p.nombre}.`;
+}
+
+function vozQuitar(nombre) {
+    const n = Voz.norm(nombre);
+    const item = carrito.find((i) => Voz.norm(i.nombre).includes(n));
+    if (!item) return `No está "${nombre}" en el carrito.`;
+    quitar(item.id);
+    return `Saqué ${item.nombre}.`;
+}
+
+function vozLimpiar() {
+    carrito = []; descuentoTotal = 0; descTotalIn.value = 0; renderCarrito();
+    return 'Vacié el carrito.';
+}
+
+function vozCobrar() {
+    if (!carrito.length) return 'El carrito está vacío.';
+    btnCobrar.click();
+    return cajaAbierta ? 'Abriendo el cobro.' : 'Primero abrí la caja.';
+}
+
+const VOZ_INTENTS = [
+    { // cobrar / vender / finalizar (sin verbo de agregar)
+        match: (t) => /\b(cobrar|cobra|a cobrar|finaliz\w*|termin\w*|pagar|hice una venta|vend[ií])\b/.test(t)
+            && !/\b(agreg\w*|sum\w*|pon\w*|anad\w*|carg\w*)\b/.test(t) ? {} : null,
+        run: () => vozCobrar(),
+    },
+    { // limpiar / nueva venta
+        match: (t) => /\b(limpi\w*|vaci\w*|cancel\w*|borra todo|nueva venta|empez\w*)\b/.test(t) ? {} : null,
+        run: () => vozLimpiar(),
+    },
+    { // sacar / quitar <producto>
+        match: (t) => { const m = t.match(/\b(?:quit\w*|sac\w*|elimin\w*|borr\w*)\s+(.+)/); return m ? { nombre: m[1] } : null; },
+        run: (s) => vozQuitar(s.nombre),
+    },
+    { // agregar <cant?> <producto>
+        match: (t) => { const m = t.match(/\b(?:agreg\w*|sum\w*|pon\w*|anad\w*|carg\w*|quiero|dame|vende\w*)\s+(.+)/); return m ? vozCantNombre(m[1]) : null; },
+        run: (s) => vozAgregar(s.nombre, s.qty),
+    },
+];
+
+if (window.Voz) Voz.montar({ intents: VOZ_INTENTS });

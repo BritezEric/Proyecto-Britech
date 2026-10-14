@@ -270,7 +270,7 @@ function actualizarCorazones() {
     document.querySelectorAll('.fav-btn').forEach((b) => {
         const on = favoritos.has(Number(b.dataset.fav));
         b.classList.toggle('activo', on);
-        b.textContent = on ? '❤️' : '🤍';
+        b.innerHTML = on ? ICO.heartFill : ICO.heart;
     });
 }
 

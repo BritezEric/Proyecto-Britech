@@ -20,18 +20,18 @@
 <body>
     <header class="t-header">
         <button id="ir-inicio" class="t-logo brand-lockup" aria-label="Inicio">
-            <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="brand-sq" width="32" height="32" rx="8"/><path class="brand-play" d="M12 8.5L24 16L12 23.5Z"/></svg>
+            <img class="brand-mark" src="/assets/img/britech-mark-blanco.png" alt="">
             <span class="brand-word">Britech <span>Tienda</span></span></button>
         <div class="t-search"><input id="buscar" type="search" placeholder="¿Qué buscás?" autocomplete="off"></div>
         <div class="t-acciones">
             <div id="mayorista-zona" class="mayorista-zona"></div>
             <div id="staff-zona"></div>
-            <button id="btn-noti-cli" class="t-ico oculto" aria-label="Notificaciones" title="Notificaciones">🔔
+            <button id="btn-noti-cli" class="t-ico oculto" aria-label="Notificaciones" title="Notificaciones"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ico" aria-hidden="true"><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/></svg>
                 <span id="noti-cli-badge" class="t-cart-count oculto">0</span>
             </button>
-            <button id="btn-favoritos-header" class="t-ico" aria-label="Favoritos" title="Favoritos">🤍</button>
+            <button id="btn-favoritos-header" class="t-ico" aria-label="Favoritos" title="Favoritos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ico" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg></button>
             <button id="btn-cuenta" class="t-btn">Ingresar</button>
-            <button id="btn-carrito" class="t-ico t-carrito" aria-label="Carrito" title="Carrito">🛒
+            <button id="btn-carrito" class="t-ico t-carrito" aria-label="Carrito" title="Carrito"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ico" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                 <span id="cart-count" class="t-cart-count oculto">0</span>
             </button>
         </div>
@@ -124,11 +124,16 @@
 
     <footer class="t-footer">
         <div class="t-footer-cols">
-            <div><strong>Britech</strong><p>Tu tienda mayorista y minorista de tecnología.</p></div>
-            <div><strong>Ayuda</strong><p>Envíos · Devoluciones · Contacto</p></div>
-            <div><strong>Cuenta</strong><p>Ingresar · Mis pedidos · Favoritos</p></div>
+            <div><img class="t-footer-logo" src="/assets/img/britech-logo-blanco.png" alt="Britech"><p>Tu tienda mayorista y minorista de tecnología.</p></div>
+            <div><strong>Ayuda</strong><p><a href="/contacto.html">Contacto</a> · <a href="/terminos.html">Envíos y devoluciones</a></p></div>
+            <div><strong>Legal</strong><p><a href="/terminos.html">Términos</a> · <a href="/privacidad.html">Privacidad</a></p></div>
         </div>
-        <div class="t-footer-base">© 2026 Britech · Proyecto educativo</div>
+        <div class="t-footer-base">
+            © 2026 Britech · Proyecto educativo ·
+            <a href="/terminos.html">Términos</a> ·
+            <a href="/privacidad.html">Privacidad</a> ·
+            <a href="/contacto.html">Contacto</a>
+        </div>
     </footer>
 
     <!-- Menú de cuenta -->
@@ -145,7 +150,7 @@
         <div class="drawer-overlay" data-cerrar-drawer></div>
         <aside class="drawer-panel">
             <header class="drawer-head">
-                <h2>🛒 Tu carrito</h2>
+                <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ico" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg> Tu carrito</h2>
                 <button id="cart-cerrar" class="drawer-x" aria-label="Cerrar">×</button>
             </header>
             <div class="drawer-body">
@@ -391,6 +396,7 @@
     </div>
 
     <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/iconos.js"></script>
     <script src="/assets/js/tienda-home.js"></script>
     <!-- Seguimiento del envío en vivo (mapa) -->
     <div id="modal-seguir" class="modal oculto">

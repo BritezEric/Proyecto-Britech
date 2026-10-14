@@ -152,15 +152,16 @@ body {
     --shadow-lg: 0 16px 48px oklch(0 0 0 / 0.62);
 }
 
-/* ===== Logo Britech (marca "play") — inline, se adapta al color y tema ===== */
-/* Todo en currentColor (el color del texto del logo, ya tematizado): la caja es
-   un borde y el triángulo va relleno, así SIEMPRE contrasta, sea el fondo claro
-   u oscuro (sidebar, hero, cards, etc.). */
-.brand-mark { width: 1.15em; height: 1.15em; flex: 0 0 auto; vertical-align: -0.22em;
-    box-sizing: border-box; padding: 0.12em; border: 0.14em solid currentColor; border-radius: 28%; }
-.brand-mark .brand-sq { display: none; }
-.brand-mark .brand-play { fill: currentColor; }
+/* ===== Logo Britech (marca B+play, imagen real) ===== */
+/* La marca es negra sobre transparente; en fondos oscuros se invierte a blanca. */
+.brand-mark { height: 1.1em; width: auto; flex: 0 0 auto; vertical-align: -0.2em; display: inline-block; }
 .brand-lockup { display: inline-flex; align-items: center; gap: 0.5em; }
+
+/* Íconos de línea coherentes (reemplazan emojis). Tamaño relativo al texto. */
+.ico { width: 1.1em; height: 1.1em; display: inline-block; vertical-align: -0.18em; flex: 0 0 auto; }
+/* Las superficies oscuras (sidebar, POS, header de la tienda) usan el PNG blanco
+   directo. Solo invertimos donde un mark negro quede sobre fondo oscuro marcado. */
+.brand-on-dark .brand-mark { filter: invert(1) brightness(1.25); }
 
 /* ===== Toast (aviso breve, compartido tienda + admin) ===== */
 .toast-cont { position: fixed; left: 0; right: 0; bottom: var(--sp-5); z-index: var(--z-toast);

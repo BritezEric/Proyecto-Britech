@@ -18,8 +18,7 @@
             color: #fff;
         }
         .hero { text-align: center; max-width: 720px; margin-bottom: var(--sp-6); }
-        .marca { font-size: clamp(2.5rem, 8vw, 4rem); font-weight: 800; letter-spacing: -0.04em;
-            display: inline-flex; align-items: center; gap: var(--sp-3); }
+        .marca-logo { height: clamp(64px, 12vw, 104px); width: auto; filter: drop-shadow(0 6px 20px oklch(0 0 0 / 0.35)); }
         .lema { margin: var(--sp-3) 0 0; font-size: var(--text-lg); color: oklch(0.88 0.02 160); font-weight: 500; }
 
         .opciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
@@ -44,9 +43,7 @@
 </head>
 <body>
     <div class="hero">
-        <div class="marca brand-lockup">
-            <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="brand-sq" width="32" height="32" rx="8"/><path class="brand-play" d="M12 8.5L24 16L12 23.5Z"/></svg>
-            <span class="brand-word">Britech</span></div>
+        <img class="marca-logo" src="/assets/img/britech-logo-blanco.png" alt="Britech">
         <p class="lema">Gestión de ventas y tienda mayorista</p>
     </div>
 

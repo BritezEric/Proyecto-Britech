@@ -18,7 +18,7 @@
         <!-- Barra lateral -->
         <aside class="side">
             <div class="side-logo brand-lockup">
-                <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect class="brand-sq" width="32" height="32" rx="8"/><path class="brand-play" d="M12 8.5L24 16L12 23.5Z"/></svg>
+                <img class="brand-mark" src="/assets/img/britech-mark-blanco.png" alt="">
                 <span class="brand-word">Britech <span>Admin</span></span></div>
             <nav class="side-nav" id="nav">
                 <button data-ent="inicio"    class="nav-item" data-admin>Inicio</button>
@@ -89,24 +89,28 @@
 
                 <h2 class="dash-h">💰 Finanzas</h2>
                 <div id="totales" class="dash-totales"></div>
-                <div class="dash-grid">
-                    <div class="dash-panel dash-ancho" id="dash-finanzas"></div>
-                    <div class="dash-panel dash-ancho" id="dash-gastos"></div>
+
+                <h2 class="dash-h">📊 Análisis</h2>
+                <div class="chart-card">
+                    <div class="chart-card-top">
+                        <div class="chart-switch" id="chart-switch"></div>
+                        <div class="periodo-toggle oculto" id="chart-periodo">
+                            <button data-p="semana" class="activo">Semana</button>
+                            <button data-p="mes">Mes</button>
+                            <button data-p="ano">Año</button>
+                        </div>
+                    </div>
+                    <p id="chart-titulo" class="chart-titulo"></p>
+                    <div class="chart-box"><canvas id="chart-main"></canvas></div>
+                    <p id="chart-vacio" class="dash-vacio oculto"></p>
                 </div>
 
-                <h2 class="dash-h">📊 Ventas</h2>
+                <h2 class="dash-h">📦 Resumen</h2>
                 <div class="dash-grid">
-                    <div class="dash-panel dash-ancho" id="dash-ventas7"></div>
                     <div class="dash-panel" id="dash-split"></div>
-                    <div class="dash-panel" id="dash-categorias"></div>
                     <div class="dash-panel" id="dash-acciones"></div>
-                    <div class="dash-panel" id="dash-vendedores"></div>
-                    <div class="dash-panel" id="dash-top"></div>
-                </div>
-
-                <h2 class="dash-h">📦 Inventario</h2>
-                <div class="dash-grid">
                     <div class="dash-panel" id="dash-stock"></div>
+                    <div class="dash-panel" id="dash-gastos"></div>
                     <div class="dash-panel" id="dash-sinmov"></div>
                 </div>
             </section>
@@ -315,7 +319,9 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/iconos.js"></script>
     <script src="/assets/js/admin.js"></script>
     <script src="/assets/js/admin-bloques.js"></script>
     <script src="/assets/js/admin-empleados.js"></script>

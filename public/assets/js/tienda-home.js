@@ -26,7 +26,7 @@ function cardProducto(p) {
     const cod = esc(p.sku || ('#' + p.id));
     return `<article class="prod" data-id="${p.id}">
         ${hayAnt ? `<span class="oferta-badge">-${off}%</span>` : ''}
-        <button class="fav-btn ${favOn ? 'activo' : ''}" data-fav="${p.id}" aria-label="Favorito">${favOn ? '❤️' : '🤍'}</button>
+        <button class="fav-btn ${favOn ? 'activo' : ''}" data-fav="${p.id}" aria-label="Favorito">${favOn ? ICO.heartFill : ICO.heart}</button>
         ${thumb}
         <div class="prod-meta">
             <span class="prod-cat">${esc(p.categoria || 'General')}</span>

@@ -346,21 +346,21 @@ const NOMBRE_VISTA = { tablas: 'Tablas', pedidos: 'Gestor de envíos', inicio: '
 
 // Cuadritos de la vista "Tablas" (Empresas de envío ya NO está acá: vive en el gestor).
 const TABLAS_CARDS = [
-    { ent: 'clientes',    icon: '👥', label: 'Clientes',    desc: 'Cuentas y datos de clientes' },
-    { ent: 'productos',   icon: '📦', label: 'Productos',   desc: 'Catálogo, precios y stock' },
-    { ent: 'proveedores', icon: '🏭', label: 'Proveedores', desc: 'A quién le comprás' },
-    { ent: 'categorias',  icon: '🏷️', label: 'Categorías',  desc: 'Rubros del catálogo' },
-    { ent: 'marcas',      icon: '™️', label: 'Marcas',      desc: 'Marcas de los productos' },
-    { ent: 'solicitudes', icon: '📨', label: 'Solicitudes', desc: 'Pedidos de cuenta mayorista' },
-    { ent: 'empleados',   icon: '🧑‍💼', label: 'Empleados',   desc: 'Rendimiento y sueldos' },
-    { ent: 'repartidores', icon: '🛵', label: 'Repartidores', desc: 'Motoqueros y su paga' },
-    { ent: 'barrios',     icon: '📍', label: 'Barrios',     desc: 'Zonas del moto y su precio' },
+    { ent: 'clientes',    icon: 'users',    label: 'Clientes',    desc: 'Cuentas y datos de clientes' },
+    { ent: 'productos',   icon: 'package',  label: 'Productos',   desc: 'Catálogo, precios y stock' },
+    { ent: 'proveedores', icon: 'factory',  label: 'Proveedores', desc: 'A quién le comprás' },
+    { ent: 'categorias',  icon: 'tag',      label: 'Categorías',  desc: 'Rubros del catálogo' },
+    { ent: 'marcas',      icon: 'star',     label: 'Marcas',      desc: 'Marcas de los productos' },
+    { ent: 'solicitudes', icon: 'mail',     label: 'Solicitudes', desc: 'Pedidos de cuenta mayorista' },
+    { ent: 'empleados',   icon: 'idcard',   label: 'Empleados',   desc: 'Rendimiento y sueldos' },
+    { ent: 'repartidores', icon: 'bike',    label: 'Repartidores', desc: 'Motoqueros y su paga' },
+    { ent: 'barrios',     icon: 'mappin',   label: 'Barrios',     desc: 'Zonas del moto y su precio' },
 ];
 
 function renderTablas() {
     const cont = $('tablas-grid');
     cont.innerHTML = TABLAS_CARDS.map((t) => `<button class="tabla-card" data-ir="${t.ent}">
-        <span class="tabla-ic">${t.icon}</span>
+        <span class="tabla-ic">${ICO[t.icon] || ''}</span>
         <span class="tabla-nom">${esc(t.label)}</span>
         <span class="tabla-desc">${esc(t.desc)}</span>
     </button>`).join('');
@@ -873,39 +873,163 @@ function accionRow(label, n, ir) {
             <span>${esc(label)}</span><span class="accion-num">${n}</span></div>`;
 }
 
-function renderSerie(serie) {
-    const max = Math.max(1, ...serie.flatMap((x) => [Number(x.fisica), Number(x.online)]));
-    $('barras-serie').innerHTML = serie.map((x) => {
-        const hf = Math.round((Number(x.fisica) / max) * 100);
-        const ho = Math.round((Number(x.online) / max) * 100);
-        return `<div class="barra-col">
-            <div class="barra-par">
-                <div class="barra fisica" style="height:${Number(x.fisica) > 0 ? Math.max(hf, 2) : 0}%" title="Físicas: ${money.format(x.fisica)}"></div>
-                <div class="barra online" style="height:${Number(x.online) > 0 ? Math.max(ho, 2) : 0}%" title="Online: ${money.format(x.online)}"></div>
-            </div>
-            <span>${esc(x.label)}</span>
-        </div>`;
-    }).join('');
+// ===== Gráfico principal del dashboard (Chart.js, con ejes + selector) =====
+let chartMain = null;            // instancia Chart.js
+let chartVista = 'ventas';       // vista activa
+let chartPeriodo = 'semana';     // sub-período (solo vista ventas)
+let DASH = null;                 // último dashboard cargado (datos de los gráficos)
+
+const CHART_VISTAS = [
+    { k: 'ventas',     t: 'Ventas' },
+    { k: 'finanzas',   t: 'Ingresos / Gastos' },
+    { k: 'categorias', t: 'Por categoría' },
+    { k: 'top',        t: 'Top productos' },
+    { k: 'vendedores', t: 'Por vendedor' },
+];
+
+// Colores desde los tokens CSS (se adaptan al tema claro/oscuro).
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function chartTema() {
+    return {
+        primary: cssVar('--primary') || '#6d28d9',
+        accent:  cssVar('--accent')  || '#db2777',
+        danger:  cssVar('--danger')  || '#dc2626',
+        ink:     cssVar('--ink')      || '#111',
+        muted:   cssVar('--ink-muted')|| '#666',
+        line:    cssVar('--line')     || '#e5e7eb',
+    };
+}
+// Formato corto para los ejes de dinero ($1,2 M / $350 k).
+function montoCorto(v) {
+    v = Number(v) || 0;
+    if (Math.abs(v) >= 1e6) return '$' + (v / 1e6).toFixed(1).replace('.', ',') + ' M';
+    if (Math.abs(v) >= 1e3) return '$' + Math.round(v / 1e3) + ' k';
+    return '$' + v;
 }
 
-async function cargarSerie(periodo) {
-    document.querySelectorAll('.periodo-toggle button').forEach((b) => b.classList.toggle('activo', b.dataset.p === periodo));
-    try { renderSerie((await api.get('/api/admin/dashboard/serie?periodo=' + periodo)).serie); }
-    catch { /* deja la serie anterior */ }
+// Arma la config de Chart.js para la vista pedida. Devuelve null si no hay datos.
+function chartConfig(vista, tema) {
+    const ejeDinero = {
+        ticks: { color: tema.muted, callback: (v) => montoCorto(v) },
+        grid: { color: tema.line }, border: { color: tema.line },
+    };
+    const ejeCat = { ticks: { color: tema.muted }, grid: { display: false }, border: { color: tema.line } };
+    const money$ = (ctx) => money.format(ctx.parsed.y ?? ctx.parsed.x ?? ctx.parsed);
+
+    if (vista === 'ventas') {
+        const s = DASH.serie || [];
+        if (!s.length) return null;
+        return {
+            type: 'bar',
+            data: { labels: s.map((x) => x.label), datasets: [
+                { label: 'Físicas (POS)', data: s.map((x) => Number(x.fisica)), backgroundColor: tema.primary, borderRadius: 4, maxBarThickness: 34 },
+                { label: 'Online (tienda)', data: s.map((x) => Number(x.online)), backgroundColor: tema.accent, borderRadius: 4, maxBarThickness: 34 },
+            ] },
+            options: { scales: { x: ejeCat, y: ejeDinero }, plugins: { tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + money.format(c.parsed.y) } } } },
+        };
+    }
+    if (vista === 'finanzas') {
+        const s = DASH.serie_finanzas || [];
+        if (!s.length) return null;
+        return {
+            type: 'line',
+            data: { labels: s.map((x) => x.label), datasets: [
+                { label: 'Ingresos', data: s.map((x) => Number(x.ingresos)), borderColor: tema.primary, backgroundColor: tema.primary + '22', fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2 },
+                { label: 'Gastos', data: s.map((x) => Number(x.gastos)), borderColor: tema.danger, backgroundColor: tema.danger + '22', fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2 },
+            ] },
+            options: { scales: { x: ejeCat, y: ejeDinero }, plugins: { tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + money.format(c.parsed.y) } } } },
+        };
+    }
+    if (vista === 'categorias') {
+        const s = DASH.ventas_categoria || [];
+        if (!s.length) return null;
+        return {
+            type: 'bar',
+            data: { labels: s.map((x) => x.categoria), datasets: [
+                { label: 'Ventas', data: s.map((x) => Number(x.monto)), backgroundColor: tema.primary, borderRadius: 4, maxBarThickness: 26 },
+            ] },
+            options: { indexAxis: 'y', scales: { x: ejeDinero, y: ejeCat }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => money.format(c.parsed.x) } } } },
+        };
+    }
+    if (vista === 'top') {
+        const s = DASH.top_productos || [];
+        if (!s.length) return null;
+        return {
+            type: 'bar',
+            data: { labels: s.map((x) => x.nombre), datasets: [
+                { label: 'Unidades', data: s.map((x) => Number(x.unidades)), backgroundColor: tema.accent, borderRadius: 4, maxBarThickness: 26 },
+            ] },
+            options: { indexAxis: 'y', scales: { x: { ticks: { color: tema.muted, precision: 0 }, grid: { color: tema.line } }, y: ejeCat }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.parsed.x + ' u' } } } },
+        };
+    }
+    if (vista === 'vendedores') {
+        const s = DASH.por_vendedor || [];
+        if (!s.length) return null;
+        return {
+            type: 'bar',
+            data: { labels: s.map((x) => x.vendedor), datasets: [
+                { label: 'Ventas', data: s.map((x) => Number(x.monto)), backgroundColor: tema.primary, borderRadius: 4, maxBarThickness: 46 },
+            ] },
+            options: { scales: { x: ejeCat, y: ejeDinero }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => money.format(c.parsed.y) } } } },
+        };
+    }
+    return null;
 }
 
-// Barras agrupadas Ingresos vs Gastos (6 meses).
-function renderBarrasFin(serie) {
-    const max = Math.max(1, ...serie.flatMap((x) => [Number(x.ingresos), Number(x.gastos)]));
-    $('barras-fin').innerHTML = serie.map((x) => {
-        const hi = Math.round((Number(x.ingresos) / max) * 100);
-        const hg = Math.round((Number(x.gastos) / max) * 100);
-        return `<div class="barra-col"><div class="barra-par">
-            <div class="barra ingreso" style="height:${Number(x.ingresos) > 0 ? Math.max(hi, 2) : 0}%" title="Ingresos: ${money.format(x.ingresos)}"></div>
-            <div class="barra gasto" style="height:${Number(x.gastos) > 0 ? Math.max(hg, 2) : 0}%" title="Gastos: ${money.format(x.gastos)}"></div>
-        </div><span>${esc(x.label)}</span></div>`;
-    }).join('');
+const CHART_TITULOS = {
+    ventas: 'Ventas físicas vs online', finanzas: 'Ingresos vs Gastos · últimos 6 meses',
+    categorias: 'Ventas por categoría · 90 días', top: 'Productos más vendidos · 30 días',
+    vendedores: 'Ventas por vendedor · mes',
+};
+
+function dibujarChart() {
+    if (!window.Chart) return;
+    const tema = chartTema();
+    const cfg = chartConfig(chartVista, tema);
+    const vacio = $('chart-vacio'), box = document.querySelector('.chart-box');
+    $('chart-titulo').textContent = CHART_TITULOS[chartVista] || '';
+    $('chart-periodo').classList.toggle('oculto', chartVista !== 'ventas');
+    if (chartMain) { chartMain.destroy(); chartMain = null; }
+    if (!cfg) { box.classList.add('oculto'); vacio.textContent = 'Sin datos en este período todavía.'; vacio.classList.remove('oculto'); return; }
+    box.classList.remove('oculto'); vacio.classList.add('oculto');
+    cfg.options = Object.assign({
+        responsive: true, maintainAspectRatio: false,
+        interaction: { intersect: false, mode: 'index' },
+    }, cfg.options);
+    cfg.options.plugins = Object.assign({
+        legend: { labels: { color: tema.ink, usePointStyle: true, boxWidth: 8, padding: 16 } },
+    }, cfg.options.plugins || {});
+    chartMain = new Chart($('chart-main').getContext('2d'), cfg);
 }
+
+async function cambiarPeriodoChart(p) {
+    chartPeriodo = p;
+    $('chart-periodo').querySelectorAll('button').forEach((b) => b.classList.toggle('activo', b.dataset.p === p));
+    try { DASH.serie = (await api.get('/api/admin/dashboard/serie?periodo=' + p)).serie; } catch {}
+    if (chartVista === 'ventas') dibujarChart();
+}
+
+async function montarChart() {
+    $('chart-switch').innerHTML = CHART_VISTAS.map((v) =>
+        `<button data-k="${v.k}" class="${v.k === chartVista ? 'activo' : ''}">${v.t}</button>`).join('');
+    $('chart-switch').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+        chartVista = b.dataset.k;
+        $('chart-switch').querySelectorAll('button').forEach((x) => x.classList.toggle('activo', x === b));
+        dibujarChart();
+    }));
+    $('chart-periodo').querySelectorAll('button').forEach((b) => {
+        b.classList.toggle('activo', b.dataset.p === chartPeriodo);
+        b.addEventListener('click', () => cambiarPeriodoChart(b.dataset.p));
+    });
+    // Abre con la serie del período elegido (la del dashboard es "semana").
+    if (chartVista === 'ventas' && chartPeriodo !== 'semana') {
+        try { DASH.serie = (await api.get('/api/admin/dashboard/serie?periodo=' + chartPeriodo)).serie; } catch {}
+    }
+    dibujarChart();
+}
+
+// Re-dibuja el gráfico al cambiar el tema (colores de ejes/leyenda).
+window.redibujarDash = () => { if (chartMain && !vistaInicio.classList.contains('oculto')) dibujarChart(); };
 
 // Barras horizontales genéricas (comparación de valores de un vistazo).
 // opts: value(x), label(x), fmt(v), cls?(x), max?
@@ -954,13 +1078,13 @@ async function renderInicio() {
     const sinAsignar = Number(d.envios_sin_asignar || 0);
     const faltantes = Number(d.reposicion_faltantes || 0);
     $('dash-accesos').innerHTML = `
-        <button class="acceso-btn" data-ir="pedidos"><span class="acceso-ic">📦</span> Envíos</button>
-        <button class="acceso-btn" data-ir="repartos"><span class="acceso-ic">🛵</span> Repartos${sinAsignar > 0 ? `<span class="acceso-badge">${sinAsignar}</span>` : ''}</button>
-        <button class="acceso-btn" data-ir="reposicion"><span class="acceso-ic">🛒</span> Reposición${faltantes > 0 ? `<span class="acceso-badge">${faltantes}</span>` : ''}</button>
-        <button class="acceso-btn" data-ir="compras"><span class="acceso-ic">📥</span> Compras</button>
-        <button class="acceso-btn" data-ir="cajas"><span class="acceso-ic">🧰</span> Cajas</button>
-        <button class="acceso-btn" data-ir="reclamos"><span class="acceso-ic">📣</span> Reclamos</button>
-        <a class="acceso-btn" href="/pos.html"><span class="acceso-ic">🧾</span> Ir al POS</a>`;
+        <button class="acceso-btn" data-ir="pedidos"><span class="acceso-ic">${ICO.package}</span> Envíos</button>
+        <button class="acceso-btn" data-ir="repartos"><span class="acceso-ic">${ICO.bike}</span> Repartos${sinAsignar > 0 ? `<span class="acceso-badge">${sinAsignar}</span>` : ''}</button>
+        <button class="acceso-btn" data-ir="reposicion"><span class="acceso-ic">${ICO.cart}</span> Reposición${faltantes > 0 ? `<span class="acceso-badge">${faltantes}</span>` : ''}</button>
+        <button class="acceso-btn" data-ir="compras"><span class="acceso-ic">${ICO.download}</span> Compras</button>
+        <button class="acceso-btn" data-ir="cajas"><span class="acceso-ic">${ICO.wallet}</span> Cajas</button>
+        <button class="acceso-btn" data-ir="reclamos"><span class="acceso-ic">${ICO.megaphone}</span> Reclamos</button>
+        <a class="acceso-btn" href="/pos.html"><span class="acceso-ic">${ICO.receipt}</span> Ir al POS</a>`;
     $('dash-accesos').querySelectorAll('[data-ir]').forEach((b) =>
         b.addEventListener('click', () => seleccionar(b.dataset.ir)));
 
@@ -1003,35 +1127,12 @@ async function renderInicio() {
     const irGastos = $('totales').querySelector('[data-ir="gastos"]');
     if (irGastos) irGastos.addEventListener('click', () => seleccionar('gastos'));
 
-    // --- Gráfico: Ingresos vs Gastos (6 meses) ---
-    $('dash-finanzas').innerHTML = `
-        <div class="chart-head"><h3>Ingresos vs Gastos · 6 meses</h3></div>
-        <div class="chart-legend">
-            <span class="lg"><i class="sw ingreso"></i>Ingresos</span>
-            <span class="lg"><i class="sw gasto"></i>Gastos</span>
-        </div>
-        <div class="barras grupos" id="barras-fin"></div>`;
-    renderBarrasFin(d.serie_finanzas || []);
+    // --- Gráfico principal (Chart.js con ejes + selector de vistas) ---
+    DASH = d;
+    chartVista = 'ventas'; chartPeriodo = 'ano';
+    montarChart();
 
-    // --- Gastos recientes (se cargan y gestionan desde acá) ---
-    const gs = d.gastos_recientes || [];
-    $('dash-gastos').innerHTML = `
-        <div class="chart-head">
-            <h3>Gastos recientes</h3>
-            <div class="panel-acciones">
-                <button class="btn-mini" data-nuevo-gasto>+ Nuevo gasto</button>
-                <button class="btn-mini ghost" data-ver-gastos>Ver todos</button>
-            </div>
-        </div>
-        ${gs.length === 0
-            ? `<p class="dash-vacio">Todavía no hay gastos. Cargá el primero.</p>`
-            : `<ul class="dash-lista">${gs.map((g) => `<li>
-                <span>${esc(g.fecha)} · ${esc(g.concepto)}${g.producto ? ` <span class="chip">${esc(g.producto)} ×${Number(g.cantidad)}</span>` : ''}</span>
-                <span class="dash-num">${money.format(g.monto)}</span></li>`).join('')}</ul>`}`;
-    $('dash-gastos').querySelector('[data-nuevo-gasto]').addEventListener('click', async () => { await seleccionar('gastos'); abrirModal('nuevo'); });
-    $('dash-gastos').querySelector('[data-ver-gastos]').addEventListener('click', () => seleccionar('gastos'));
-
-    // --- Ventas por categoría (90 días) ---
+    // ===== Paneles secundarios (resumen) =====
     // --- Dona: ventas del mes físicas vs online ---
     const vf = Number(d.ventas_mes || 0), vo = Number(d.ventas_online_mes || 0);
     $('dash-split').innerHTML = `<h3>Ventas del mes · físicas vs online</h3>` + ((vf + vo) === 0
@@ -1040,30 +1141,6 @@ async function renderInicio() {
             { label: 'Físicas', valor: vf, color: 'var(--primary)' },
             { label: 'Online', valor: vo, color: 'var(--accent)' },
         ], { c1: money.format(vf + vo), c2: 'total' }));
-
-    const cats = d.ventas_categoria || [];
-    $('dash-categorias').innerHTML = `<h3>Ventas por categoría · 90 días</h3>` + (cats.length === 0
-        ? `<p class="dash-vacio">Sin ventas en el período.</p>`
-        : hbarList(cats, { value: (c) => c.monto, label: (c) => c.categoria, fmt: (v) => money.format(v) }));
-
-    // --- Gráfico rotable: físicas vs online ---
-    $('dash-ventas7').innerHTML = `
-        <div class="chart-head">
-            <h3>Ventas: físicas vs online</h3>
-            <div class="periodo-toggle">
-                <button data-p="semana" class="activo">Semana</button>
-                <button data-p="mes">Mes</button>
-                <button data-p="ano">Año</button>
-            </div>
-        </div>
-        <div class="chart-legend">
-            <span class="lg"><i class="sw fisica"></i>Físicas (POS)</span>
-            <span class="lg"><i class="sw online"></i>Online (tienda)</span>
-        </div>
-        <div class="barras grupos" id="barras-serie"></div>`;
-    renderSerie(d.serie);
-    $('dash-ventas7').querySelectorAll('.periodo-toggle button').forEach((b) =>
-        b.addEventListener('click', () => cargarSerie(b.dataset.p)));
 
     // --- Requiere acción (clickable a su sección) ---
     $('dash-acciones').innerHTML = `<h3>Requiere acción</h3>
@@ -1082,15 +1159,23 @@ async function renderInicio() {
             fmt: (v) => v + ' u',
         }));
 
-    // --- Top productos ---
-    $('dash-top').innerHTML = `<h3>Top productos (30 días)</h3>` + (d.top_productos.length === 0
-        ? `<p class="dash-vacio">Sin ventas en el período.</p>`
-        : hbarList(d.top_productos, { value: (p) => p.unidades, label: (p) => p.nombre, fmt: (v) => v + ' u' }));
-
-    // --- Ventas por vendedor (mes) ---
-    $('dash-vendedores').innerHTML = `<h3>Ventas por vendedor (mes)</h3>` + ((d.por_vendedor || []).length === 0
-        ? `<p class="dash-vacio">Sin ventas este mes.</p>`
-        : hbarList(d.por_vendedor, { value: (v) => v.monto, label: (v) => v.vendedor, fmt: (v) => money.format(v) }));
+    // --- Gastos recientes (se cargan y gestionan desde acá) ---
+    const gs = d.gastos_recientes || [];
+    $('dash-gastos').innerHTML = `
+        <div class="chart-head">
+            <h3>Gastos recientes</h3>
+            <div class="panel-acciones">
+                <button class="btn-mini" data-nuevo-gasto>+ Nuevo gasto</button>
+                <button class="btn-mini ghost" data-ver-gastos>Ver todos</button>
+            </div>
+        </div>
+        ${gs.length === 0
+            ? `<p class="dash-vacio">Todavía no hay gastos. Cargá el primero.</p>`
+            : `<ul class="dash-lista">${gs.map((g) => `<li>
+                <span>${esc(g.fecha)} · ${esc(g.concepto)}${g.producto ? ` <span class="chip">${esc(g.producto)} ×${Number(g.cantidad)}</span>` : ''}</span>
+                <span class="dash-num">${money.format(g.monto)}</span></li>`).join('')}</ul>`}`;
+    $('dash-gastos').querySelector('[data-nuevo-gasto]').addEventListener('click', async () => { await seleccionar('gastos'); abrirModal('nuevo'); });
+    $('dash-gastos').querySelector('[data-ver-gastos]').addEventListener('click', () => seleccionar('gastos'));
 
     // --- Productos sin movimiento (30 días) ---
     const sm = d.sin_movimiento || { total: 0, lista: [] };
@@ -1230,6 +1315,7 @@ function wire() {
         if (oscuro) { delete document.documentElement.dataset.theme; localStorage.setItem('britech_admin_theme', ''); }
         else { document.documentElement.dataset.theme = 'dark'; localStorage.setItem('britech_admin_theme', 'dark'); }
         pintarTema();
+        if (window.redibujarDash) window.redibujarDash();
     });
 }
 
