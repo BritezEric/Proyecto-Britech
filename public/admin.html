@@ -12,6 +12,10 @@
     <!-- Leaflet (mapas, OpenStreetMap) para el seguimiento de envíos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <!-- Tom Select: selects con buscador (cliente/producto/proveedor en formularios) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.3.1/css/tom-select.default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.3.1/js/tom-select.complete.min.js"></script>
+    <link rel="stylesheet" href="/assets/css/tomselect-britech.css">
 </head>
 <body>
     <div class="admin">
@@ -31,7 +35,7 @@
                 <button data-ent="ajustes"   class="nav-item" data-admin>Ajustes</button>
             </nav>
             <div class="side-foot">
-                <button id="btn-tema" class="side-link">🌙 Tema oscuro</button>
+                <button id="btn-tema" class="side-link"><span id="tema-ic" class="ico"></span> <span id="tema-tx">Tema oscuro</span></button>
                 <button id="btn-salir" class="side-link side-salir">Salir</button>
             </div>
         </aside>
@@ -40,7 +44,7 @@
         <main class="content">
             <!-- Novedades / avisos -->
             <button id="btn-noti" class="noti-btn" aria-label="Novedades" title="Novedades">
-                🔔<span id="noti-badge" class="noti-badge oculto">0</span>
+                <span id="noti-ic" class="ico"></span><span id="noti-badge" class="noti-badge oculto">0</span>
             </button>
             <div id="noti-panel" class="noti-panel oculto"></div>
 
@@ -87,10 +91,10 @@
                 <div id="dash-accesos" class="dash-accesos"></div>
                 <div id="kpis" class="cards"></div>
 
-                <h2 class="dash-h">💰 Finanzas</h2>
+                <h2 class="dash-h" data-ico="coins">Finanzas</h2>
                 <div id="totales" class="dash-totales"></div>
 
-                <h2 class="dash-h">📊 Análisis</h2>
+                <h2 class="dash-h" data-ico="chart">Análisis</h2>
                 <div class="chart-card">
                     <div class="chart-card-top">
                         <div class="chart-switch" id="chart-switch"></div>
@@ -105,7 +109,7 @@
                     <p id="chart-vacio" class="dash-vacio oculto"></p>
                 </div>
 
-                <h2 class="dash-h">📦 Resumen</h2>
+                <h2 class="dash-h" data-ico="package">Resumen</h2>
                 <div class="dash-grid">
                     <div class="dash-panel" id="dash-split"></div>
                     <div class="dash-panel" id="dash-acciones"></div>

@@ -101,6 +101,9 @@ tbody td { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--line
 tbody tr:last-child td { border-bottom: none; }
 tbody tr { transition: background var(--dur-fast) var(--ease-out); }
 tbody tr:hover { background: var(--surface-2); }
+/* Fila clickeable: entra al detalle al tocar cualquier parte (menos los controles). */
+tbody tr.fila-link { cursor: pointer; }
+tbody tr.fila-link:hover { background: var(--primary-tint); }
 td.acciones { text-align: right; white-space: nowrap; }
 .td-fuerte { font-weight: 700; }
 .td-mute { color: var(--ink-muted); }
@@ -218,6 +221,10 @@ td.acciones { text-align: right; white-space: nowrap; }
     border-bottom: 1px solid var(--line);
     font-size: var(--text-lg); font-weight: 800; letter-spacing: -0.02em; color: var(--ink); }
 .dash-h:first-of-type { margin-top: var(--sp-3); }
+.dash-h-ic { color: var(--primary); width: 1.15em; height: 1.15em; }
+/* Ícono + texto en línea (ej. "Retiro en el local"). */
+.ico-txt { display: inline-flex; align-items: center; gap: 0.4em; }
+.ico-txt .ico { color: var(--ink-muted); }
 
 /* ===== Gráfico principal (Chart.js) con selector de vistas ===== */
 .chart-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
@@ -419,6 +426,10 @@ td.acciones { text-align: right; white-space: nowrap; }
 :root[data-theme="dark"] .badge.ok { color: oklch(0.80 0.16 300); }
 :root[data-theme="dark"] .badge.off { color: oklch(0.83 0.16 25); }
 :root[data-theme="dark"] .badge.pend, :root[data-theme="dark"] .chip { color: oklch(0.82 0.20 320); }
+/* warn/info/danger: tint translúcido para que el dot y el texto se lean igual en oscuro. */
+:root[data-theme="dark"] .badge.warn   { background: oklch(0.72 0.15 75 / 0.18);  color: oklch(0.82 0.14 75); }
+:root[data-theme="dark"] .badge.info   { background: oklch(0.70 0.13 240 / 0.18); color: oklch(0.82 0.12 240); }
+:root[data-theme="dark"] .badge.danger { background: oklch(0.65 0.18 25 / 0.18);  color: oklch(0.82 0.16 25); }
 :root[data-theme="dark"] .td-fuerte, :root[data-theme="dark"] tbody td { color: var(--ink); }
 
 /* Formulario de envío en el detalle del pedido */

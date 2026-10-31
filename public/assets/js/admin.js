@@ -16,8 +16,8 @@ const badgeEstado = (v) => Number(v) === 1
 
 // Badge del estado de pago del pedido.
 const badgePago = (v) => {
-    const m = { pendiente: ['warn', '⏳ pendiente'], en_revision: ['info', '🔎 en revisión'],
-        pagado: ['ok', '✓ pagado'], rechazado: ['danger', '✗ rechazado'] };
+    const m = { pendiente: ['warn', 'Pendiente'], en_revision: ['info', 'En revisión'],
+        pagado: ['ok', 'Pagado'], rechazado: ['danger', 'Rechazado'] };
     const [cls, txt] = m[v] || ['off', v || '—'];
     return `<span class="badge ${cls}">${esc(txt)}</span>`;
 };
@@ -27,8 +27,8 @@ const badgeComprobante = (url, row) => {
     if (row.metodo_pago && row.metodo_pago !== 'transferencia')
         return '<span class="badge neutral">no aplica</span>';
     return url
-        ? '<span class="badge ok">📎 Recibido</span>'
-        : '<span class="badge danger">✗ Sin comprobante</span>';
+        ? '<span class="badge ok">Recibido</span>'
+        : '<span class="badge danger">Sin comprobante</span>';
 };
 
 // Estado del cliente considerando la verificación de correo de la tienda:
@@ -152,7 +152,7 @@ const ENTIDADES = {
         titulo: 'Gastos', sub: 'Finanzas del negocio. Si cargás producto + cantidad, esa compra SUMA stock al inventario (al crear el gasto).',
         singular: 'gasto', endpoint: '/api/admin/gastos',
         columnas: [
-            { key: 'fecha', label: 'Fecha', render: (v) => `<span class="td-mute">${esc(v)}</span>` },
+            { key: 'fecha', label: 'Fecha', render: (v) => `<span class="td-mute">${fechaCorta(v)}</span>` },
             { key: 'concepto', label: 'Concepto', clase: 'td-fuerte' },
             { key: 'proveedor', label: 'Proveedor', render: oMenos },
             { key: 'producto', label: 'Suma stock', render: (v, row) => row.producto
@@ -191,7 +191,7 @@ const ENTIDADES = {
             { key: 'cliente', label: 'Cliente' },
             { key: 'items', label: 'Ítems', num: true },
             { key: 'total', label: 'Total', num: true, render: (v) => money.format(v) },
-            { key: 'creado_en', label: 'Fecha', render: (v) => `<span class="td-mute">${esc(v)}</span>` },
+            { key: 'creado_en', label: 'Fecha', render: (v) => `<span class="td-mute">${fechaCorta(v)}</span>` },
             { key: 'estado_pago', label: 'Pago', render: (v) => badgePago(v) },
             { key: 'comprobante_url', label: 'Comprobante', render: (v, row) => badgeComprobante(v, row) },
             { key: 'estado', label: 'Envío', render: renderEstadoInline },
@@ -211,7 +211,7 @@ const ENTIDADES = {
             { key: 'cliente', label: 'Cliente', clase: 'td-fuerte' },
             { key: 'email', label: 'Email', render: (v) => `<span class="td-mute">${esc(v)}</span>` },
             { key: 'mensaje', label: 'Mensaje', render: oMenos },
-            { key: 'creado_en', label: 'Fecha', render: (v) => `<span class="td-mute">${esc(v)}</span>` },
+            { key: 'creado_en', label: 'Fecha', render: (v) => `<span class="td-mute">${fechaCorta(v)}</span>` },
             { key: 'estado', label: 'Estado', render: renderBadgeSolic },
         ],
         filtros: [
@@ -444,12 +444,23 @@ async function seleccionar(ent) {
     await cargar();
 }
 
+// Convierte los <select class="js-ts"> en selects con buscador (Tom Select).
+// Si el CDN no cargó, quedan como selects nativos (degradación limpia).
+function initTomSelects(root) {
+    if (!window.TomSelect || !root) return;
+    root.querySelectorAll('select.js-ts').forEach((el) => {
+        if (el.tomselect) return;                       // ya inicializado
+        new TomSelect(el, { allowEmptyOption: true, maxOptions: null });
+    });
+}
+
 // ---- Toolbar: filtros ----
 async function renderFiltros() {
     const cont = $('filtros'); cont.innerHTML = '';
     for (const f of cfg.filtros) {
         const sel = document.createElement('select');
         sel.dataset.key = f.key;
+        if (f.origen) sel.className = 'js-ts';
         let ops = f.opciones;
         if (f.origen) ops = [{ v: '', t: `Todas (${f.label})` }, ...(await opcionesDe(f.origen))];
         sel.innerHTML = ops.map((o) => `<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
@@ -460,6 +471,7 @@ async function renderFiltros() {
         });
         cont.appendChild(sel);
     }
+    initTomSelects(cont);
 }
 
 // ---- Tabla ----
@@ -482,6 +494,10 @@ function renderFilas(filas) {
     filasActuales = filas;
     const tbody = $('tbody');
     $('vacio').classList.toggle('oculto', filas.length > 0);
+    const acc = cfg.acciones || ['editar', 'baja'];
+    // Acción principal que dispara el click en toda la fila: ver detalle, o editar.
+    // (Las tablas con accionesFn —ej. solicitudes— no tienen fila clickeable.)
+    const primaria = cfg.accionesFn ? null : (acc.includes('ver') ? 'ver' : (acc.includes('editar') ? 'editar' : null));
     tbody.innerHTML = filas.map((row) => {
         const celdas = cfg.columnas.map((c) => {
             const val = c.render ? c.render(row[c.key], row) : esc(row[c.key]);
@@ -491,15 +507,18 @@ function renderFilas(filas) {
         if (cfg.accionesFn) {
             botones = cfg.accionesFn(row);
         } else {
-            const acc = cfg.acciones || ['editar', 'baja'];
-            botones = acc.map((a) => {
+            // No repetimos el botón de la acción principal: ya la hace el click en la fila.
+            botones = acc.filter((a) => a !== primaria).map((a) => {
                 if (a === 'editar') return `<button class="btn-fila" data-accion="editar" data-id="${row.id}">Editar</button>`;
                 if (a === 'baja')   return `<button class="btn-fila peligro" data-accion="baja" data-id="${row.id}" data-nombre="${esc(row.nombre)}">Baja</button>`;
-                if (a === 'ver')    return `<button class="btn-fila ver-detalle" data-accion="ver" data-id="${row.id}" data-numero="${esc(row.numero)}">👁 Ver detalle</button>`;
+                if (a === 'ver')    return `<button class="btn-fila ver-detalle" data-accion="ver" data-id="${row.id}" data-numero="${esc(row.numero)}">${ICO.eye || ''} Ver detalle</button>`;
                 return '';
             }).join('');
         }
-        return `<tr>${celdas}<td class="acciones">${botones}</td></tr>`;
+        const trAttrs = primaria
+            ? ` class="fila-link" data-fila-accion="${primaria}" data-id="${row.id}" data-numero="${esc(row.numero || '')}"`
+            : '';
+        return `<tr${trAttrs}>${celdas}<td class="acciones">${botones}</td></tr>`;
     }).join('');
 }
 
@@ -548,6 +567,7 @@ async function abrirModal(modo, row = null) {
     for (const campo of cfg.campos) {
         cont.appendChild(await renderCampo(campo, datos));
     }
+    initTomSelects(cont);
 
     // Widget de imágenes: cargar las actuales y conectar subir/quitar.
     const campoImg = cfg.campos.find((c) => c.tipo === 'imagenes');
@@ -612,7 +632,9 @@ async function renderCampo(campo, datos) {
         let ops = campo.opciones;
         if (campo.origen) ops = [{ v: '', t: campo.vacio || '(elegir)' }, ...(await opcionesDe(campo.origen))];
         const actual = val ?? '';
-        control = `<select id="f_${campo.key}">` +
+        // Listas largas (proveedor, producto, categoría…) → select con buscador.
+        const clase = campo.origen ? ' class="js-ts"' : '';
+        control = `<select id="f_${campo.key}"${clase}>` +
             ops.map((o) => `<option value="${esc(o.v)}" ${String(o.v) === String(actual) ? 'selected' : ''}>${esc(o.t)}</option>`).join('') +
             `</select>`;
     } else if (campo.tipo === 'textarea') {
@@ -766,7 +788,7 @@ async function verPedido(id, numero) {
             // Retiro en el local: no hay envío → sin datos de dirección ni seguimiento.
             envioHtml = `
                 <h4 class="detalle-sub">Entrega</h4>
-                <div class="pedido-linea"><span>🏠 ${esc(e.empresa || 'Retiro en el local')}</span><span class="tabular">${costo}</span></div>
+                <div class="pedido-linea"><span class="ico-txt">${ICO.mappin}${esc(e.empresa || 'Retiro en el local')}</span><span class="tabular">${costo}</span></div>
                 <div class="envio-form">
                     <label>Estado</label>${selEstado}
                     <button class="btn-primary" id="envio-guardar" data-id="${id}">Guardar</button>
@@ -812,8 +834,8 @@ async function verPedido(id, numero) {
         <div class="pedido-linea"><span>Estado del pago</span>${badgePago(pg.estado_pago)}</div>
         ${compro}
         <div class="pago-acciones">
-            <button class="btn-mini" data-pago="pagado" data-id="${id}">✓ Aprobar pago</button>
-            <button class="btn-mini ghost" data-pago="rechazado" data-id="${id}">✗ Rechazar</button>
+            <button class="btn-mini" data-pago="pagado" data-id="${id}">Aprobar pago</button>
+            <button class="btn-mini ghost" data-pago="rechazado" data-id="${id}">Rechazar</button>
         </div>`;
 
     cont.innerHTML = `<div class="pedido-cols">
@@ -1187,14 +1209,19 @@ async function renderInicio() {
 
 // ---- Init ----
 // ---- Novedades / avisos (campana con bandeja de leídas) ----
-const NOTI_IC = { pedido_nuevo: '🛒', comprobante: '🧾', solicitud: '📨', stock_bajo: '⚠️', compra_recibida: '📦', reclamo: '📣',
-    venta_anulada: '🚫', compra_creada: '📝', compra_anulada: '🚫', caja_cierre: '🧰' };
+const NOTI_IC = { pedido_nuevo: ICO.cart, comprobante: ICO.receipt, solicitud: ICO.mail, stock_bajo: ICO.alert,
+    compra_recibida: ICO.package, reclamo: ICO.megaphone, venta_anulada: ICO.xcircle, compra_creada: ICO.receipt,
+    compra_anulada: ICO.xcircle, caja_cierre: ICO.wallet };
 
 function fechaCorta(s) {
+    if (!s) return '<span class="td-mute">—</span>';
     const d = new Date(String(s).replace(' ', 'T'));
-    if (isNaN(d)) return '';
-    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) + ' ' +
-           d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    if (isNaN(d)) return esc(String(s));
+    const dia = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+    // Si el origen no trae hora (ej. "2026-10-26"), mostramos solo la fecha.
+    if (!String(s).includes(':')) return dia;
+    const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    return dia + ' ' + hora;
 }
 
 async function cargarNotificaciones() {
@@ -1207,7 +1234,7 @@ async function cargarNotificaciones() {
 
     const lista = r.items.length
         ? r.items.map((n) => `<button class="noti-item ${Number(n.leida) ? '' : 'no-leida'}" data-id="${n.id}" data-ir="${esc(n.ir || '')}" data-ref="${n.ref_id || ''}">
-              <span class="noti-ic">${NOTI_IC[n.tipo] || '🔔'}</span>
+              <span class="noti-ic">${NOTI_IC[n.tipo] || ICO.bell}</span>
               <span class="noti-tx">${esc(n.titulo)}<span class="noti-fecha">${fechaCorta(n.creado_en)}</span></span>
            </button>`).join('')
         : '<p class="noti-vacio">Sin novedades ✓</p>';
@@ -1277,15 +1304,27 @@ function wire() {
     });
     $('modal').addEventListener('click', (e) => { if (e.target === $('modal')) cerrarModal(); });
 
+    // Abre la acción principal de una fila (ver detalle o editar).
+    function abrirFila(accion, id, numero) {
+        if (accion === 'ver') return cfg.verFn ? cfg.verFn(id) : verPedido(id, numero);
+        const fila = filasActuales.find((f) => String(f.id) === String(id));
+        if (fila) abrirModal('editar', fila);
+    }
+
     $('tbody').addEventListener('click', async (e) => {
         const b = e.target.closest('.btn-fila');
-        if (!b) return;
-        const id = b.dataset.id;
-        if (b.dataset.accion === 'baja') return baja(id, b.dataset.nombre);
-        if (b.dataset.accion === 'ver')  return cfg.verFn ? cfg.verFn(id) : verPedido(id, b.dataset.numero);
-        if (b.dataset.accion === 'aprobar' || b.dataset.accion === 'rechazar') return resolverSolicitud(id, b.dataset.accion);
-        const fila = filasActuales.find((f) => String(f.id) === String(id));
-        abrirModal('editar', fila);
+        if (b) {
+            const id = b.dataset.id;
+            if (b.dataset.accion === 'baja') return baja(id, b.dataset.nombre);
+            if (b.dataset.accion === 'ver')  return abrirFila('ver', id, b.dataset.numero);
+            if (b.dataset.accion === 'aprobar' || b.dataset.accion === 'rechazar') return resolverSolicitud(id, b.dataset.accion);
+            return abrirFila('editar', id);
+        }
+        // Click en cualquier parte de la fila → acción principal.
+        // Ignoramos clicks sobre controles propios (select de estado, link de comprobante…).
+        if (e.target.closest('a, select, input, button, label')) return;
+        const tr = e.target.closest('tr.fila-link');
+        if (tr) abrirFila(tr.dataset.filaAccion, tr.dataset.id, tr.dataset.numero);
     });
 
     // Cambio de estado inline (pedidos)
@@ -1304,10 +1343,17 @@ function wire() {
         window.location.href = '/login.html';
     });
 
+    // Íconos de línea en el chrome fijo (campana + headers del dashboard).
+    $('noti-ic').innerHTML = ICO.bell;
+    document.querySelectorAll('[data-ico]').forEach((el) => {
+        if (ICO[el.dataset.ico]) el.insertAdjacentHTML('afterbegin', `<span class="ico dash-h-ic">${ICO[el.dataset.ico]}</span>`);
+    });
+
     // Tema claro / oscuro (se guarda en el navegador)
     const pintarTema = () => {
         const oscuro = document.documentElement.dataset.theme === 'dark';
-        $('btn-tema').textContent = oscuro ? '☀️ Tema claro' : '🌙 Tema oscuro';
+        $('tema-ic').innerHTML = oscuro ? ICO.sun : ICO.moon;
+        $('tema-tx').textContent = oscuro ? 'Tema claro' : 'Tema oscuro';
     };
     pintarTema();
     $('btn-tema').addEventListener('click', () => {
