@@ -34,6 +34,22 @@ services:
       - db_data:/var/lib/mysql                       # guarda los datos (persisten)
       - ./database:/docker-entrypoint-initdb.d       # importa el schema al crear la base
 
-# Volumen con nombre: mantiene los datos de MySQL aunque se apague el contenedor.
+  # --- n8n (automatizacion del asistente de voz) ---
+  # Guarda sus propios flujos en SQLite dentro del volumen n8n_data (no toca la
+  # base de Britech). Llega a la API de Britech por la red interna: http://app
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"      # solo local: se accede por tunel SSH (no expuesto a internet)
+    environment:
+      - N8N_SECURE_COOKIE=false    # permite abrir la UI por http durante el armado
+      - GENERIC_TIMEZONE=America/Argentina/Buenos_Aires
+      - TZ=America/Argentina/Buenos_Aires
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+# Volumenes con nombre: los datos persisten aunque se apaguen los contenedores.
 volumes:
   db_data:
+  n8n_data:
