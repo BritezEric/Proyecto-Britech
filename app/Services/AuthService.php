@@ -44,6 +44,26 @@ class AuthService
     }
 
     /**
+     * Autentica a un sistema externo (n8n / asistente de voz) como un usuario
+     * de servicio, sin contraseña. La validación de la API-key ya se hizo antes
+     * (en el front controller); acá solo cargamos la identidad en la sesión.
+     * Si el usuario no existe o está inactivo, no autentica nada (queda 401).
+     */
+    public function autenticarServicio(int $usuarioId): void
+    {
+        $u = (new UsuarioRepository())->buscarPorIdConRol($usuarioId);
+        if ($u === null || (int) $u['activo'] !== 1) {
+            return;
+        }
+        Session::login((int) $u['id'], [
+            'nombre' => $u['nombre'],
+            'email'  => $u['email'],
+            'rol_id' => (int) $u['rol_id'],
+            'rol'    => $u['rol'],
+        ]);
+    }
+
+    /**
      * Pide recuperar contraseña. Si el email existe (y está verificado), manda
      * un correo con un link. No revela si el email existe o no (seguridad).
      */

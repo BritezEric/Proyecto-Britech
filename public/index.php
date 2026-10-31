@@ -41,6 +41,17 @@ set_exception_handler(function (\Throwable $e) use ($config) {
 // 2. Arranca la sesión (para saber si el usuario está logueado).
 Session::iniciar();
 
+// 2b. Autenticación de servicio por API-key (n8n / asistente de voz).
+//     Un sistema sin navegador no tiene cookie de sesión: si trae una API-key
+//     válida en el header X-Api-Key, lo autenticamos como el usuario de servicio.
+//     Solo aplica si la clave está configurada y no hay ya una sesión abierta.
+$apiKey   = $_SERVER['HTTP_X_API_KEY'] ?? '';
+$claveVoz = $config['voz']['api_key'] ?? '';
+if ($apiKey !== '' && $claveVoz !== '' && Session::usuarioId() === null
+    && hash_equals($claveVoz, $apiKey)) {
+    (new App\Services\AuthService())->autenticarServicio((int) ($config['voz']['usuario_id'] ?? 1));
+}
+
 // 3. Crea el router y carga las rutas de la API.
 $router = new Router();
 require dirname(__DIR__) . '/routes/api.php';

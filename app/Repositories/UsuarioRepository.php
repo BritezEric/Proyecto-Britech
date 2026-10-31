@@ -30,6 +30,18 @@ class UsuarioRepository
         return $stmt->fetch() ?: null;
     }
 
+    /** Igual que buscarPorId pero incluye el nombre del rol (para armar la sesión). */
+    public function buscarPorIdConRol(int $id): ?array
+    {
+        $stmt = Database::conexion()->prepare(
+            "SELECT u.id, u.nombre, u.email, u.rol_id, u.activo, r.nombre AS rol
+             FROM usuario u JOIN rol r ON r.id = u.rol_id
+             WHERE u.id = ?"
+        );
+        $stmt->execute([$id]);
+        return $stmt->fetch() ?: null;
+    }
+
     /** Crea un usuario SIN contraseña (la define él mismo al verificar). */
     public function crear(string $nombre, string $email, int $rolId): int
     {

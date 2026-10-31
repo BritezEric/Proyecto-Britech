@@ -63,4 +63,10 @@ return [
     'mercadopago' => [
         'access_token' => $leer('MERCADOPAGO_ACCESS_TOKEN', ''),
     ],
+    // Asistente de voz / n8n: API-key para que un sistema sin navegador llame a
+    // la API. Si la clave queda vacía, el acceso por API-key está desactivado.
+    'voz' => [
+        'api_key'     => $leer('VOZ_API_KEY', ''),
+        'usuario_id'  => (int) $leer('VOZ_USUARIO_ID', '1'),  // como quién opera (default: admin)
+    ],
 ];
