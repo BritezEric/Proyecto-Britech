@@ -38,6 +38,7 @@ use App\Controllers\Auth0Controller;
 use App\Controllers\TrackingController;
 use App\Controllers\PrecioController;
 use App\Controllers\AuditoriaController;
+use App\Controllers\VozController;
 
 /** @var App\Core\Router $router */
 
@@ -53,6 +54,7 @@ $router->post('/api/restablecer',  [AuthController::class, 'restablecer']);
 $router->post('/api/usuarios',   [UsuarioController::class, 'crear'], true);
 
 // --- POS (requieren login) ---
+$router->post('/api/voz/interpretar',  [VozController::class, 'interpretar'],  true);
 $router->get('/api/productos',         [ProductoController::class, 'index'],  true);
 $router->get('/api/productos/buscar',  [ProductoController::class, 'buscar'], true);
 $router->get('/api/productos/precios', [ProductoController::class, 'precios'], true);

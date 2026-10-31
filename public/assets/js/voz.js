@@ -12,6 +12,7 @@ window.Voz = (function () {
     const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
 
     let intents = [];
+    let endpoint = null;   // si se setea, el cerebro es el backend (n8n + IA) en vez de reglas locales
     let rec = null, escuchando = false, finalTexto = '';
     let boton, toast;
 
@@ -42,7 +43,36 @@ window.Voz = (function () {
         decir._t = setTimeout(() => toast.classList.remove('ver'), 3500);
     }
 
+    // Dice la respuesta en voz (TTS del navegador). Silencioso si no hay soporte.
+    function hablar(texto) {
+        try {
+            if (!window.speechSynthesis) return;
+            speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(texto);
+            u.lang = 'es-AR';
+            speechSynthesis.speak(u);
+        } catch (e) { /* sin TTS, queda solo el toast */ }
+    }
+
     async function procesar(texto) {
+        // Modo backend: el texto va a n8n (IA) por /api/voz/interpretar y hablamos la respuesta.
+        if (endpoint) {
+            decir(`"${texto}"`, 'Procesando');
+            try {
+                const r = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ texto }),
+                });
+                const d = await r.json();
+                const msg = (d && d.respuesta) || 'No pude procesar eso.';
+                decir(msg, 'Asistente');
+                hablar(msg);
+            } catch (e) {
+                decir('No pude contactar al asistente.', 'Error');
+            }
+            return;
+        }
         const t = norm(texto);
         for (const it of intents) {
             let slots;
@@ -94,6 +124,7 @@ window.Voz = (function () {
 
     function montar(opts) {
         intents = (opts && opts.intents) || [];
+        endpoint = (opts && opts.endpoint) || null;
         inyectarEstilo();
         boton = document.createElement('button');
         boton.id = 'voz-btn';

@@ -68,5 +68,8 @@ return [
     'voz' => [
         'api_key'     => $leer('VOZ_API_KEY', ''),
         'usuario_id'  => (int) $leer('VOZ_USUARIO_ID', '1'),  // como quién opera (default: admin)
+        // Webhook de n8n al que el POS reenvía el texto. En Docker, n8n es un
+        // contenedor de la misma red (http://n8n:5678). En local, apuntar al túnel.
+        'n8n_url'     => $leer('VOZ_N8N_URL', 'http://n8n:5678/webhook/voz'),
     ],
 ];

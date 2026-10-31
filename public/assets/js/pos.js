@@ -710,4 +710,6 @@ const VOZ_INTENTS = [
     },
 ];
 
-if (window.Voz) Voz.montar({ intents: VOZ_INTENTS });
+// El cerebro del asistente ahora es el backend (n8n + IA). Las reglas locales
+// (VOZ_INTENTS) quedan como respaldo por si se quiere volver al modo offline.
+if (window.Voz) Voz.montar({ endpoint: '/api/voz/interpretar' });
