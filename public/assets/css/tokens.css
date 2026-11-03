@@ -20,14 +20,14 @@
     --line:          oklch(0.905 0 0);         /* bordes / divisores */
     --line-strong:   oklch(0.82 0 0);
 
-    --primary:       oklch(0.52 0.24 296);     /* morado eléctrico (fills) */
-    --primary-strong:oklch(0.44 0.24 296);     /* hover / texto morado */
-    --primary-tint:  oklch(0.965 0.03 296);    /* fondo suave (badge) */
+    --primary:       oklch(0.52 0.16 290);     /* morado sobrio (fills) — minimal, no "gamer" */
+    --primary-strong:oklch(0.44 0.16 290);     /* hover / texto morado */
+    --primary-tint:  oklch(0.970 0.016 290);   /* fondo suave (badge) */
     --on-primary:    oklch(1 0 0);
 
-    --accent:        oklch(0.58 0.26 318);     /* violeta-magenta (oferta/atención) */
-    --accent-strong: oklch(0.50 0.26 318);
-    --accent-tint:   oklch(0.965 0.035 318);
+    --accent:        oklch(0.55 0.17 320);     /* violeta-magenta sobrio (oferta/atención) */
+    --accent-strong: oklch(0.48 0.17 320);
+    --accent-tint:   oklch(0.968 0.024 320);
     --on-accent:     oklch(1 0 0);             /* texto blanco sobre violeta */
 
     --danger:        oklch(0.58 0.19 25);
@@ -56,14 +56,16 @@
     --r-sm: 8px;  --r-md: 12px;  --r-lg: 16px;  --r-xl: 22px;  --r-full: 999px;
 
     /* --- Sombras (negro neutro, con profundidad) --- */
-    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.07),
-                 0 1px 3px oklch(0 0 0 / 0.06);
-    --shadow-md: 0 2px 8px oklch(0 0 0 / 0.09),
-                 0 12px 28px oklch(0 0 0 / 0.08);
-    --shadow-lg: 0 20px 56px oklch(0 0 0 / 0.22);
-    --shadow-primary: 0 8px 22px oklch(0.52 0.24 296 / 0.35);   /* glow morado para CTA */
-    --ring: 0 0 0 3px oklch(0.52 0.24 296 / 0.35);       /* foco: halo morado */
-    --ring-primary: 0 0 0 3px oklch(0.52 0.24 296 / 0.30);
+    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.05),
+                 0 1px 2px oklch(0 0 0 / 0.04);
+    --shadow-md: 0 1px 3px oklch(0 0 0 / 0.06),
+                 0 8px 20px oklch(0 0 0 / 0.07);
+    --shadow-lg: 0 16px 44px oklch(0 0 0 / 0.16);
+    /* CTA sin glow: sombra neutra sutil (minimal/profesional) */
+    --shadow-primary: 0 1px 2px oklch(0 0 0 / 0.08),
+                      0 4px 12px oklch(0 0 0 / 0.08);
+    --ring: 0 0 0 3px oklch(0.52 0.16 290 / 0.22);       /* foco: halo morado tenue */
+    --ring-primary: 0 0 0 3px oklch(0.52 0.16 290 / 0.20);
 
     /* --- Z-index semántico --- */
     --z-dropdown: 100;
@@ -140,16 +142,17 @@ body {
     --ink-muted:     oklch(0.72 0 0);
     --line:          oklch(0.30 0 0);
     --line-strong:   oklch(0.40 0 0);
-    --primary:       oklch(0.64 0.23 296);     /* morado más brillante sobre negro */
-    --primary-strong:oklch(0.56 0.23 296);
-    --primary-tint:  oklch(0.30 0.09 296);
-    --accent:        oklch(0.66 0.25 318);
-    --accent-tint:   oklch(0.30 0.10 318);
+    --primary:       oklch(0.66 0.16 290);     /* morado sobrio, legible sobre negro */
+    --primary-strong:oklch(0.58 0.16 290);
+    --primary-tint:  oklch(0.30 0.06 290);
+    --accent:        oklch(0.66 0.17 320);
+    --accent-tint:   oklch(0.30 0.07 320);
     --danger-tint:   oklch(0.30 0.08 25);
-    --shadow-primary: 0 8px 24px oklch(0.64 0.23 296 / 0.45);
-    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.45);
-    --shadow-md: 0 4px 16px oklch(0 0 0 / 0.50);
-    --shadow-lg: 0 16px 48px oklch(0 0 0 / 0.62);
+    --shadow-primary: 0 1px 2px oklch(0 0 0 / 0.5),
+                      0 6px 18px oklch(0 0 0 / 0.45);
+    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.4);
+    --shadow-md: 0 2px 10px oklch(0 0 0 / 0.45);
+    --shadow-lg: 0 14px 40px oklch(0 0 0 / 0.55);
 }
 
 /* ===== Logo Britech (marca B+play, imagen real) ===== */

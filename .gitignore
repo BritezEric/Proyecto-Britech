@@ -11,3 +11,7 @@
 # Comprobantes de pago subidos por clientes: datos personales/financieros,
 # NUNCA se suben al repo.
 /public/uploads/comprobantes/
+
+# Temporales de sesión (NO subir: pueden tener claves)
+scratchpad/
+Claude outputs/

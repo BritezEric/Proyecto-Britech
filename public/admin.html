@@ -326,6 +326,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/iconos.js"></script>
+    <script src="/assets/js/voz.js"></script>
     <script src="/assets/js/admin.js"></script>
     <script src="/assets/js/admin-bloques.js"></script>
     <script src="/assets/js/admin-empleados.js"></script>
@@ -335,5 +336,11 @@
     <script src="/assets/js/admin-cajas.js"></script>
     <script src="/assets/js/admin-reclamos.js"></script>
     <script src="/assets/js/admin-mapa.js"></script>
+    <!-- Asistente de voz (mismo botón flotante que el POS). La ruta exige sesión de staff. -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.Voz && Voz.montar) Voz.montar({ endpoint: '/api/voz/interpretar' });
+        });
+    </script>
 </body>
 </html>

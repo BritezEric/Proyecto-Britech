@@ -13,6 +13,7 @@ window.Voz = (function () {
 
     let intents = [];
     let endpoint = null;   // si se setea, el cerebro es el backend (n8n + IA) en vez de reglas locales
+    let historial = [];    // contexto conversacional (lo mantiene el agente de n8n)
     let rec = null, escuchando = false, finalTexto = '';
     let boton, toast;
 
@@ -21,17 +22,26 @@ window.Voz = (function () {
         const st = document.createElement('style');
         st.id = 'voz-estilo';
         st.textContent = `
-        #voz-btn{position:fixed;right:20px;bottom:20px;z-index:9000;width:60px;height:60px;border-radius:50%;
-            border:none;cursor:pointer;background:var(--primario,#2563eb);color:#fff;font-size:26px;
-            box-shadow:0 6px 18px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;transition:transform .1s}
-        #voz-btn:active{transform:scale(.94)}
-        #voz-btn.escuchando{background:var(--danger,#dc2626);animation:voz-pulso 1s infinite}
-        @keyframes voz-pulso{0%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}70%{box-shadow:0 0 0 14px rgba(220,38,38,0)}100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}}
-        #voz-toast{position:fixed;right:20px;bottom:92px;z-index:9000;max-width:340px;background:#111827;color:#f9fafb;
-            padding:10px 14px;border-radius:10px;font:14px/1.35 system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.3);
-            opacity:0;transform:translateY(8px);transition:opacity .15s,transform .15s;pointer-events:none}
+        #voz-btn{position:fixed;right:22px;bottom:22px;z-index:9000;width:50px;height:50px;border-radius:50%;
+            cursor:pointer;background:var(--superficie,#fff);color:var(--texto,#1f2937);
+            border:1px solid var(--borde,#e5e7eb);display:flex;align-items:center;justify-content:center;
+            box-shadow:0 2px 12px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .2s ease,background .2s,color .2s,border-color .2s;-webkit-tap-highlight-color:transparent}
+        #voz-btn svg{width:21px;height:21px;position:relative;z-index:1}
+        #voz-btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.12)}
+        #voz-btn:active{transform:scale(.95)}
+        #voz-btn:focus-visible{outline:2px solid var(--primario,#2563eb);outline-offset:3px}
+        /* Activo (conversación): superficie oscura sobria + anillos que respiran. */
+        #voz-btn.escuchando{background:var(--texto,#111827);color:#fff;border-color:transparent;box-shadow:0 4px 18px rgba(0,0,0,.22)}
+        #voz-btn.escuchando::before,#voz-btn.escuchando::after{content:'';position:absolute;inset:-1px;border-radius:50%;
+            border:1.5px solid var(--primario,#2563eb);opacity:0;animation:voz-ring 2.4s cubic-bezier(.33,0,.2,1) infinite}
+        #voz-btn.escuchando::after{animation-delay:1.2s}
+        @keyframes voz-ring{0%{transform:scale(1);opacity:.45}100%{transform:scale(2.2);opacity:0}}
+        @media (prefers-reduced-motion:reduce){#voz-btn.escuchando::before,#voz-btn.escuchando::after{animation:none}}
+        #voz-toast{position:fixed;right:22px;bottom:84px;z-index:9000;max-width:320px;background:var(--texto,#111827);color:#f9fafb;
+            padding:10px 13px;border-radius:12px;font:13.5px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.18);
+            opacity:0;transform:translateY(6px);transition:opacity .18s,transform .18s;pointer-events:none}
         #voz-toast.ver{opacity:1;transform:translateY(0)}
-        #voz-toast .voz-chip{display:inline-block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;opacity:.7;margin-bottom:2px}`;
+        #voz-toast .voz-chip{display:inline-block;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;opacity:.6;margin-bottom:2px}`;
         document.head.appendChild(st);
     }
 
@@ -54,6 +64,36 @@ window.Voz = (function () {
         } catch (e) { /* sin TTS, queda solo el toast */ }
     }
 
+    // Reproduce el audio de ElevenLabs (mp3 base64). Devuelve una promesa que se
+    // resuelve cuando termina de hablar (para el modo conversación). Fallback TTS.
+    let audioEl = null;
+    function reproducirVoz(mp3b64, texto) {
+        return new Promise((resolve) => {
+            if (!mp3b64) { hablar(texto); resolve(); return; }
+            try {
+                if (window.speechSynthesis) speechSynthesis.cancel();
+                if (!audioEl) audioEl = new Audio();
+                audioEl.onended = () => resolve();
+                audioEl.onerror = () => { hablar(texto); resolve(); };
+                audioEl.src = 'data:audio/mpeg;base64,' + mp3b64;
+                audioEl.play().catch(() => { hablar(texto); resolve(); });
+            } catch (e) { hablar(texto); resolve(); }
+        });
+    }
+
+    // Maneja la respuesta del backend: contexto, toast (lo que escuchó + respuesta) y voz.
+    async function manejarRespuesta(d) {
+        const msg = (d && d.respuesta) || 'No pude procesar eso.';
+        if (d && Array.isArray(d.historial)) historial = d.historial;
+        if (d && d.texto) {
+            decir(`"${d.texto}"`, 'Escuché');
+            setTimeout(() => decir(msg, 'Asistente'), 1200);
+        } else {
+            decir(msg, 'Asistente');
+        }
+        await reproducirVoz(d && d.audio, msg);
+    }
+
     async function procesar(texto) {
         // Modo backend: el texto va a n8n (IA) por /api/voz/interpretar y hablamos la respuesta.
         if (endpoint) {
@@ -62,12 +102,9 @@ window.Voz = (function () {
                 const r = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ texto }),
+                    body: JSON.stringify({ texto, historial }),
                 });
-                const d = await r.json();
-                const msg = (d && d.respuesta) || 'No pude procesar eso.';
-                decir(msg, 'Asistente');
-                hablar(msg);
+                manejarRespuesta(await r.json());
             } catch (e) {
                 decir('No pude contactar al asistente.', 'Error');
             }
@@ -84,6 +121,129 @@ window.Voz = (function () {
             }
         }
         decir(`No te entendí: "${texto}"`, 'Sin acción');
+    }
+
+    // ===== Grabación de audio (modo backend) =====
+    // Para navegadores sin STT confiable (Brave bloquea el Web Speech de Google):
+    // grabamos el micrófono como WAV y lo mandamos al backend, que lo transcribe.
+    let mediaStream = null;
+
+    function encodeWav(samples, rate) {
+        const buf = new ArrayBuffer(44 + samples.length * 2);
+        const v = new DataView(buf);
+        const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+        w(0, 'RIFF'); v.setUint32(4, 36 + samples.length * 2, true); w(8, 'WAVE');
+        w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+        v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+        w(36, 'data'); v.setUint32(40, samples.length * 2, true);
+        let o = 44;
+        for (let i = 0; i < samples.length; i++) {
+            const s = Math.max(-1, Math.min(1, samples[i]));
+            v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7FFF, true); o += 2;
+        }
+        return new Blob([buf], { type: 'audio/wav' });
+    }
+
+    // ===== Modo conversación (tipo ChatGPT) =====
+    // Abre el micrófono UNA vez; detecta fin de frase por silencio (VAD), responde
+    // con voz, y vuelve a escuchar solo, hasta que tocás el botón para terminar.
+    let convCtx, convSrc, convProc;
+    let hayVoz = false, vozDesde = 0, ultimaVoz = 0, bufFrames = [], frameRate = 48000;
+    let ocupado = false;            // mientras procesa/habla, no escucha (evita realimentación)
+    const SILENCIO_MS = 800;        // silencio tras hablar => fin de frase (turno más ágil)
+    const UMBRAL = 0.02;            // nivel mínimo para considerar "voz"
+    const MIN_VOZ_MS = 350;         // frase mínima para enviar (ignora ruiditos)
+
+    function rmsNivel(frame) {
+        let s = 0; for (let i = 0; i < frame.length; i++) s += frame[i] * frame[i];
+        return Math.sqrt(s / frame.length);
+    }
+
+    function wavDeFrames(frames) {
+        const len = frames.reduce((a, c) => a + c.length, 0);
+        const all = new Float32Array(len);
+        let off = 0; for (const c of frames) { all.set(c, off); off += c.length; }
+        return { blob: encodeWav(all, frameRate), ms: (len / frameRate) * 1000 };
+    }
+
+    function onFrame(e) {
+        if (!escuchando || ocupado) return;
+        const frame = new Float32Array(e.inputBuffer.getChannelData(0));
+        const nivel = rmsNivel(frame);
+        const now = performance.now();
+        if (nivel > UMBRAL) {
+            if (!hayVoz) { hayVoz = true; vozDesde = now; bufFrames = []; decir('Te escucho…', 'Conversación'); }
+            ultimaVoz = now;
+            bufFrames.push(frame);
+        } else if (hayVoz) {
+            bufFrames.push(frame);                       // cola de silencio corta
+            if (now - ultimaVoz > SILENCIO_MS) {
+                const dur = ultimaVoz - vozDesde;
+                const { blob, ms } = wavDeFrames(bufFrames);
+                hayVoz = false; bufFrames = [];
+                if (ms >= MIN_VOZ_MS && dur >= 0) { ocupado = true; procesarAudio(blob); }
+            }
+        }
+    }
+
+    async function convIniciar() {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        });
+        mediaStream = stream;
+        convCtx = new (window.AudioContext || window.webkitAudioContext)();
+        frameRate = convCtx.sampleRate;
+        convSrc = convCtx.createMediaStreamSource(stream);
+        convProc = convCtx.createScriptProcessor(4096, 1, 1);
+        convProc.onaudioprocess = onFrame;
+        convSrc.connect(convProc); convProc.connect(convCtx.destination);
+        hayVoz = false; bufFrames = []; ocupado = false;
+    }
+
+    function convDetener() {
+        escuchando = false; ocupado = false; hayVoz = false; bufFrames = [];
+        try { convProc && convProc.disconnect(); convSrc && convSrc.disconnect(); } catch (e) {}
+        mediaStream && mediaStream.getTracks().forEach((t) => t.stop());
+        try { convCtx && convCtx.close(); } catch (e) {}
+        try { if (audioEl) audioEl.pause(); } catch (e) {}
+        boton.classList.remove('escuchando');
+        decir('Conversación terminada.', 'Listo');
+    }
+
+    const blobAb64 = (blob) => new Promise((res) => {
+        const r = new FileReader();
+        r.onloadend = () => res(String(r.result).split(',')[1] || '');
+        r.readAsDataURL(blob);
+    });
+
+    async function procesarAudio(blob) {
+        decir('Procesando…', 'Asistente');
+        try {
+            const audio = await blobAb64(blob);
+            const r = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ audio, mime: 'audio/wav', historial }),
+            });
+            await manejarRespuesta(await r.json());   // espera a que termine de hablar
+        } catch (e) {
+            decir('No pude contactar al asistente.', 'Error');
+        } finally {
+            // Volver a escuchar si la conversación sigue activa.
+            if (escuchando) { ocupado = false; hayVoz = false; bufFrames = []; decir('Te escucho…', 'Conversación'); }
+        }
+    }
+
+    async function toggleConversacion() {
+        if (escuchando) { convDetener(); return; }
+        try {
+            await convIniciar();
+            escuchando = true;
+            boton.classList.add('escuchando');
+            decir('Conversación activa. Hablá cuando quieras; yo te respondo. Tocá para terminar.', 'Conversación');
+        } catch (e) {
+            decir(e && e.name === 'NotAllowedError' ? 'Permiso de micrófono denegado.' : 'No pude abrir el micrófono.', 'Error');
+        }
     }
 
     function nuevaSesion() {
@@ -103,7 +263,14 @@ window.Voz = (function () {
         };
         rec.onerror = (e) => {
             escuchando = false; boton.classList.remove('escuchando');
-            decir(e.error === 'not-allowed' ? 'Permiso de micrófono denegado.' : 'No pude escuchar.', 'Error');
+            const msgs = {
+                'not-allowed': 'Permiso de micrófono denegado.',
+                'service-not-allowed': 'Permiso de micrófono denegado.',
+                'no-speech': 'No te escuché, probá de nuevo.',
+                'audio-capture': 'No hay micrófono disponible.',
+                'network': 'Sin internet para el dictado (Web Speech usa Google).',
+            };
+            decir(msgs[e.error] || ('No pude escuchar (' + e.error + ').'), 'Error');
         };
         rec.onend = () => {
             escuchando = false; boton.classList.remove('escuchando');
@@ -113,6 +280,8 @@ window.Voz = (function () {
     }
 
     function alternar() {
+        // Modo backend: conversación continua (graba, transcribe y responde en bucle).
+        if (endpoint) { toggleConversacion(); return; }
         if (!SR) { decir('Tu navegador no soporta dictado por voz (usá Chrome/Edge).', 'Sin soporte'); return; }
         if (escuchando) { rec && rec.stop(); return; }
         nuevaSesion();
@@ -129,14 +298,14 @@ window.Voz = (function () {
         boton = document.createElement('button');
         boton.id = 'voz-btn';
         boton.type = 'button';
-        boton.title = 'Tocar para hablar';
+        boton.title = 'Asistente de voz';
         boton.setAttribute('aria-label', 'Asistente de voz');
-        boton.textContent = '🎤';
+        boton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/></svg>';
         toast = document.createElement('div');
         toast.id = 'voz-toast';
         document.body.append(boton, toast);
         boton.addEventListener('click', alternar);
-        if (!SR) boton.title = 'Dictado por voz no soportado en este navegador';
+        if (!SR && !endpoint) boton.title = 'Dictado por voz no soportado en este navegador';
     }
 
     return { montar, decir, norm, get soportado() { return !!SR; } };

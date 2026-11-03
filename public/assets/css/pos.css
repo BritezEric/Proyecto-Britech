@@ -297,13 +297,13 @@ body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     font-weight: 700;
     font-family: inherit;
     cursor: pointer;
-    box-shadow: 0 2px 8px oklch(0.52 0.24 296 / 0.30);
+    box-shadow: var(--shadow-sm);
     transition: background var(--dur-fast) var(--ease-out),
                 transform var(--dur-fast) var(--ease-out),
                 box-shadow var(--dur-fast) var(--ease-out);
 }
-.btn-cobrar:not(:disabled):hover { background: var(--primary-strong); transform: translateY(-1px); box-shadow: 0 6px 16px oklch(0.52 0.24 296 / 0.34); }
-.btn-cobrar:not(:disabled):active { transform: translateY(0); box-shadow: 0 2px 6px oklch(0.52 0.24 296 / 0.30); }
+.btn-cobrar:not(:disabled):hover { background: var(--primary-strong); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-cobrar:not(:disabled):active { transform: translateY(0); box-shadow: var(--shadow-sm); }
 .btn-cobrar:disabled { background: var(--surface-sunk); color: var(--ink-muted); box-shadow: none; cursor: not-allowed; }
 
 /* ===== Modales ===== */

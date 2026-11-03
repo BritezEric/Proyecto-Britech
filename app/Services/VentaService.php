@@ -115,6 +115,13 @@ class VentaService
         $envioCosto = $envio['costo'] ?? 0.0;
         $total = round($total + $envioCosto, 2);
 
+        // Pago automático: si no mandan pagos (ej. asistente de voz), cobramos el
+        // total exacto en efectivo. Así el que registra no necesita saber el precio
+        // (lo calcula el backend) y nunca hay desajuste de monto.
+        if (!is_array($pagos) || count($pagos) === 0) {
+            $pagos = [['tipo_pago_id' => $this->tipoPagoEfectivoId(), 'monto' => $total]];
+        }
+
         // 4) Validar que los pagos sumen exactamente el total (productos + envío) (RN6).
         $sumaPagos = 0.0;
         foreach ($pagos as $pg) {
@@ -177,6 +184,17 @@ class VentaService
         $this->avisarStockBajo(array_column($lineas, 'producto_id'));
 
         return ['venta_id' => $ventaId, 'numero' => $numero, 'total' => $total, 'envio_costo' => $envioCosto];
+    }
+
+    /** Id del medio de pago "Efectivo" (o el primero activo). Para el pago automático. */
+    private function tipoPagoEfectivoId(): int
+    {
+        $db = Database::conexion();
+        $id = $db->query("SELECT id FROM tipo_pago WHERE activo = 1 AND LOWER(nombre) LIKE '%efectivo%' ORDER BY id LIMIT 1")->fetchColumn();
+        if ($id === false) {
+            $id = $db->query("SELECT id FROM tipo_pago WHERE activo = 1 ORDER BY id LIMIT 1")->fetchColumn();
+        }
+        return (int) $id;
     }
 
     /**

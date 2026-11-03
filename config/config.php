@@ -71,5 +71,14 @@ return [
         // Webhook de n8n al que el POS reenvía el texto. En Docker, n8n es un
         // contenedor de la misma red (http://n8n:5678). En local, apuntar al túnel.
         'n8n_url'     => $leer('VOZ_N8N_URL', 'http://n8n:5678/webhook/voz'),
+        // STT: el backend transcribe el audio con Gemini (así la voz anda en
+        // cualquier navegador, incluido Brave que bloquea el Web Speech de Google).
+        'gemini_key'   => $leer('GEMINI_API_KEY', ''),
+        'gemini_model' => $leer('GEMINI_MODEL', 'gemini-3.1-flash-lite'),
+        // TTS con voz natural (ElevenLabs). Si la key queda vacía, el POS usa
+        // el TTS del navegador como respaldo. Voice por defecto: "Sarah" (multilingüe).
+        'elevenlabs_key'   => $leer('ELEVENLABS_API_KEY', ''),
+        'elevenlabs_voice' => $leer('ELEVENLABS_VOICE_ID', 'cjVigY5qzO86Huf0OWal'), // Eric
+        'elevenlabs_model' => $leer('ELEVENLABS_MODEL', 'eleven_flash_v2_5'),        // flash = rápido
     ],
 ];
