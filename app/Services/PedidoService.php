@@ -9,12 +9,15 @@ use App\Repositories\ProductoRepository;
 use App\Repositories\EmpresaEnvioRepository;
 use App\Repositories\EnvioRepository;
 use App\Repositories\BarrioRepository;
+use App\Repositories\InventarioRepository;
+use App\Repositories\NotificacionRepository;
 
 /**
  * Lógica de los pedidos de la tienda online.
  * Igual que en el POS: el precio se calcula SIEMPRE en el backend (según la
  * lista del cliente), nunca se confía en lo que manda el navegador.
- * Un pedido NO descuenta stock: es una solicitud que el admin gestionará.
+ * Un pedido descuenta stock al crearse (reserva la mercadería) y lo reintegra
+ * si el pedido se cancela. Igual que una venta del POS.
  */
 class PedidoService
 {
@@ -58,6 +61,10 @@ class PedidoService
             if ($p['precio'] === null) {
                 throw new ValidacionException("El producto {$p['nombre']} no tiene precio.");
             }
+            $sobrePedido = (int) ($p['es_sobre_pedido'] ?? 0) === 1;
+            if (!$sobrePedido && $cant > (int) $p['stock']) {
+                throw new ValidacionException("No hay stock suficiente de {$p['nombre']} (quedan {$p['stock']}).");
+            }
             // En modo mayorista se exige la cantidad mínima de cada producto.
             if ($listaId === 2 && $cant < (int) $p['min_mayorista']) {
                 throw new ValidacionException(
@@ -67,7 +74,7 @@ class PedidoService
             $precio = (float) $p['precio'];
             $sub    = round($precio * $cant, 2);
             $total += $sub;
-            $lineas[] = ['pid' => $pid, 'cant' => $cant, 'precio' => $precio, 'sub' => $sub];
+            $lineas[] = ['pid' => $pid, 'cant' => $cant, 'precio' => $precio, 'sub' => $sub, 'sobre' => $sobrePedido];
         }
         $total = round($total, 2);
 
@@ -122,6 +129,7 @@ class PedidoService
 
         $obs = trim($observacion ?? '') ?: null;
         $pdo = Database::conexion();
+        $inv = new InventarioRepository();
         try {
             $pdo->beginTransaction();
             $pedidoId = $this->repo->crear($clienteId, $total, $obs, $metodoPago);
@@ -129,6 +137,9 @@ class PedidoService
             $this->repo->actualizarNumero($pedidoId, $numero);
             foreach ($lineas as $l) {
                 $this->repo->agregarDetalle($pedidoId, $l['pid'], $l['cant'], $l['precio'], $l['sub']);
+                if (!$l['sobre']) {
+                    $inv->descontar($l['pid'], $l['cant']);   // reserva stock (salvo sobre pedido)
+                }
             }
             (new EnvioRepository())->crear($pedidoId, $empresaId, $datosEnvio, $costoEnvio, $barrioId);
             $pdo->commit();
@@ -136,6 +147,9 @@ class PedidoService
             $pdo->rollBack();
             throw $e;
         }
+
+        // Aviso de stock bajo (fuera de la transacción: nunca frena el pedido).
+        $this->avisarStockBajo(array_column($lineas, 'pid'));
 
         // Avisos: al staff (bandeja del panel) y al cliente (bandeja de la tienda).
         $notif = new \App\Repositories\NotificacionRepository();
@@ -236,10 +250,48 @@ class PedidoService
         if (!in_array($estado, self::ESTADOS, true)) {
             throw new ValidacionException('Estado inválido.');
         }
-        if ($this->repo->buscarPorId($id) === null) {
+        $pedido = $this->repo->buscarPorId($id);
+        if ($pedido === null) {
             throw new ValidacionException('El pedido no existe.');
         }
+
+        // Cancelar devuelve el stock reservado (solo la primera vez).
+        if ($estado === 'cancelado' && $pedido['estado'] !== 'cancelado') {
+            $inv = new InventarioRepository();
+            $pdo = Database::conexion();
+            try {
+                $pdo->beginTransaction();
+                foreach ($this->repo->lineasParaStock($id) as $l) {
+                    $inv->reintegrar((int) $l['producto_id'], (int) $l['cantidad']);
+                }
+                $this->repo->cambiarEstado($id, $estado);
+                $pdo->commit();
+            } catch (\Throwable $e) {
+                $pdo->rollBack();
+                throw $e;
+            }
+            return;
+        }
+
         $this->repo->cambiarEstado($id, $estado);
+    }
+
+    /**
+     * Crea un aviso de stock bajo por cada producto que quedó en o bajo su
+     * mínimo. No repite si ya hay un aviso sin leer para ese producto.
+     */
+    private function avisarStockBajo(array $productoIds): void
+    {
+        $notif = new NotificacionRepository();
+        foreach ((new ProductoRepository())->enAlerta($productoIds) as $p) {
+            if ($notif->existeNoLeida('stock_bajo', (int) $p['id'])) continue;
+            $notif->crear(
+                'stock_bajo',
+                "Stock bajo: {$p['nombre']} ({$p['stock']} u.)",
+                'reposicion',
+                (int) $p['id']
+            );
+        }
     }
 
     /** Actualiza el envío de un pedido (gestor admin): estado, seguimiento, datos de entrega y repartidor. */

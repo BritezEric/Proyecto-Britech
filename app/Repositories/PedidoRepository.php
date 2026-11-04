@@ -104,6 +104,18 @@ class PedidoRepository
         return $st->fetch() ?: null;
     }
 
+    /** Líneas (producto_id + cantidad) para reintegrar stock al cancelar. */
+    public function lineasParaStock(int $pedidoId): array
+    {
+        $st = Database::conexion()->prepare(
+            "SELECT d.producto_id, d.cantidad
+             FROM pedido_detalle d JOIN producto p ON p.id = d.producto_id
+             WHERE d.pedido_id = ? AND p.es_sobre_pedido = 0"
+        );
+        $st->execute([$pedidoId]);
+        return $st->fetchAll();
+    }
+
     public function cambiarEstado(int $id, string $estado): void
     {
         Database::conexion()->prepare("UPDATE pedido SET estado = ? WHERE id = ?")->execute([$estado, $id]);
