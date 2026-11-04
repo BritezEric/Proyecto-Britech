@@ -9,6 +9,48 @@ namespace App\Services;
  */
 class VozService
 {
+    /** Transcribe audio (base64 WAV) con Groq Whisper (ultra rápido). '' si falla. */
+    private function transcribirGroq(string $audioB64, array $cfg): string
+    {
+        $bin = base64_decode($audioB64, true);
+        if ($bin === false || $bin === '') return '';
+        $tmp = tempnam(sys_get_temp_dir(), 'voz') . '.wav';
+        file_put_contents($tmp, $bin);
+
+        $ch = curl_init('https://api.groq.com/openai/v1/audio/transcriptions');
+        $opts = [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $cfg['voz']['groq_key']],
+            CURLOPT_POSTFIELDS     => [
+                'file'            => new \CURLFile($tmp, 'audio/wav', 'audio.wav'),
+                'model'           => $cfg['voz']['groq_stt'] ?? 'whisper-large-v3-turbo',
+                'language'        => 'es',
+                'response_format' => 'json',
+                'temperature'     => '0',
+            ],
+            CURLOPT_TIMEOUT        => 20,
+        ];
+        $ca = getenv('CURL_CA_BUNDLE') ?: null;
+        if (!$ca && class_exists(\Composer\CaBundle\CaBundle::class)) {
+            $ca = \Composer\CaBundle\CaBundle::getSystemCaRootBundlePath();
+        }
+        if ($ca) { $opts[is_dir($ca) ? CURLOPT_CAPATH : CURLOPT_CAINFO] = $ca; }
+        curl_setopt_array($ch, $opts);
+        $raw  = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err  = curl_error($ch);
+        curl_close($ch);
+        @unlink($tmp);
+
+        if ($raw === false || $code < 200 || $code >= 300) {
+            error_log('[Voz] Groq STT falló: ' . ($err ?: ('HTTP ' . $code . ' ' . substr((string) $raw, 0, 200))));
+            return '';
+        }
+        $data = json_decode($raw, true);
+        return trim((string) ($data['text'] ?? ''));
+    }
+
     /**
      * Transcribe audio (base64) a texto con Gemini. Se usa cuando el navegador
      * no tiene STT confiable (ej. Brave bloquea el Web Speech de Google), así que
@@ -17,9 +59,17 @@ class VozService
     public function transcribir(string $audioB64, string $mime): string
     {
         $cfg   = require dirname(__DIR__, 2) . '/config/config.php';
+        if ($audioB64 === '') {
+            return '';
+        }
+        // Groq Whisper = transcripción casi instantánea. Si no hay key, cae a Gemini.
+        if (($cfg['voz']['groq_key'] ?? '') !== '') {
+            $t = $this->transcribirGroq($audioB64, $cfg);
+            if ($t !== '') return $t;
+        }
         $key   = $cfg['voz']['gemini_key'] ?? '';
         $model = $cfg['voz']['gemini_model'] ?? 'gemini-3.1-flash-lite';
-        if ($key === '' || $audioB64 === '') {
+        if ($key === '') {
             return '';
         }
 

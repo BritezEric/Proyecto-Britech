@@ -14,8 +14,21 @@ window.Voz = (function () {
     let intents = [];
     let endpoint = null;   // si se setea, el cerebro es el backend (n8n + IA) en vez de reglas locales
     let historial = [];    // contexto conversacional (lo mantiene el agente de n8n)
+    let onNavegar = null;  // callback de navegación por voz (la página decide a dónde ir)
     let rec = null, escuchando = false, finalTexto = '';
     let boton, toast;
+    let panel = null, vpEstadoEl = null, vpUserEl = null, vpReplyEl = null;
+
+    // --- Ventana emergente del asistente (estado + diálogo) ---
+    function vpShow(b) { if (panel) panel.classList.toggle('ver', !!b); }
+    function vpEstado(modo, label) {
+        if (!panel) return;
+        panel.classList.remove('idle', 'listen', 'think', 'speak');
+        panel.classList.add(modo);
+        if (vpEstadoEl) vpEstadoEl.textContent = label;
+    }
+    function vpUser(t) { if (vpUserEl) { vpUserEl.textContent = t ? ('Vos: ' + t) : ''; vpUserEl.classList.toggle('ver', !!t); } }
+    function vpReply(t) { if (vpReplyEl) vpReplyEl.textContent = t || ''; }
 
     function inyectarEstilo() {
         if (document.getElementById('voz-estilo')) return;
@@ -41,7 +54,35 @@ window.Voz = (function () {
             padding:10px 13px;border-radius:12px;font:13.5px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.18);
             opacity:0;transform:translateY(6px);transition:opacity .18s,transform .18s;pointer-events:none}
         #voz-toast.ver{opacity:1;transform:translateY(0)}
-        #voz-toast .voz-chip{display:inline-block;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;opacity:.6;margin-bottom:2px}`;
+        #voz-toast .voz-chip{display:inline-block;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;opacity:.6;margin-bottom:2px}
+        /* ===== Ventana emergente del asistente ===== */
+        #voz-panel{position:fixed;right:22px;bottom:84px;z-index:9001;width:320px;max-width:calc(100vw - 44px);
+            background:var(--surface,#fff);color:var(--ink,#111827);border:1px solid var(--line,#e5e7eb);
+            border-radius:16px;box-shadow:0 16px 44px rgba(0,0,0,.16);padding:14px 16px;
+            opacity:0;transform:translateY(12px) scale(.98);pointer-events:none;
+            transition:opacity .22s cubic-bezier(.16,1,.3,1),transform .22s cubic-bezier(.16,1,.3,1)}
+        #voz-panel.ver{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+        #voz-panel .vp-head{display:flex;align-items:center;gap:8px}
+        #voz-panel .vp-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-muted,#9ca3af);flex:0 0 auto;transition:background .2s}
+        #voz-panel .vp-estado{font:600 11px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted,#6b7280)}
+        #voz-panel .vp-wave{display:flex;align-items:center;gap:3px;height:16px;margin-left:auto}
+        #voz-panel .vp-wave i{width:3px;height:4px;border-radius:2px;background:var(--ink-muted,#9ca3af);display:block}
+        #voz-panel .vp-body{margin-top:11px;font:14px/1.45 system-ui,sans-serif}
+        #voz-panel .vp-user{color:var(--ink-muted,#6b7280);font-size:12.5px;margin-bottom:5px;display:none}
+        #voz-panel .vp-user.ver{display:block}
+        #voz-panel .vp-reply{color:var(--ink,#111827);min-height:1.2em}
+        /* Estados */
+        #voz-panel.listen .vp-dot,#voz-panel.speak .vp-dot{background:var(--primary,#2563eb)}
+        #voz-panel.think .vp-dot{background:var(--primary,#2563eb);animation:vp-pulse 1s ease-in-out infinite}
+        #voz-panel.listen .vp-wave i,#voz-panel.speak .vp-wave i{background:var(--primary,#2563eb);animation:vp-bar .9s ease-in-out infinite}
+        #voz-panel.speak .vp-wave i{animation-duration:.55s}
+        #voz-panel .vp-wave i:nth-child(2){animation-delay:.12s}
+        #voz-panel .vp-wave i:nth-child(3){animation-delay:.24s}
+        #voz-panel .vp-wave i:nth-child(4){animation-delay:.36s}
+        #voz-panel.think .vp-wave i{background:var(--primary,#2563eb);animation:vp-pulse 1.1s ease-in-out infinite}
+        @keyframes vp-bar{0%,100%{height:4px}50%{height:15px}}
+        @keyframes vp-pulse{0%,100%{opacity:.35}50%{opacity:1}}
+        @media (prefers-reduced-motion:reduce){#voz-panel .vp-wave i,#voz-panel .vp-dot{animation:none!important}}`;
         document.head.appendChild(st);
     }
 
@@ -81,18 +122,19 @@ window.Voz = (function () {
         });
     }
 
-    // Maneja la respuesta del backend: contexto, toast (lo que escuchó + respuesta) y voz.
+    // Maneja la respuesta del backend: contexto, ventana (lo que escuchó + respuesta) y voz.
     async function manejarRespuesta(d) {
         const msg = (d && d.respuesta) || 'No pude procesar eso.';
         if (d && Array.isArray(d.historial)) historial = d.historial;
-        if (d && d.texto) {
-            decir(`"${d.texto}"`, 'Escuché');
-            setTimeout(() => decir(msg, 'Asistente'), 1200);
-        } else {
-            decir(msg, 'Asistente');
-        }
+        if (d && d.texto) vpUser(d.texto);
+        vpReply(msg);
+        vpEstado('speak', 'Hablando');
+        if (d && d.vista) navegarVista(d.vista);   // navegación por voz (plomería)
         await reproducirVoz(d && d.audio, msg);
     }
+
+    // La página decide a dónde ir cuando el asistente lo pide (montar({onNavegar})).
+    function navegarVista(vista) { try { if (onNavegar) onNavegar(vista); } catch (e) {} }
 
     async function procesar(texto) {
         // Modo backend: el texto va a n8n (IA) por /api/voz/interpretar y hablamos la respuesta.
@@ -172,7 +214,7 @@ window.Voz = (function () {
         const nivel = rmsNivel(frame);
         const now = performance.now();
         if (nivel > UMBRAL) {
-            if (!hayVoz) { hayVoz = true; vozDesde = now; bufFrames = []; decir('Te escucho…', 'Conversación'); }
+            if (!hayVoz) { hayVoz = true; vozDesde = now; bufFrames = []; vpEstado('listen', 'Escuchando'); }
             ultimaVoz = now;
             bufFrames.push(frame);
         } else if (hayVoz) {
@@ -207,7 +249,8 @@ window.Voz = (function () {
         try { convCtx && convCtx.close(); } catch (e) {}
         try { if (audioEl) audioEl.pause(); } catch (e) {}
         boton.classList.remove('escuchando');
-        decir('Conversación terminada.', 'Listo');
+        vpEstado('idle', 'Listo');
+        setTimeout(() => { if (!escuchando) vpShow(false); }, 1200);
     }
 
     const blobAb64 = (blob) => new Promise((res) => {
@@ -217,7 +260,7 @@ window.Voz = (function () {
     });
 
     async function procesarAudio(blob) {
-        decir('Procesando…', 'Asistente');
+        vpEstado('think', 'Pensando');
         try {
             const audio = await blobAb64(blob);
             const r = await fetch(endpoint, {
@@ -227,10 +270,10 @@ window.Voz = (function () {
             });
             await manejarRespuesta(await r.json());   // espera a que termine de hablar
         } catch (e) {
-            decir('No pude contactar al asistente.', 'Error');
+            vpEstado('idle', 'Error'); vpReply('No pude contactar al asistente.');
         } finally {
             // Volver a escuchar si la conversación sigue activa.
-            if (escuchando) { ocupado = false; hayVoz = false; bufFrames = []; decir('Te escucho…', 'Conversación'); }
+            if (escuchando) { ocupado = false; hayVoz = false; bufFrames = []; vpEstado('listen', 'Escuchando'); }
         }
     }
 
@@ -240,9 +283,12 @@ window.Voz = (function () {
             await convIniciar();
             escuchando = true;
             boton.classList.add('escuchando');
-            decir('Conversación activa. Hablá cuando quieras; yo te respondo. Tocá para terminar.', 'Conversación');
+            vpUser(''); vpReply('Hablá cuando quieras; te respondo. Tocá el botón para terminar.');
+            vpEstado('listen', 'Escuchando');
+            vpShow(true);
         } catch (e) {
-            decir(e && e.name === 'NotAllowedError' ? 'Permiso de micrófono denegado.' : 'No pude abrir el micrófono.', 'Error');
+            vpShow(true); vpEstado('idle', 'Error');
+            vpReply(e && e.name === 'NotAllowedError' ? 'Permiso de micrófono denegado.' : 'No pude abrir el micrófono.');
         }
     }
 
@@ -294,6 +340,7 @@ window.Voz = (function () {
     function montar(opts) {
         intents = (opts && opts.intents) || [];
         endpoint = (opts && opts.endpoint) || null;
+        onNavegar = (opts && opts.onNavegar) || null;
         inyectarEstilo();
         boton = document.createElement('button');
         boton.id = 'voz-btn';
@@ -303,7 +350,16 @@ window.Voz = (function () {
         boton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="22"/></svg>';
         toast = document.createElement('div');
         toast.id = 'voz-toast';
-        document.body.append(boton, toast);
+        panel = document.createElement('div');
+        panel.id = 'voz-panel';
+        panel.innerHTML =
+            '<div class="vp-head"><span class="vp-dot"></span><span class="vp-estado">Listo</span>' +
+            '<span class="vp-wave"><i></i><i></i><i></i><i></i></span></div>' +
+            '<div class="vp-body"><div class="vp-user"></div><div class="vp-reply"></div></div>';
+        document.body.append(boton, toast, panel);
+        vpEstadoEl = panel.querySelector('.vp-estado');
+        vpUserEl = panel.querySelector('.vp-user');
+        vpReplyEl = panel.querySelector('.vp-reply');
         boton.addEventListener('click', alternar);
         if (!SR && !endpoint) boton.title = 'Dictado por voz no soportado en este navegador';
     }

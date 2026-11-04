@@ -406,9 +406,9 @@ async function seleccionar(ent) {
     const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados'),
           vistaTablas = $('vista-tablas'), vistaAjustes = $('vista-ajustes'), vistaRepartos = $('vista-repartos'),
           vistaReposicion = $('vista-reposicion'), vistaCompras = $('vista-compras'), vistaCajas = $('vista-cajas'),
-          vistaReclamos = $('vista-reclamos'), vistaMapa = $('vista-mapa');
-    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas, vistaAjustes, vistaRepartos, vistaReposicion, vistaCompras, vistaCajas, vistaReclamos, vistaMapa]
-        .forEach((v) => v.classList.add('oculto'));
+          vistaReclamos = $('vista-reclamos'), vistaMapa = $('vista-mapa'), vistaVoz = $('vista-voz');
+    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas, vistaAjustes, vistaRepartos, vistaReposicion, vistaCompras, vistaCajas, vistaReclamos, vistaMapa, vistaVoz]
+        .forEach((v) => v && v.classList.add('oculto'));
     if (ent === 'inicio')   { ocultarTodo(); vistaInicio.classList.remove('oculto');   return renderInicio(); }
     if (ent === 'tablas')   { ocultarTodo(); vistaTablas.classList.remove('oculto');   return renderTablas(); }
     if (ent === 'bloques')  { ocultarTodo(); vistaBloques.classList.remove('oculto');  return renderBloques(); }
@@ -419,6 +419,7 @@ async function seleccionar(ent) {
     if (ent === 'cajas')     { ocultarTodo(); vistaCajas.classList.remove('oculto');      return renderCajas(); }
     if (ent === 'reclamos')  { ocultarTodo(); vistaReclamos.classList.remove('oculto');   return renderReclamos(); }
     if (ent === 'mapa')      { ocultarTodo(); vistaMapa.classList.remove('oculto');       return renderMapaEnvios(); }
+    if (ent === 'voz')       { ocultarTodo(); vistaVoz.classList.remove('oculto');        return renderVoz(); }
     if (ent === 'ajustes')  { ocultarTodo(); vistaAjustes.classList.remove('oculto');  return renderAjustes(); }
     entActual = ent; cfg = ENTIDADES[ent];
     page = 1; q = ''; filtros = {};

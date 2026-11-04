@@ -80,5 +80,10 @@ return [
         'elevenlabs_key'   => $leer('ELEVENLABS_API_KEY', ''),
         'elevenlabs_voice' => $leer('ELEVENLABS_VOICE_ID', 'cjVigY5qzO86Huf0OWal'), // Eric
         'elevenlabs_model' => $leer('ELEVENLABS_MODEL', 'eleven_flash_v2_5'),        // flash = rápido
+        // Groq (LPU): transcripción Whisper + cerebro Llama, latencia casi nula.
+        // Si GROQ_API_KEY está seteada, la transcripción usa Groq; si no, Gemini.
+        'groq_key'     => $leer('GROQ_API_KEY', ''),
+        'groq_stt'     => $leer('GROQ_STT_MODEL', 'whisper-large-v3-turbo'),
+        'groq_model'   => $leer('GROQ_MODEL', 'llama-3.3-70b-versatile'),
     ],
 ];

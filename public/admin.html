@@ -30,6 +30,7 @@
                 <button data-ent="mapa"      class="nav-item">Mapa envíos</button>
                 <button data-ent="reclamos"  class="nav-item">Reclamos</button>
                 <button data-ent="cajas"     class="nav-item" data-admin>Cajas</button>
+                <button data-ent="voz"       class="nav-item" data-admin>Asistente</button>
                 <button data-ent="tablas"    class="nav-item" data-admin>Tablas</button>
                 <button data-ent="bloques"   class="nav-item" data-admin>Inicio tienda</button>
                 <button data-ent="ajustes"   class="nav-item" data-admin>Ajustes</button>
@@ -166,6 +167,21 @@
                     </div>
                 </header>
                 <div id="reposicion-cont"></div>
+            </section>
+
+            <!-- Vista: Asistente de voz (auditoría de interacciones) -->
+            <section id="vista-voz" class="oculto">
+                <header class="content-top">
+                    <div>
+                        <button class="volver-link" data-ir-inicio>‹ Panel</button>
+                        <h1>Asistente de voz</h1>
+                        <p class="sub">Auditoría de las conversaciones: qué pidió cada quién y qué respondió el asistente.</p>
+                    </div>
+                    <div class="content-top-acciones">
+                        <button id="voz-refrescar" class="btn-secundario">Actualizar</button>
+                    </div>
+                </header>
+                <div id="voz-log-cont"></div>
             </section>
 
             <!-- Vista: Reclamos (gestión de reclamos de clientes) -->
@@ -336,6 +352,7 @@
     <script src="/assets/js/admin-cajas.js"></script>
     <script src="/assets/js/admin-reclamos.js"></script>
     <script src="/assets/js/admin-mapa.js"></script>
+    <script src="/assets/js/admin-voz.js"></script>
     <!-- Asistente de voz (mismo botón flotante que el POS). La ruta exige sesión de staff. -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {

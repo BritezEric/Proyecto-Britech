@@ -4,7 +4,10 @@ namespace App\Controllers;
 
 use App\Core\Request;
 use App\Core\Response;
+use App\Core\Session;
+use App\Core\Paginacion;
 use App\Services\VozService;
+use App\Repositories\VozRepository;
 
 /**
  * Asistente de voz del POS. Recibe el texto dictado y lo reenvía a n8n
@@ -32,6 +35,10 @@ class VozController
 
         $resultado = $voz->interpretar($texto, $historial);
         $respuesta = $this->limpiarVoz($resultado['respuesta']);
+
+        // Auditoría: guardamos la interacción para que el admin la pueda revisar.
+        (new VozRepository())->registrar(Session::usuarioId(), $texto, $respuesta, 'pos');
+
         Response::json([
             'ok'        => true,
             'texto'     => $texto,
@@ -39,6 +46,15 @@ class VozController
             'historial' => $resultado['historial'] ?? $historial,
             'audio'     => $voz->hablar($respuesta),   // mp3 base64 (ElevenLabs) o '' si no hay key
         ]);
+    }
+
+    /** GET /api/admin/voz/log — bitácora del asistente (auditoría). Solo admin. */
+    public function log(): void
+    {
+        if (!Session::esAdmin()) { Response::json(['ok' => false, 'error' => 'Solo admin.'], 403); return; }
+        [$page, $perPage, $offset] = Paginacion::desde(20, 100);
+        $repo = new VozRepository();
+        Response::json(Paginacion::respuesta($repo->listar($perPage, $offset), $repo->total(), $page, $perPage));
     }
 
     /** Saca markdown y saltos de línea para que la voz no lea asteriscos ni viñetas. */

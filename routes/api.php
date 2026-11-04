@@ -55,6 +55,7 @@ $router->post('/api/usuarios',   [UsuarioController::class, 'crear'], true);
 
 // --- POS (requieren login) ---
 $router->post('/api/voz/interpretar',  [VozController::class, 'interpretar'],  true);
+$router->get('/api/admin/voz/log',     [VozController::class, 'log'],           true);
 $router->get('/api/productos',         [ProductoController::class, 'index'],  true);
 $router->get('/api/productos/buscar',  [ProductoController::class, 'buscar'], true);
 $router->get('/api/productos/precios', [ProductoController::class, 'precios'], true);
