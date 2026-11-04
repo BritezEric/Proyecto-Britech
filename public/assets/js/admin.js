@@ -406,8 +406,8 @@ async function seleccionar(ent) {
     const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados'),
           vistaTablas = $('vista-tablas'), vistaAjustes = $('vista-ajustes'), vistaRepartos = $('vista-repartos'),
           vistaReposicion = $('vista-reposicion'), vistaCompras = $('vista-compras'), vistaCajas = $('vista-cajas'),
-          vistaReclamos = $('vista-reclamos'), vistaMapa = $('vista-mapa'), vistaVoz = $('vista-voz');
-    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas, vistaAjustes, vistaRepartos, vistaReposicion, vistaCompras, vistaCajas, vistaReclamos, vistaMapa, vistaVoz]
+          vistaReclamos = $('vista-reclamos'), vistaMapa = $('vista-mapa'), vistaVoz = $('vista-voz'), vistaReportes = $('vista-reportes');
+    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas, vistaAjustes, vistaRepartos, vistaReposicion, vistaCompras, vistaCajas, vistaReclamos, vistaMapa, vistaVoz, vistaReportes]
         .forEach((v) => v && v.classList.add('oculto'));
     if (ent === 'inicio')   { ocultarTodo(); vistaInicio.classList.remove('oculto');   return renderInicio(); }
     if (ent === 'tablas')   { ocultarTodo(); vistaTablas.classList.remove('oculto');   return renderTablas(); }
@@ -420,6 +420,7 @@ async function seleccionar(ent) {
     if (ent === 'reclamos')  { ocultarTodo(); vistaReclamos.classList.remove('oculto');   return renderReclamos(); }
     if (ent === 'mapa')      { ocultarTodo(); vistaMapa.classList.remove('oculto');       return renderMapaEnvios(); }
     if (ent === 'voz')       { ocultarTodo(); vistaVoz.classList.remove('oculto');        return renderVoz(); }
+    if (ent === 'reportes')  { ocultarTodo(); vistaReportes.classList.remove('oculto');   return renderReportes(); }
     if (ent === 'ajustes')  { ocultarTodo(); vistaAjustes.classList.remove('oculto');  return renderAjustes(); }
     entActual = ent; cfg = ENTIDADES[ent];
     page = 1; q = ''; filtros = {};
@@ -1107,6 +1108,7 @@ async function renderInicio() {
         <button class="acceso-btn" data-ir="compras"><span class="acceso-ic">${ICO.download}</span> Compras</button>
         <button class="acceso-btn" data-ir="cajas"><span class="acceso-ic">${ICO.wallet}</span> Cajas</button>
         <button class="acceso-btn" data-ir="reclamos"><span class="acceso-ic">${ICO.megaphone}</span> Reclamos</button>
+        <button class="acceso-btn" data-ir="reportes"><span class="acceso-ic">${ICO.mappin}</span> Localidades</button>
         <a class="acceso-btn" href="/pos.html"><span class="acceso-ic">${ICO.receipt}</span> Ir al POS</a>`;
     $('dash-accesos').querySelectorAll('[data-ir]').forEach((b) =>
         b.addEventListener('click', () => seleccionar(b.dataset.ir)));

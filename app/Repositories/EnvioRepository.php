@@ -32,9 +32,38 @@ class EnvioRepository
     /** Deriva (asigna) un envío a un repartidor. $repartidorId null = sin asignar. */
     public function derivar(int $envioId, ?int $repartidorId): void
     {
+        if (self::tieneAsignadoEn()) {
+            // asignado_en va ANTES que repartidor_id: MySQL evalúa el SET en orden.
+            Database::conexion()
+                ->prepare("UPDATE envio SET " . self::SET_ASIGNADO . ", repartidor_id = ? WHERE id = ?")
+                ->execute([$repartidorId, $repartidorId, $envioId]);
+            return;
+        }
         Database::conexion()
             ->prepare("UPDATE envio SET repartidor_id = ? WHERE id = ?")
             ->execute([$repartidorId, $envioId]);
+    }
+
+    /**
+     * Momento de la PRIMERA asignación (para medir cuánto esperó el envío):
+     * se fija al pasar de "sin repartidor" a uno; si se reasigna se conserva,
+     * y si se desasigna vuelve a NULL. Usa un parámetro: el repartidor nuevo.
+     */
+    private const SET_ASIGNADO = "asignado_en = CASE WHEN ? IS NULL THEN NULL
+                                                    WHEN repartidor_id IS NULL THEN NOW()
+                                                    ELSE asignado_en END";
+
+    /** La columna asignado_en la agrega schema_reportes_operativos.sql: sin él, todo sigue andando. */
+    private static function tieneAsignadoEn(): bool
+    {
+        static $tiene = null;
+        if ($tiene === null) {
+            $tiene = (bool) Database::conexion()->query(
+                "SELECT COUNT(*) FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'envio' AND COLUMN_NAME = 'asignado_en'"
+            )->fetchColumn();
+        }
+        return $tiene;
     }
 
     /** Cambia el estado de un envío por su id (sirve para pedido o venta). */
@@ -86,7 +115,10 @@ class EnvioRepository
         foreach (self::CAMPOS as $c) {
             if (array_key_exists($c, $datos)) { $sets[] = "$c = ?"; $vals[] = $datos[$c]; }
         }
-        if ($repartidorId !== false) { $sets[] = 'repartidor_id = ?'; $vals[] = $repartidorId; }
+        if ($repartidorId !== false) {
+            if (self::tieneAsignadoEn()) { $sets[] = self::SET_ASIGNADO; $vals[] = $repartidorId; }
+            $sets[] = 'repartidor_id = ?'; $vals[] = $repartidorId;
+        }
         $vals[] = $pedidoId;
         Database::conexion()
             ->prepare('UPDATE envio SET ' . implode(', ', $sets) . ' WHERE pedido_id = ?')

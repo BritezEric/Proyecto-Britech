@@ -38,6 +38,8 @@
 
 **Módulo 5 — Salidas del Sistema**
 - [modulos/dashboard.md](modulos/dashboard.md) — dashboard, KPIs y reportes
+- [modulos/reporte-localidades.md](modulos/reporte-localidades.md) — ventas, pedidos y entregas por localidad / zona (PDF + CSV)
+- [modulos/reportes-operativos.md](modulos/reportes-operativos.md) — control diario: medios de pago, cajas, vendedores, tienda, reclamos y envíos (PDF + CSV)
 
 ## 🛒 Tienda, pagos y posventa
 - [modulos/tienda-online.md](modulos/tienda-online.md) — catálogo, carrito, checkout, mayorista, favoritos

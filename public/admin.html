@@ -29,6 +29,7 @@
                 <button data-ent="pedidos"   class="nav-item">Pedidos</button>
                 <button data-ent="mapa"      class="nav-item">Mapa envíos</button>
                 <button data-ent="reclamos"  class="nav-item">Reclamos</button>
+                <button data-ent="reportes"  class="nav-item">Reportes</button>
                 <button data-ent="cajas"     class="nav-item" data-admin>Cajas</button>
                 <button data-ent="voz"       class="nav-item" data-admin>Asistente</button>
                 <button data-ent="tablas"    class="nav-item" data-admin>Tablas</button>
@@ -214,6 +215,171 @@
                 </div>
             </section>
 
+            <!-- Vista: Reportes — Localidades (admin y vendedor) + Control operativo (solo admin) -->
+            <section id="vista-reportes" class="oculto">
+                <nav class="rep-tabs" id="rep-tabs" aria-label="Reportes">
+                    <button type="button" data-rep="localidades" class="activo">Localidades</button>
+                    <button type="button" data-rep="pagos" data-admin>Medios de pago</button>
+                    <button type="button" data-rep="cajas" data-admin>Cajas y anulaciones</button>
+                    <button type="button" data-rep="vendedores" data-admin>Vendedores</button>
+                    <button type="button" data-rep="pedidos" data-admin>Tienda online</button>
+                    <button type="button" data-rep="reclamos" data-admin>Reclamos</button>
+                    <button type="button" data-rep="envios" data-admin>Envíos sin asignar</button>
+                    <button type="button" data-rep="carga" data-admin>Carga por barrio</button>
+                </nav>
+
+                <!-- Reportes operativos (los arma admin-reportes-operativos.js) -->
+                <div id="rep-operativo" class="oculto"></div>
+
+                <div id="rep-localidades">
+                <header class="content-top">
+                    <div>
+                        <button class="volver-link" data-ir-inicio data-admin>‹ Panel</button>
+                        <h1>Reporte de Localidades</h1>
+                        <p class="sub">Dónde se vende, cuánto y cómo se entrega: ventas del POS, pedidos online y envíos por zona.</p>
+                    </div>
+                    <div class="content-top-acciones">
+                        <select id="rl-csv-seccion" class="rl-select" aria-label="Qué exportar en CSV">
+                            <option value="zonas">CSV · Zonas</option>
+                            <option value="logistica">CSV · Entregas</option>
+                            <option value="productos">CSV · Productos</option>
+                        </select>
+                        <button id="rl-csv" class="btn-secundario">Exportar CSV</button>
+                        <button id="rl-pdf" class="btn-primary">Exportar PDF</button>
+                    </div>
+                </header>
+
+                <form id="rl-filtros" class="rl-filtros" autocomplete="off">
+                    <div class="rl-rapidos" id="rl-rapidos">
+                        <button type="button" data-rango="mes">Este mes</button>
+                        <button type="button" data-rango="mes_ant">Mes anterior</button>
+                        <button type="button" data-rango="7">Últimos 7 días</button>
+                        <button type="button" data-rango="30">Últimos 30 días</button>
+                        <button type="button" data-rango="anio">Este año</button>
+                    </div>
+                    <div class="rl-grid">
+                        <div class="campo"><label for="rl-desde">Desde</label><input type="date" id="rl-desde" name="desde" required></div>
+                        <div class="campo"><label for="rl-hasta">Hasta</label><input type="date" id="rl-hasta" name="hasta" required></div>
+                        <div class="campo"><label for="rl-comparar">Comparar con</label>
+                            <select id="rl-comparar" name="comparar">
+                                <option value="anterior">Período anterior</option>
+                                <option value="anio">Mismo período del año anterior</option>
+                                <option value="personalizado">Otro rango…</option>
+                                <option value="ninguna">Sin comparar</option>
+                            </select></div>
+                        <div class="campo rl-comp oculto"><label for="rl-comp-desde">Comparar desde</label><input type="date" id="rl-comp-desde" name="comp_desde"></div>
+                        <div class="campo rl-comp oculto"><label for="rl-comp-hasta">Comparar hasta</label><input type="date" id="rl-comp-hasta" name="comp_hasta"></div>
+                        <div class="campo"><label for="rl-base">Ubicación según</label>
+                            <select id="rl-base" name="base">
+                                <option value="entrega">Destino del envío</option>
+                                <option value="cliente">Domicilio del cliente</option>
+                            </select></div>
+                        <div class="campo"><label for="rl-canal">Canal</label>
+                            <select id="rl-canal" name="canal">
+                                <option value="">Todos</option>
+                                <option value="pos">POS (mostrador)</option>
+                                <option value="online">Tienda online</option>
+                            </select></div>
+                        <div class="campo"><label for="rl-zona">Localidad / zona</label><select id="rl-zona" name="zona"></select></div>
+                        <div class="campo"><label for="rl-tipo">Tipo de zona</label>
+                            <select id="rl-tipo" name="tipo_zona">
+                                <option value="">Todas</option>
+                                <option value="localidad">Localidades</option>
+                                <option value="barrio">Barrios (Moto Express)</option>
+                                <option value="local">Retiro / mostrador</option>
+                                <option value="sin">Sin localidad</option>
+                            </select></div>
+                        <div class="campo"><label for="rl-estado-pedido">Estado del pedido</label><select id="rl-estado-pedido" name="estado_pedido"></select></div>
+                        <div class="campo"><label for="rl-estado-envio">Estado del envío</label><select id="rl-estado-envio" name="estado_envio"></select></div>
+                        <div class="campo"><label for="rl-empresa">Medio de envío</label><select id="rl-empresa" name="empresa_envio_id"></select></div>
+                        <div class="campo"><label for="rl-producto">Producto</label><select id="rl-producto" name="producto_id"></select></div>
+                        <div class="campo"><label for="rl-demora">Demorado si supera (días)</label><input type="number" id="rl-demora" name="dias_demora" min="1" max="60" value="3"></div>
+                    </div>
+                    <div class="rl-acciones">
+                        <p id="rl-alcance" class="rl-nota"></p>
+                        <button type="button" id="rl-limpiar" class="btn-secundario">Limpiar</button>
+                        <button type="submit" class="btn-primary">Aplicar filtros</button>
+                    </div>
+                </form>
+
+                <div id="rl-error" class="rl-error oculto" role="alert"></div>
+                <div id="rl-cont" aria-live="polite">
+                    <p class="rl-periodo" id="rl-periodo"></p>
+                    <div id="rl-kpis" class="cards rl-kpis"></div>
+                    <div id="rl-kpis-fin" class="cards rl-kpis oculto"></div>
+
+                    <h2 class="dash-h">📊 Análisis geográfico</h2>
+                    <div class="chart-card">
+                        <div class="chart-card-top"><div class="chart-switch" id="rl-chart-switch"></div></div>
+                        <p id="rl-chart-titulo" class="chart-titulo"></p>
+                        <div class="chart-box"><canvas id="rl-chart"></canvas></div>
+                        <p id="rl-chart-vacio" class="dash-vacio oculto">Sin ventas para graficar con estos filtros.</p>
+                    </div>
+
+                    <h2 class="dash-h">📍 Ventas por localidad</h2>
+                    <div class="toolbar">
+                        <div class="search-wrap"><input id="rl-q" class="search" type="search" placeholder="Buscar localidad o barrio…" aria-label="Buscar localidad o barrio"></div>
+                    </div>
+                    <div class="tabla-caja rl-tabla-scroll">
+                        <table class="rl-tabla">
+                            <thead id="rl-thead"></thead>
+                            <tbody id="rl-tbody"></tbody>
+                        </table>
+                        <div id="rl-vacio" class="tabla-vacia oculto">Sin operaciones para estos filtros.</div>
+                    </div>
+                    <div class="paginacion" id="rl-paginacion"></div>
+
+                    <div class="dash-grid rl-dos">
+                        <div class="dash-panel">
+                            <div class="chart-head">
+                                <h3>🛒 Productos más vendidos por zona</h3>
+                                <div class="periodo-toggle" id="rl-prod-orden">
+                                    <button type="button" data-o="unidades" class="activo">Unidades</button>
+                                    <button type="button" data-o="importe">Importe</button>
+                                </div>
+                            </div>
+                            <select id="rl-prod-zona" class="rl-select rl-ancho" aria-label="Zona para ver productos"></select>
+                            <div id="rl-productos"></div>
+                        </div>
+                        <div class="dash-panel">
+                            <h3>⚖️ Comparar dos localidades</h3>
+                            <div class="rl-comp-zonas">
+                                <select id="rl-zona-a" class="rl-select" aria-label="Primera zona"></select>
+                                <span class="td-mute">vs</span>
+                                <select id="rl-zona-b" class="rl-select" aria-label="Segunda zona"></select>
+                                <button type="button" id="rl-comparar-zonas" class="btn-secundario">Comparar</button>
+                            </div>
+                            <div id="rl-comparacion"><p class="td-mute">Elegí dos zonas para verlas lado a lado con los filtros actuales.</p></div>
+                        </div>
+                    </div>
+
+                    <h2 class="dash-h">🚚 Entregas por zona</h2>
+                    <div class="tabla-caja rl-tabla-scroll">
+                        <table class="rl-tabla">
+                            <thead id="rl-log-thead"></thead>
+                            <tbody id="rl-log-tbody"></tbody>
+                        </table>
+                        <div id="rl-log-vacio" class="tabla-vacia oculto">Sin envíos a domicilio para estos filtros.</div>
+                    </div>
+                    <div id="rl-repartidores"></div>
+
+                    <details class="rl-notas">
+                        <summary>Cómo se calculan los datos y qué limitaciones tienen</summary>
+                        <ul>
+                            <li><b>Operación</b> = una venta del POS registrada o un pedido online no cancelado. Un pedido con varios productos cuenta como una sola operación. Las ventas anuladas y los pedidos cancelados se informan aparte y no suman importe.</li>
+                            <li><b>Importe</b> = productos vendidos, sin el costo del envío. El envío cobrado al cliente se muestra por separado.</li>
+                            <li><b>Cobrado</b> (solo admin) = ventas del POS (se cobran al momento) + pedidos online con pago aprobado. Los pagos pendientes o en revisión se muestran como <i>pendiente de cobro</i>.</li>
+                            <li><b>Zona</b> = destino del envío. Las ventas sin envío y los retiros figuran como “Retiro / venta en el local”. Los barrios de Moto Express se muestran separados de las localidades. Los envíos sin localidad cargada se agrupan como “Sin localidad identificada”: no se adivina la localidad por el código postal.</li>
+                            <li>Con <b>Domicilio del cliente</b> la zona es la localidad declarada en el perfil del cliente (puede no coincidir con el lugar de entrega).</li>
+                            <li><b>Demorado</b> = envío pendiente, despachado o en camino con más días que el umbral elegido. Britech no registra una fecha prometida de entrega ni la fecha real de entrega.</li>
+                            <li>La <b>paga a repartidores</b> usa la tarifa vigente del barrio (misma regla que el reporte de Repartidores). Para Correo, Andreani u OCA no hay costo interno registrado: no se calcula ganancia logística.</li>
+                            <li>El importe por producto usa el precio guardado en cada venta; no reparte el descuento general de la venta entre los productos.</li>
+                        </ul>
+                    </details>
+                </div>
+                </div><!-- /rep-localidades -->
+            </section>
+
             <!-- Vista: Cajas (supervisión de aperturas/cierres del vendedor) -->
             <section id="vista-cajas" class="oculto">
                 <header class="content-top">
@@ -359,5 +525,7 @@
             if (window.Voz && Voz.montar) Voz.montar({ endpoint: '/api/voz/interpretar' });
         });
     </script>
+    <script src="/assets/js/admin-reportes.js"></script>
+    <script src="/assets/js/admin-reportes-operativos.js"></script>
 </body>
 </html>

@@ -58,6 +58,32 @@ Todas las respuestas son JSON (salvo los redirects de Auth0 y el PDF de empleado
 | POST | `/api/admin/notificaciones/leer` | login (staff) | `NotificacionController::leer` |
 | POST | `/api/admin/notificaciones/leer-todas` | login (staff) | `NotificacionController::leerTodas` |
 
+## Reporte de Localidades (solo lectura)
+Admin: completo. Vendedor: acotado (sus ventas del POS + pedidos online, sin cobros,
+costos de envío ni repartidores). Filtros por query string: `desde`, `hasta`, `comparar`,
+`comp_desde`, `comp_hasta`, `base`, `canal`, `zona`, `tipo_zona`, `estado_pedido`,
+`estado_envio`, `empresa_envio_id`, `producto_id`, `dias_demora`.
+| Método | Ruta | Auth | Controlador::acción |
+|---|---|---|---|
+| GET | `/api/admin/reportes/localidades/opciones` | login (admin / vendedor) | `ReporteLocalidadController::opciones` |
+| GET | `/api/admin/reportes/localidades/resumen` | login (admin / vendedor) | `ReporteLocalidadController::resumen` |
+| GET | `/api/admin/reportes/localidades/zonas` | login (admin / vendedor) | `ReporteLocalidadController::zonas` |
+| GET | `/api/admin/reportes/localidades/productos` | login (admin / vendedor) | `ReporteLocalidadController::productos` |
+| GET | `/api/admin/reportes/localidades/comparar-zonas` | login (admin / vendedor) | `ReporteLocalidadController::compararZonas` |
+| GET | `/api/admin/reportes/localidades/csv` | login (admin / vendedor) | `ReporteLocalidadController::csv` (archivo CSV) |
+| GET | `/api/admin/reportes/localidades/pdf` | login (admin / vendedor) | `ReporteLocalidadController::pdf` (archivo PDF) |
+
+## Reportes y Control Operativo (solo admin · solo lectura)
+Detalle en [modulos/reportes-operativos.md](modulos/reportes-operativos.md). `reporte` = `pagos` | `cajas` |
+`vendedores` | `pedidos` | `reclamos` | `envios` | `carga`. Filtros comunes: `desde`, `hasta` (AAAA-MM-DD, por
+defecto hoy, máximo un año); cada reporte suma los suyos. Un vendedor recibe **403**.
+| Método | Ruta | Auth | Controlador::acción |
+|---|---|---|---|
+| GET | `/api/admin/reportes/operativo?reporte=…` | login (admin) | `ReporteOperativoController::datos` |
+| GET | `/api/admin/reportes/operativo/opciones` | login (admin) | `ReporteOperativoController::opciones` |
+| GET | `/api/admin/reportes/operativo/csv?reporte=…&tabla=N` | login (admin) | `ReporteOperativoController::csv` (archivo CSV) |
+| GET | `/api/admin/reportes/operativo/pdf?reporte=…` | login (admin) | `ReporteOperativoController::pdf` (archivo PDF) |
+
 ## Pedidos online (gestión admin)
 | Método | Ruta | Auth | Controlador::acción |
 |---|---|---|---|

@@ -39,6 +39,8 @@ use App\Controllers\TrackingController;
 use App\Controllers\PrecioController;
 use App\Controllers\AuditoriaController;
 use App\Controllers\VozController;
+use App\Controllers\ReporteLocalidadController;
+use App\Controllers\ReporteOperativoController;
 
 /** @var App\Core\Router $router */
 
@@ -138,6 +140,23 @@ $router->post('/api/admin/precios/previsualizar', [PrecioController::class, 'pre
 $router->post('/api/admin/precios/aplicar',       [PrecioController::class, 'aplicar'],       true);
 // Auditoría (quién cambió qué) — solo admin
 $router->get('/api/admin/auditoria', [AuditoriaController::class, 'listar'], true);
+
+// Reporte de Localidades (ventas / pedidos / envíos por zona) — admin completo;
+// vendedor acotado (el alcance lo decide el Service según la sesión). Solo lectura.
+$router->get('/api/admin/reportes/localidades/opciones',       [ReporteLocalidadController::class, 'opciones'],      true);
+$router->get('/api/admin/reportes/localidades/resumen',        [ReporteLocalidadController::class, 'resumen'],       true);
+$router->get('/api/admin/reportes/localidades/zonas',          [ReporteLocalidadController::class, 'zonas'],         true);
+$router->get('/api/admin/reportes/localidades/productos',      [ReporteLocalidadController::class, 'productos'],     true);
+$router->get('/api/admin/reportes/localidades/comparar-zonas', [ReporteLocalidadController::class, 'compararZonas'], true);
+$router->get('/api/admin/reportes/localidades/csv',            [ReporteLocalidadController::class, 'csv'],           true);
+$router->get('/api/admin/reportes/localidades/pdf',            [ReporteLocalidadController::class, 'pdf'],           true);
+
+// Reportes y Control Operativo (pagos, cajas, vendedores, tienda, reclamos, envíos) —
+// solo admin (lo chequea el controlador). Solo lectura.
+$router->get('/api/admin/reportes/operativo',          [ReporteOperativoController::class, 'datos'],    true);
+$router->get('/api/admin/reportes/operativo/opciones', [ReporteOperativoController::class, 'opciones'], true);
+$router->get('/api/admin/reportes/operativo/csv',      [ReporteOperativoController::class, 'csv'],      true);
+$router->get('/api/admin/reportes/operativo/pdf',      [ReporteOperativoController::class, 'pdf'],      true);
 
 // Reposición: productos con stock bajo + pedido a proveedor — solo admin
 $router->get('/api/admin/reposicion',  [ReposicionController::class, 'index'],     true);
