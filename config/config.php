@@ -10,11 +10,11 @@
 // 1. Carga el autoload de Composer (una sola vez).
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
-// 2. Carga el .env SOLO si el entorno no definio ya las variables.
-//    (En Docker las define docker-compose, y no queremos pisarlas.)
-if (getenv('DB_HOST') === false && !isset($_ENV['DB_HOST'])) {
-    Dotenv\Dotenv::createImmutable(dirname(__DIR__))->safeLoad();
-}
+// 2. Carga el .env siempre. createImmutable NO pisa las variables que el entorno
+//    ya definió (las de docker-compose: DB_*, VOZ_API_KEY), así que esto solo
+//    SUMA las que falten (GROQ_API_KEY, ELEVENLABS_API_KEY…) tanto en Laragon
+//    como en Docker. safeLoad no rompe si el archivo .env no existe.
+Dotenv\Dotenv::createImmutable(dirname(__DIR__))->safeLoad();
 
 // Lee una variable: primero del entorno real (Docker), luego del .env (Laragon).
 $leer = fn(string $clave, ?string $def = null): ?string
