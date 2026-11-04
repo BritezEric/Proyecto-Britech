@@ -12,6 +12,9 @@ const money = (n) => '$ ' + Number(n).toLocaleString('es-AR', { minimumFractionD
 
 function fila(v) {
     const tr = document.createElement('tr');
+    tr.className = 'clickable';
+    tr.dataset.id = v.id;
+    tr.dataset.num = v.numero;
     const boton = v.estado === 'registrada'
         ? `<button class="btn-anular" data-id="${v.id}" data-num="${v.numero}">Anular</button>`
         : '';
@@ -36,9 +39,58 @@ async function cargar() {
     ventas.forEach((v) => tbody.appendChild(fila(v)));
 }
 
+// ----- Detalle de la venta (modal al hacer click en la fila) -----
+const modalDet = document.getElementById('modal-det');
+const detCont  = document.getElementById('det-cont');
+const detTit   = document.getElementById('det-titulo');
+
+function cerrarDet() { modalDet.classList.add('oculto'); }
+document.getElementById('det-cerrar').addEventListener('click', cerrarDet);
+modalDet.addEventListener('click', (e) => { if (e.target === modalDet) cerrarDet(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarDet(); });
+
+async function verDetalle(id, num) {
+    detTit.textContent = 'Venta ' + num;
+    detCont.innerHTML = '<p class="td-mute">Cargando…</p>';
+    modalDet.classList.remove('oculto');
+    let d;
+    try { d = await api.get('/api/ventas/detalle?id=' + id); }
+    catch (err) { detCont.innerHTML = '<p class="msg error">No se pudo cargar el detalle.</p>'; return; }
+
+    const v = d.venta || {};
+    const items = (d.items || []).map((it) =>
+        `<tr><td>${it.cantidad} × ${esc(it.nombre)}</td><td class="r">${money(it.subtotal)}</td></tr>`).join('');
+    const pagos = (d.pagos || []).map((p) =>
+        `<div class="row"><span>${esc(p.nombre)}</span><span>${money(p.monto)}</span></div>`).join('');
+    const desc = Number(v.descuento) > 0 ? `<div class="row"><span>Descuento</span><span>- ${money(v.descuento)}</span></div>` : '';
+    const envio = Math.round((Number(v.total) - (Number(v.subtotal) - Number(v.descuento))) * 100) / 100;
+    const envioRow = envio > 0.001 ? `<div class="row"><span>Envío</span><span>${money(envio)}</span></div>` : '';
+
+    detCont.innerHTML = `
+        <div class="det-meta">
+            <span>Estado <b>${esc(v.estado)}</b></span>
+            <span>Cliente <b>${esc(v.cliente)}</b></span>
+            <span>Vendedor <b>${esc(v.vendedor)}</b></span>
+            <span>Fecha <b>${esc(v.creado_en)}</b></span>
+        </div>
+        <table class="det-items"><tbody>${items || '<tr><td>Sin ítems</td></tr>'}</tbody></table>
+        <div class="det-sum">
+            <div class="row"><span>Subtotal</span><span>${money(v.subtotal)}</span></div>
+            ${desc}${envioRow}
+            <div class="row total"><span>Total</span><span>${money(v.total)}</span></div>
+            ${pagos ? '<div style="margin-top:var(--sp-3);font-weight:700;color:var(--ink)">Pagos</div>' + pagos : ''}
+        </div>`;
+}
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
 tbody.addEventListener('click', async (e) => {
     const btn = e.target.closest('.btn-anular');
-    if (!btn) return;
+    if (!btn) {
+        const tr = e.target.closest('tr[data-id]');
+        if (tr) verDetalle(tr.dataset.id, tr.dataset.num);
+        return;
+    }
 
     const motivo = prompt(`Anular venta ${btn.dataset.num}. Motivo (obligatorio):`);
     if (motivo === null) return;              // canceló

@@ -63,6 +63,7 @@ $router->get('/api/clientes',          [ClienteController::class, 'index'],   tr
 $router->get('/api/tipos-pago',        [TipoPagoController::class, 'index'],   true);
 $router->post('/api/ventas',           [VentaController::class, 'crear'],      true);
 $router->get('/api/ventas',            [VentaController::class, 'listar'],     true);
+$router->get('/api/ventas/detalle',    [VentaController::class, 'detalle'],    true);
 $router->get('/api/ventas/ticket',     [VentaController::class, 'ticket'],     true);
 $router->post('/api/ventas/anular',    [VentaController::class, 'anular'],     true);
 

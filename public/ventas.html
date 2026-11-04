@@ -54,6 +54,23 @@
         .msg { margin: 0 0 var(--sp-4); padding: var(--sp-3) var(--sp-4); border-radius: var(--r-md); font-size: var(--text-sm); font-weight: 600; }
         .msg.ok { background: var(--primary-tint); color: var(--primary-strong); }
         .msg.error { background: var(--danger-tint); color: var(--danger-strong); }
+
+        tbody tr.clickable { cursor: pointer; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: var(--sp-4); z-index: 310; }
+        .modal-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-lg); width: 100%; max-width: 460px; max-height: 85vh; overflow: auto; }
+        .modal-head { display: flex; align-items: center; justify-content: space-between; padding: var(--sp-4) var(--sp-4) var(--sp-3); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--surface); }
+        .modal-head h2 { margin: 0; font-size: var(--text-lg); font-weight: 800; }
+        .modal-x { border: none; background: none; cursor: pointer; font-size: 1.1rem; color: var(--ink-muted); padding: 2px 8px; border-radius: var(--r-sm); line-height: 1; }
+        .modal-x:hover { background: var(--surface-2); color: var(--ink); }
+        .det-body { padding: var(--sp-4); }
+        .det-meta { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-5); margin-bottom: var(--sp-4); font-size: var(--text-sm); color: var(--ink-muted); }
+        .det-meta b { color: var(--ink); font-weight: 700; }
+        .det-items { width: 100%; border-collapse: collapse; }
+        .det-items td { padding: var(--sp-2) 0; border-bottom: 1px solid var(--line); font-size: var(--text-sm); }
+        .det-items td.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .det-sum { margin-top: var(--sp-3); font-size: var(--text-sm); }
+        .det-sum .row { display: flex; justify-content: space-between; padding: 2px 0; color: var(--ink-muted); }
+        .det-sum .row.total { color: var(--ink); font-weight: 800; font-size: var(--text-lg); margin-top: var(--sp-2); padding-top: var(--sp-2); border-top: 1px solid var(--line); }
     </style>
 </head>
 <body>
@@ -80,6 +97,16 @@
                     <tr><td colspan="7">Cargando…</td></tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <div id="modal-det" class="modal-overlay oculto">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="det-titulo">
+            <div class="modal-head">
+                <h2 id="det-titulo">Venta</h2>
+                <button id="det-cerrar" class="modal-x" aria-label="Cerrar">✕</button>
+            </div>
+            <div id="det-cont" class="det-body"></div>
         </div>
     </div>
 

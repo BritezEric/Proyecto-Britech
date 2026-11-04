@@ -38,6 +38,14 @@ class VentaController
         Response::json(['ok' => true, 'ventas' => (new VentaRepository())->listarRecientes()]);
     }
 
+    /** Detalle de una venta (ítems + pagos) para ver al hacer click en la lista. */
+    public function detalle(): void
+    {
+        $d = (new VentaRepository())->paraTicket((int) Request::query('id', '0'));
+        if ($d === null) { Response::json(['ok' => false, 'error' => 'Venta no encontrada'], 404); return; }
+        Response::json(['ok' => true] + $d);
+    }
+
     /** Genera el ticket de una venta en PDF (para descargar/imprimir). Requiere login. */
     public function ticket(): void
     {
