@@ -27,6 +27,10 @@ if (php_sapi_name() === 'cli-server') {
 // 1. Carga autoload de Composer + variables de entorno (.env) y la config.
 $config = require dirname(__DIR__) . '/config/config.php';
 
+// Zona horaria de PHP = la del negocio (y la de MySQL). Si no, PHP usa UTC y los
+// gráficos por día/hora de los dashboards quedan corridos 3 horas respecto de la base.
+date_default_timezone_set($_ENV['APP_TIMEZONE'] ?? (getenv('APP_TIMEZONE') ?: 'America/Argentina/Buenos_Aires'));
+
 // Red de seguridad: cualquier error no capturado sale como JSON limpio (no un
 // stack trace en pantalla). En modo debug incluimos el mensaje; en prod, genérico.
 set_exception_handler(function (\Throwable $e) use ($config) {

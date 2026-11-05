@@ -32,3 +32,12 @@ UPDATE usuario SET email_verificado = 1 WHERE email = 'admin@britech.local';
 UPDATE usuario
 SET password_hash = '$2y$12$VuVlwf5pu8q/./VTwZRRK..98099KeAyA68WYsGDb/1Ex/9Lj.qUi'
 WHERE email = 'admin@britech.local';
+
+-- Intentos de acceso por IP (anti fuerza bruta en login/registro). Ver App\Core\RateLimit.
+CREATE TABLE IF NOT EXISTS intento_acceso (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  ip         VARCHAR(45) NOT NULL,
+  accion     VARCHAR(30) NOT NULL,
+  creado_en  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_intento_ip (ip, accion, creado_en)
+) ENGINE=InnoDB;

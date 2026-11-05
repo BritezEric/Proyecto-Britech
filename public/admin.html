@@ -26,6 +26,7 @@
                 <span class="brand-word">Britech <span>Admin</span></span></div>
             <nav class="side-nav" id="nav">
                 <button data-ent="inicio"    class="nav-item" data-admin>Inicio</button>
+                <button data-ent="vendedor"  class="nav-item">Mi panel</button>
                 <button data-ent="pedidos"   class="nav-item">Pedidos</button>
                 <button data-ent="mapa"      class="nav-item">Mapa envíos</button>
                 <button data-ent="reclamos"  class="nav-item">Reclamos</button>
@@ -118,6 +119,33 @@
                     <div class="dash-panel" id="dash-stock"></div>
                     <div class="dash-panel" id="dash-gastos"></div>
                     <div class="dash-panel" id="dash-sinmov"></div>
+                </div>
+            </section>
+
+            <!-- Vista: dashboard INDIVIDUAL del vendedor (solo su desempeño) -->
+            <section id="vista-vendedor" class="oculto">
+                <header class="content-top">
+                    <div>
+                        <h1 id="vend-titulo">Mi panel</h1>
+                        <p class="sub">Tu desempeño: tus ventas, los clientes que te compraron y tus cajas.</p>
+                    </div>
+                    <div class="content-top-acciones">
+                        <div class="periodo-toggle" id="vend-periodo">
+                            <button data-p="dia">Día</button>
+                            <button data-p="semana" class="activo">Semana</button>
+                            <button data-p="mes">Mes</button>
+                            <button data-p="ano">Año</button>
+                        </div>
+                        <a class="btn-secundario" href="/pos.html">🧾 Ir al POS</a>
+                    </div>
+                </header>
+                <div id="vend-kpis" class="cards"></div>
+                <div class="dash-grid">
+                    <div class="dash-panel dash-ancho" id="vend-ventas"></div>
+                    <div class="dash-panel dash-ancho" id="vend-compras"></div>
+                    <div class="dash-panel dash-ancho" id="vend-cajas"></div>
+                    <div class="dash-panel" id="vend-ranking"></div>
+                    <div class="dash-panel" id="vend-clientes"></div>
                 </div>
             </section>
 
@@ -527,5 +555,6 @@
     </script>
     <script src="/assets/js/admin-reportes.js"></script>
     <script src="/assets/js/admin-reportes-operativos.js"></script>
+    <script src="/assets/js/admin-vendedor.js"></script>
 </body>
 </html>

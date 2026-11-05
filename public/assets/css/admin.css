@@ -885,3 +885,44 @@ td.acciones { text-align: right; white-space: nowrap; }
 .ro-acc { white-space: nowrap; }
 .btn-chico { padding: 4px var(--sp-2); font-size: var(--text-xs); }
 .ro-quitar { font-size: var(--text-sm); margin-left: var(--sp-2); }
+
+/* ===== Dashboard del vendedor (Mi panel) ===== */
+/* Barras hechas con CSS (el dashboard del admin pasó a Chart.js y ya no las define). */
+.barras { display: flex; align-items: flex-end; gap: var(--sp-3); height: 150px; }
+.barra-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); height: 100%; justify-content: flex-end; }
+.barra { width: 100%; max-width: 48px; border-radius: var(--r-sm) var(--r-sm) 0 0;
+    background: linear-gradient(180deg, var(--primary), var(--primary-strong)); min-height: 3px;
+    transition: opacity var(--dur-fast) var(--ease-out); }
+.barra-col:hover .barra { opacity: 0.85; }
+.barra-col span { font-size: var(--text-xs); color: var(--ink-muted); text-transform: capitalize; }
+.barras.grupos .barra-par { display: flex; align-items: flex-end; gap: 3px; width: 100%; height: 100%; justify-content: center; }
+.barras.grupos .barra { max-width: 18px; }
+.barra.fisica { background: linear-gradient(180deg, var(--primary), var(--primary-strong)); }
+.barra.online { background: linear-gradient(180deg, var(--accent), var(--accent-strong)); }
+.barra.gasto  { background: linear-gradient(180deg, var(--danger), var(--danger-strong)); }
+.chart-legend { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-bottom: var(--sp-3); font-size: var(--text-xs); color: var(--ink-muted); }
+.chart-legend .lg { display: inline-flex; align-items: center; gap: var(--sp-1); }
+.chart-legend .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.sw.fisica { background: var(--primary); }
+.sw.online { background: var(--accent); }
+.sw.gasto  { background: var(--danger); }
+#vista-vendedor .content-top { align-items: center; }
+/* Cantidad escrita arriba de cada barra (data-n), para leer el número sin hover. */
+.vend-barras { padding-top: 18px; }
+.vend-barras .barra { position: relative; }
+.vend-barras .barra[data-n]::before { content: attr(data-n); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+    margin-bottom: 2px; font-size: 10px; font-weight: 700; color: var(--ink-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chart-legend .lg b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.vend-cajas-kpis { grid-template-columns: repeat(2, 1fr); max-width: 440px; margin-bottom: var(--sp-3); }
+/* Ranking de vendedores (de mayor a menor) */
+.vend-ranking { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.vend-ranking li { display: grid; grid-template-columns: 28px minmax(70px, 34%) 1fr auto; align-items: center; gap: var(--sp-3);
+    font-size: var(--text-sm); padding: var(--sp-1) var(--sp-2); border-radius: var(--r-sm); }
+.vend-ranking li.yo { background: var(--primary-tint); }
+.vend-pos { text-align: center; font-weight: 800; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+/* Período "Día" = 24 barras (una por hora): más juntas y etiquetas chicas. */
+.vend-barras.compacto { gap: 2px; }
+.vend-barras.compacto .barra-col span { font-size: 9px; }
+.vend-barras.compacto .barra[data-n]::before { font-size: 9px; }
+#vista-vendedor a.btn-secundario { text-decoration: none; white-space: nowrap; }
+#vista-vendedor .content-top-acciones { flex-wrap: wrap; justify-content: flex-end; }
