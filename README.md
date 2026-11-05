@@ -46,7 +46,7 @@ mysql -u root < database/instalar.sql
 ```
 
 Si tu usuario de MySQL tiene contraseña: `mysql -u root -p < database/instalar.sql`.
-Probado en una base vacía con MySQL 8.4: crea 41 tablas y el usuario `admin@britech.local`.
+Probado en una base vacía con MySQL 8.4: crea 42 tablas y el usuario `admin@britech.local`.
 
 **Forma manual:** importar los `.sql` **en este orden** (las FKs dependen de él).
 El primero crea la base `britech_v2`; el resto hace `USE britech_v2`.
@@ -82,6 +82,8 @@ El primero crea la base `britech_v2`; el resto hace `USE britech_v2`.
 28. database/schema_tracking.sql          (seguimiento de envíos en tiempo real: posición del repartidor)
 29. database/schema_auditoria.sql         (auditoría: quién cambió qué y cuándo)
 30. database/schema_cliente_fiscal.sql    (datos fiscales opcionales del cliente)
+31. database/schema_reportes_localidad.sql  (índices del reporte por localidades)
+32. database/schema_reportes_operativos.sql (columnas e índices de los reportes operativos)
 ```
 
 Desde la terminal (uno por uno, o encadenados):
@@ -117,6 +119,8 @@ mysql -u root britech_v2 < database/schema_notificaciones_v2.sql
 mysql -u root britech_v2 < database/schema_tracking.sql
 mysql -u root britech_v2 < database/schema_auditoria.sql
 mysql -u root britech_v2 < database/schema_cliente_fiscal.sql
+mysql -u root britech_v2 < database/schema_reportes_localidad.sql
+mysql -u root britech_v2 < database/schema_reportes_operativos.sql
 ```
 
 **3. Variables de entorno** — copiar la plantilla y completar:

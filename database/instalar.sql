@@ -35,3 +35,5 @@ SOURCE database/schema_notificaciones_v2.sql;
 SOURCE database/schema_tracking.sql;
 SOURCE database/schema_auditoria.sql;
 SOURCE database/schema_cliente_fiscal.sql;
+SOURCE database/schema_reportes_localidad.sql;
+SOURCE database/schema_reportes_operativos.sql;
