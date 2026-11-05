@@ -69,10 +69,21 @@ class CajaService
         $this->repo->cerrar((int) $caja['id'], $contado, $esperado, $diferencia, trim((string) $observacion) ?: null);
 
         // Aviso a los admin: se cerró una caja (marcamos alerta si no cuadra).
+        $notif = new \App\Repositories\NotificacionRepository();
         $dif = number_format($diferencia, 2, ',', '.');
-        (new \App\Repositories\NotificacionRepository())->crearRol(
+        $notif->crearRol(
             1, 'caja_cierre',
             $diferencia == 0.0 ? 'Caja cerrada y cuadrada ✓' : "Caja cerrada · diferencia \$ {$dif}",
+            'cajas', (int) $caja['id'], $diferencia == 0.0 ? 'exito' : 'alerta'
+        );
+
+        // Aviso al vendedor que cerró, con el detalle del cierre.
+        $m = fn($n) => number_format((float) $n, 2, ',', '.');
+        $detalle = "Cierre de tu caja · {$resumen['ventas']} ventas · "
+            . "Efectivo \$ {$m($resumen['efectivo'])} · Transf \$ {$m($resumen['transferencia'])} · "
+            . "Esperado \$ {$m($esperado)} · Contado \$ {$m($contado)} · Diferencia \$ {$dif}";
+        $notif->crearUsuario(
+            $usuarioId, 'caja_cierre_detalle', $detalle,
             'cajas', (int) $caja['id'], $diferencia == 0.0 ? 'exito' : 'alerta'
         );
 
