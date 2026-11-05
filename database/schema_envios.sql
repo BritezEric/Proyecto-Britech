@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS empresa_envio (
   id         INT AUTO_INCREMENT PRIMARY KEY,
   nombre     VARCHAR(120) NOT NULL,
   costo_base DECIMAL(12,2) NOT NULL DEFAULT 0,
+  es_retiro  TINYINT(1) NOT NULL DEFAULT 0,   -- 1 = retiro en local, sin dirección
   activo     TINYINT(1) NOT NULL DEFAULT 1,
   creado_en  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -30,8 +31,8 @@ CREATE TABLE IF NOT EXISTS envio (
   CONSTRAINT fk_envio_empresa FOREIGN KEY (empresa_envio_id) REFERENCES empresa_envio(id)
 ) ENGINE=InnoDB;
 
-INSERT INTO empresa_envio (nombre, costo_base) VALUES
-  ('Retiro en local', 0),
-  ('Correo Argentino', 3500),
-  ('Andreani', 4800),
-  ('OCA', 5200);
+INSERT INTO empresa_envio (nombre, costo_base, es_retiro) VALUES
+  ('Retiro en local', 0, 1),
+  ('Correo Argentino', 3500, 0),
+  ('Andreani', 4800, 0),
+  ('OCA', 5200, 0);

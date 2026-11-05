@@ -12,7 +12,10 @@
 
 USE britech_v2;
 
+-- precio_anterior = precio tachado de las ofertas de la tienda. Ningún script lo
+-- creaba (se había agregado a mano), así que una instalación nueva fallaba acá.
 ALTER TABLE producto
+  ADD COLUMN precio_anterior DECIMAL(12,2) NULL AFTER min_mayorista,
   ADD COLUMN costo        DECIMAL(12,2) NULL AFTER precio_anterior,
   ADD COLUMN stock_minimo INT NOT NULL DEFAULT 0 AFTER costo;
 

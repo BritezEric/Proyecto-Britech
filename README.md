@@ -36,7 +36,19 @@ Proyecto de la materia *Prácticas Profesionalizantes*.
 composer install
 ```
 
-**2. Base de datos** — importar los `.sql` **en este orden** (las FKs dependen de él).
+**2. Base de datos**
+
+**Forma rápida (recomendada):** desde la carpeta raíz del proyecto, un solo comando
+crea la base `britech_v2` con todas las tablas y los datos de prueba:
+
+```bash
+mysql -u root < database/instalar.sql
+```
+
+Si tu usuario de MySQL tiene contraseña: `mysql -u root -p < database/instalar.sql`.
+Probado en una base vacía con MySQL 8.4: crea 41 tablas y el usuario `admin@britech.local`.
+
+**Forma manual:** importar los `.sql` **en este orden** (las FKs dependen de él).
 El primero crea la base `britech_v2`; el resto hace `USE britech_v2`.
 
 ```
@@ -68,6 +80,8 @@ El primero crea la base `britech_v2`; el resto hace `USE britech_v2`.
 26. database/schema_mercadopago.sql      (id del pago de Mercado Pago en el pedido)
 27. database/schema_notificaciones_v2.sql (notificaciones por destinatario: staff/rol/usuario/cliente)
 28. database/schema_tracking.sql          (seguimiento de envíos en tiempo real: posición del repartidor)
+29. database/schema_auditoria.sql         (auditoría: quién cambió qué y cuándo)
+30. database/schema_cliente_fiscal.sql    (datos fiscales opcionales del cliente)
 ```
 
 Desde la terminal (uno por uno, o encadenados):
@@ -101,6 +115,8 @@ mysql -u root britech_v2 < database/schema_reclamos.sql
 mysql -u root britech_v2 < database/schema_mercadopago.sql
 mysql -u root britech_v2 < database/schema_notificaciones_v2.sql
 mysql -u root britech_v2 < database/schema_tracking.sql
+mysql -u root britech_v2 < database/schema_auditoria.sql
+mysql -u root britech_v2 < database/schema_cliente_fiscal.sql
 ```
 
 **3. Variables de entorno** — copiar la plantilla y completar:
