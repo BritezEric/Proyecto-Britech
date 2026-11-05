@@ -56,7 +56,10 @@ class ClienteService
     private function validar(array $in): array
     {
         $nombre    = trim($in['nombre'] ?? '');
+        $razonSoc  = trim($in['razon_social'] ?? '');
         $documento = trim($in['documento'] ?? '');
+        $cuit      = trim($in['cuit'] ?? '');
+        $condIva   = trim($in['condicion_iva'] ?? '');
         $email     = trim($in['email'] ?? '');
         $telefono  = trim($in['telefono'] ?? '');
         $direccion = trim($in['direccion'] ?? '');
@@ -72,13 +75,23 @@ class ClienteService
         if ($telefono !== '' && !preg_match('/^[0-9()+\-\s]{6,30}$/', $telefono)) {
             throw new ValidacionException('El teléfono solo puede tener números, espacios y ( ) + -.');
         }
+        if ($cuit !== '' && !preg_match('/^[0-9\-]{6,20}$/', $cuit)) {
+            throw new ValidacionException('El CUIT/CUIL solo puede tener números y guiones.');
+        }
+        $condIvaOk = ['', 'consumidor_final', 'responsable_inscripto', 'monotributo', 'exento'];
+        if (!in_array($condIva, $condIvaOk, true)) {
+            throw new ValidacionException('Condición frente al IVA inválida.');
+        }
         if ($listaId <= 0) {
             throw new ValidacionException('Elegí una lista de precios.');
         }
 
         return [
             'nombre'          => $nombre,
+            'razon_social'    => $razonSoc ?: null,
             'documento'       => $documento ?: null,
+            'cuit'            => $cuit ?: null,
+            'condicion_iva'   => $condIva ?: null,
             'email'           => $email ?: null,
             'telefono'        => $telefono ?: null,
             'direccion'       => $direccion ?: null,

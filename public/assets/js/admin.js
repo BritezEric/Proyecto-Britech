@@ -73,7 +73,16 @@ const ENTIDADES = {
         ],
         campos: [
             { key: 'nombre', label: 'Nombre', tipo: 'text', req: true, ancho: true },
+            { key: 'razon_social', label: 'Razón social (facturación)', tipo: 'text', ancho: true },
             { key: 'documento', label: 'Documento', tipo: 'text' },
+            { key: 'cuit', label: 'CUIT / CUIL', tipo: 'text' },
+            { key: 'condicion_iva', label: 'Condición IVA', tipo: 'select', opciones: [
+                { v: '', t: 'Sin especificar' },
+                { v: 'consumidor_final', t: 'Consumidor final' },
+                { v: 'responsable_inscripto', t: 'Responsable inscripto' },
+                { v: 'monotributo', t: 'Monotributo' },
+                { v: 'exento', t: 'Exento' },
+            ] },
             { key: 'email', label: 'Email', tipo: 'email' },
             { key: 'telefono', label: 'Teléfono', tipo: 'text' },
             { key: 'direccion', label: 'Dirección', tipo: 'text', ancho: true },

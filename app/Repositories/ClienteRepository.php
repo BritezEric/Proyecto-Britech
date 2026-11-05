@@ -89,10 +89,10 @@ class ClienteRepository
     {
         $pdo = Database::conexion();
         $pdo->prepare("INSERT INTO cliente
-                       (nombre, documento, email, telefono, direccion, localidad, lista_precio_id, activo)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
-            ->execute([$d['nombre'], $d['documento'], $d['email'], $d['telefono'],
-                       $d['direccion'], $d['localidad'], $d['lista_precio_id'], $d['activo']]);
+                       (nombre, razon_social, documento, cuit, condicion_iva, email, telefono, direccion, localidad, lista_precio_id, activo)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+            ->execute([$d['nombre'], $d['razon_social'], $d['documento'], $d['cuit'], $d['condicion_iva'],
+                       $d['email'], $d['telefono'], $d['direccion'], $d['localidad'], $d['lista_precio_id'], $d['activo']]);
         return (int) $pdo->lastInsertId();
     }
 
@@ -100,11 +100,11 @@ class ClienteRepository
     {
         Database::conexion()
             ->prepare("UPDATE cliente SET
-                       nombre = ?, documento = ?, email = ?, telefono = ?,
-                       direccion = ?, localidad = ?, lista_precio_id = ?, activo = ?
+                       nombre = ?, razon_social = ?, documento = ?, cuit = ?, condicion_iva = ?,
+                       email = ?, telefono = ?, direccion = ?, localidad = ?, lista_precio_id = ?, activo = ?
                        WHERE id = ?")
-            ->execute([$d['nombre'], $d['documento'], $d['email'], $d['telefono'],
-                       $d['direccion'], $d['localidad'], $d['lista_precio_id'], $d['activo'], $id]);
+            ->execute([$d['nombre'], $d['razon_social'], $d['documento'], $d['cuit'], $d['condicion_iva'],
+                       $d['email'], $d['telefono'], $d['direccion'], $d['localidad'], $d['lista_precio_id'], $d['activo'], $id]);
     }
 
     /** El propio cliente edita su perfil (no toca lista_precio ni activo ni email). */
