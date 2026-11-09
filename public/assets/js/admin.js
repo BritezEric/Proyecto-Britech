@@ -192,7 +192,7 @@ const ENTIDADES = {
     },
 
     pedidos: {
-        titulo: 'Gestor de envíos', sub: 'Pedidos de la tienda: hacete cargo de cada envío — estado, datos de entrega y seguimiento.',
+        titulo: 'Pedidos y envíos', sub: 'Pedidos de la tienda: hacete cargo de cada envío — estado, datos de entrega y seguimiento.',
         singular: 'pedido', endpoint: '/api/admin/pedidos', detalle: '/api/admin/pedidos/detalle',
         noCrear: true, acciones: ['ver'], accionExtra: { label: '⚙ Empresas de envío', ent: 'envios' },
         columnas: [
@@ -255,7 +255,7 @@ const ENTIDADES = {
     },
 
     barrios: {
-        titulo: 'Barrios (Moto Express)', sub: 'Barrios de Formosa que cubre el moto y el precio de envío de cada uno.',
+        titulo: 'Barrios de envío', sub: 'Barrios de Formosa que cubre el moto y el precio de envío de cada uno.',
         singular: 'barrio', endpoint: '/api/admin/barrios',
         columnas: [
             { key: 'nombre', label: 'Barrio', clase: 'td-fuerte' },
@@ -343,40 +343,6 @@ let pasteWired = false; // listener global de pegar imagen (Ctrl+V) armado una s
 const $ = (id) => document.getElementById(id);
 const vistaAbm = $('vista-abm'), vistaInicio = $('vista-inicio');
 
-// De qué vista "cuelga" cada entidad (para el sidebar activo y el link de volver).
-//  - las maestras cuelgan de "tablas"; "envios" (empresas) cuelga del gestor "pedidos".
-const PADRE = {
-    clientes: 'tablas', productos: 'tablas', proveedores: 'tablas',
-    categorias: 'tablas', marcas: 'tablas', solicitudes: 'tablas',
-    empleados: 'tablas', repartidores: 'tablas', barrios: 'tablas',
-    envios: 'pedidos', pedidos: 'inicio',
-};
-const NOMBRE_VISTA = { tablas: 'Tablas', pedidos: 'Gestor de envíos', inicio: 'Panel', compras: 'Compras' };
-
-// Cuadritos de la vista "Tablas" (Empresas de envío ya NO está acá: vive en el gestor).
-const TABLAS_CARDS = [
-    { ent: 'clientes',    icon: 'users',    label: 'Clientes',    desc: 'Cuentas y datos de clientes' },
-    { ent: 'productos',   icon: 'package',  label: 'Productos',   desc: 'Catálogo, precios y stock' },
-    { ent: 'proveedores', icon: 'factory',  label: 'Proveedores', desc: 'A quién le comprás' },
-    { ent: 'categorias',  icon: 'tag',      label: 'Categorías',  desc: 'Rubros del catálogo' },
-    { ent: 'marcas',      icon: 'star',     label: 'Marcas',      desc: 'Marcas de los productos' },
-    { ent: 'solicitudes', icon: 'mail',     label: 'Solicitudes', desc: 'Pedidos de cuenta mayorista' },
-    { ent: 'empleados',   icon: 'idcard',   label: 'Empleados',   desc: 'Rendimiento y sueldos' },
-    { ent: 'repartidores', icon: 'bike',    label: 'Repartidores', desc: 'Motoqueros y su paga' },
-    { ent: 'barrios',     icon: 'mappin',   label: 'Barrios',     desc: 'Zonas del moto y su precio' },
-];
-
-function renderTablas() {
-    const cont = $('tablas-grid');
-    cont.innerHTML = TABLAS_CARDS.map((t) => `<button class="tabla-card" data-ir="${t.ent}">
-        <span class="tabla-ic">${ICO[t.icon] || ''}</span>
-        <span class="tabla-nom">${esc(t.label)}</span>
-        <span class="tabla-desc">${esc(t.desc)}</span>
-    </button>`).join('');
-    cont.querySelectorAll('[data-ir]').forEach((el) =>
-        el.addEventListener('click', () => seleccionar(el.dataset.ir)));
-}
-
 // ---- Ajustes: datos de transferencia ----
 async function renderAjustes() {
     const cont = $('ajustes-cont');
@@ -406,21 +372,55 @@ async function renderAjustes() {
     });
 }
 
+// ---- Menú lateral: grupos y buscador ----
+const sinAcentos = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const itemsMenu = () => [...document.querySelectorAll('#nav .nav-item')];
+
+function marcarGrupo(g, abierto) {
+    g.classList.toggle('abierto', abierto);
+    g.querySelector('.nav-grupo-tit').setAttribute('aria-expanded', abierto);
+}
+
+// Sin texto: deja abierto solo el grupo de la sección actual. Con texto: muestra lo que coincide.
+function filtrarMenu(texto) {
+    const t = sinAcentos(texto.trim());
+    const grupos = document.querySelectorAll('.nav-grupo');
+    itemsMenu().forEach((it) => it.classList.toggle('nav-filtrado',
+        !!t && !sinAcentos(it.textContent + ' ' + (it.dataset.k || '')).includes(t)));
+    const activo = document.querySelector('.nav-item.activo');
+    grupos.forEach((g) => {
+        g.classList.toggle('nav-filtrado', !!t && !g.querySelector('.nav-item:not(.nav-filtrado):not(.oculto)'));
+        marcarGrupo(g, t ? true : g.contains(activo));
+    });
+    $('nav-vacio').classList.toggle('oculto', !t || itemsMenu().some((it) => it.offsetParent !== null));
+}
+
+// Solo se puede abrir lo que el rol ve en el menú (también vale para links con #seccion).
+function vistaPermitida(ent) {
+    const item = itemsMenu().find((b) => b.dataset.ent === ent);
+    if (item) return !item.closest('.oculto');
+    return ES_ADMIN && Object.hasOwn(ENTIDADES, ent);
+}
+
 // ---- Navegación ----
+let navLista = false;   // la primera vista reemplaza el historial; las siguientes lo suman
 async function seleccionar(ent) {
-    // Las entidades "hijas" (maestras, o empresas de envío) marcan activo a su
-    // vista padre en el sidebar (Tablas o Gestor de envíos).
-    const navKey = PADRE[ent] || ent;
-    document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('activo', b.dataset.ent === navKey));
+    if (!vistaPermitida(ent)) ent = ES_ADMIN ? 'inicio' : 'vendedor';
+    if (location.hash.slice(1) !== ent) history[navLista ? 'pushState' : 'replaceState'](null, '', '#' + ent);
+    navLista = true;
+    itemsMenu().forEach((b) => b.classList.toggle('activo', b.dataset.ent === ent));
+    $('nav-q').value = '';
+    filtrarMenu('');
+    $('btn-menu').setAttribute('aria-expanded', 'false');
+    document.querySelector('.side').classList.remove('abierto');
     const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados'),
-          vistaTablas = $('vista-tablas'), vistaAjustes = $('vista-ajustes'), vistaRepartos = $('vista-repartos'),
+          vistaAjustes = $('vista-ajustes'), vistaRepartos = $('vista-repartos'),
           vistaReposicion = $('vista-reposicion'), vistaCompras = $('vista-compras'), vistaCajas = $('vista-cajas'),
           vistaReclamos = $('vista-reclamos'), vistaMapa = $('vista-mapa'), vistaVoz = $('vista-voz'), vistaReportes = $('vista-reportes'), vistaVendedor = $('vista-vendedor');
-    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaTablas, vistaAjustes, vistaRepartos, vistaReposicion, vistaCompras, vistaCajas, vistaReclamos, vistaMapa, vistaVoz, vistaReportes, vistaVendedor]
+    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaAjustes, vistaRepartos, vistaReposicion, vistaCompras, vistaCajas, vistaReclamos, vistaMapa, vistaVoz, vistaReportes, vistaVendedor]
         .forEach((v) => v && v.classList.add('oculto'));
     if (ent === 'inicio')   { ocultarTodo(); vistaInicio.classList.remove('oculto');   return renderInicio(); }
     if (ent === 'vendedor') { ocultarTodo(); vistaVendedor.classList.remove('oculto'); return renderVendedor(); }
-    if (ent === 'tablas')   { ocultarTodo(); vistaTablas.classList.remove('oculto');   return renderTablas(); }
     if (ent === 'bloques')  { ocultarTodo(); vistaBloques.classList.remove('oculto');  return renderBloques(); }
     if (ent === 'empleados'){ ocultarTodo(); vistaEmpleados.classList.remove('oculto'); return renderEmpleados(); }
     if (ent === 'repartos') { ocultarTodo(); vistaRepartos.classList.remove('oculto'); return renderRepartos(); }
@@ -438,11 +438,6 @@ async function seleccionar(ent) {
     $('ent-title').textContent = cfg.titulo;
     $('ent-sub').textContent = cfg.sub;
     $('btn-nuevo').classList.toggle('oculto', !!cfg.noCrear);
-
-    // Link "‹ volver" a la vista padre (Tablas o Gestor de envíos).
-    const volver = $('btn-volver'), padre = PADRE[ent];
-    volver.classList.toggle('oculto', !padre);
-    if (padre) { volver.textContent = '‹ ' + NOMBRE_VISTA[padre]; volver.onclick = () => seleccionar(padre); }
 
     // Botón de acción extra (ej: desde el gestor de envíos, ir a "Empresas de envío").
     const accion = $('btn-ent-accion');
@@ -1137,14 +1132,12 @@ async function renderInicio() {
     const sinAsignar = Number(d.envios_sin_asignar || 0);
     const faltantes = Number(d.reposicion_faltantes || 0);
     $('dash-accesos').innerHTML = `
-        <button class="acceso-btn" data-ir="pedidos"><span class="acceso-ic">${ICO.package}</span> Envíos</button>
-        <button class="acceso-btn" data-ir="repartos"><span class="acceso-ic">${ICO.bike}</span> Repartos${sinAsignar > 0 ? `<span class="acceso-badge">${sinAsignar}</span>` : ''}</button>
-        <button class="acceso-btn" data-ir="reposicion"><span class="acceso-ic">${ICO.cart}</span> Reposición${faltantes > 0 ? `<span class="acceso-badge">${faltantes}</span>` : ''}</button>
-        <button class="acceso-btn" data-ir="compras"><span class="acceso-ic">${ICO.download}</span> Compras</button>
-        <button class="acceso-btn" data-ir="cajas"><span class="acceso-ic">${ICO.wallet}</span> Cajas</button>
-        <button class="acceso-btn" data-ir="reclamos"><span class="acceso-ic">${ICO.megaphone}</span> Reclamos</button>
-        <button class="acceso-btn" data-ir="reportes"><span class="acceso-ic">${ICO.mappin}</span> Localidades</button>
-        <a class="acceso-btn" href="/pos.html"><span class="acceso-ic">${ICO.receipt}</span> Ir al POS</a>`;
+        <a class="acceso-btn" href="/pos.html"><span class="acceso-ic">${ICO.receipt}</span> Vender</a>
+        <button class="acceso-btn" data-ir="pedidos"><span class="acceso-ic">${ICO.package}</span> Ver pedidos</button>
+        <button class="acceso-btn" data-ir="repartos"><span class="acceso-ic">${ICO.bike}</span> Repartir envíos${sinAsignar > 0 ? `<span class="acceso-badge">${sinAsignar}</span>` : ''}</button>
+        <button class="acceso-btn" data-ir="reposicion"><span class="acceso-ic">${ICO.cart}</span> Reponer stock${faltantes > 0 ? `<span class="acceso-badge">${faltantes}</span>` : ''}</button>
+        <button class="acceso-btn" data-ir="compras"><span class="acceso-ic">${ICO.download}</span> Cargar compra</button>
+        <button class="acceso-btn" data-ir="reportes"><span class="acceso-ic">${ICO.chart}</span> Ver reportes</button>`;
     $('dash-accesos').querySelectorAll('[data-ir]').forEach((b) =>
         b.addEventListener('click', () => seleccionar(b.dataset.ir)));
 
@@ -1203,8 +1196,9 @@ async function renderInicio() {
         ], { c1: money.format(vf + vo), c2: 'total' }));
 
     // --- Requiere acción (clickable a su sección) ---
-    $('dash-acciones').innerHTML = `<h3>Requiere acción</h3>
+    $('dash-acciones').innerHTML = `<h3>Para atender hoy</h3>
         ${accionRow('Pedidos pendientes', d.pedidos_pendientes, 'pedidos')}
+        ${accionRow('Envíos sin repartidor', sinAsignar, 'repartos')}
         ${accionRow('Solicitudes mayoristas', d.solicitudes_pendientes, 'solicitudes')}
         ${accionRow('Productos sin stock', d.sin_stock, 'productos')}`;
     $('dash-acciones').querySelectorAll('[data-ir]').forEach((el) =>
@@ -1304,8 +1298,24 @@ async function cargarNotificaciones() {
 
 let debounce;
 function wire() {
-    document.querySelectorAll('.nav-item').forEach((b) =>
+    document.querySelectorAll('.nav-item[data-ent]').forEach((b) =>
         b.addEventListener('click', () => seleccionar(b.dataset.ent)));
+    document.querySelectorAll('[data-nav-ic]').forEach((el) => { el.innerHTML = ICO[el.dataset.navIc] || ''; });
+    document.querySelectorAll('.nav-grupo-tit').forEach((b) => b.addEventListener('click', () => {
+        const grupo = b.closest('.nav-grupo'), abrir = !grupo.classList.contains('abierto');
+        document.querySelectorAll('.nav-grupo').forEach((g) => marcarGrupo(g, g === grupo && abrir));
+    }));
+    $('nav-q').addEventListener('input', (e) => filtrarMenu(e.target.value));
+    $('nav-q').addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        const primero = itemsMenu().find((it) => it.offsetParent !== null);
+        if (primero) primero.click();
+    });
+    $('btn-menu').addEventListener('click', () => {
+        const abierto = document.querySelector('.side').classList.toggle('abierto');
+        $('btn-menu').setAttribute('aria-expanded', abierto);
+    });
+    window.addEventListener('popstate', () => seleccionar(location.hash.slice(1)));
 
     // Campana de novedades: refresca al abrir; se cierra al clickear afuera.
     $('btn-noti').addEventListener('click', async (e) => {
@@ -1411,14 +1421,10 @@ let ES_ADMIN = true;   // el vendedor entra con acceso acotado (solo Pedidos)
     catch { window.location.href = '/login.html'; return; }
     ES_ADMIN = sesion.usuario.rol === 'admin';
     wire();
-    if (ES_ADMIN) {
-        // Desde el POS ("📊 Mi panel") se llega con #vendedor → abre el dashboard propio.
-        seleccionar(location.hash === '#vendedor' ? 'vendedor' : 'inicio');
-    } else {
-        // Vendedor: su dashboard + lo operativo (pedidos + envíos). Oculta lo admin-only.
-        document.querySelectorAll('[data-admin]').forEach((el) => el.classList.add('oculto'));
-        seleccionar('vendedor');
-    }
+    // El vendedor ve su panel y lo operativo (pedidos y envíos); lo demás es solo admin.
+    if (!ES_ADMIN) document.querySelectorAll('[data-admin]').forEach((el) => el.classList.add('oculto'));
+    // Abre la sección del link (#vendedor desde el POS, o al recargar); si no hay, la de inicio.
+    seleccionar(location.hash.slice(1));
     cargarNotificaciones();
     setInterval(cargarNotificaciones, 60000);   // refresca cada 60s
 })();

@@ -1,7 +1,7 @@
 /* ============================================================
-   Britech — Design System (tokens)
-   Única fuente de verdad: color, tipografía, espaciado, motion.
-   Todas las pantallas importan este archivo primero.
+   Britech — Design System (tokens + componentes base)
+   Única fuente de verdad: color, tipografía, espaciado, sombras, motion,
+   botones y modales. Todas las pantallas importan este archivo primero.
    Mood: blanco y negro con morado eléctrico — minimal, alto contraste,
    sombras suaves y movimiento fluido. Identidad propia, no plantilla.
    ============================================================ */
@@ -34,7 +34,21 @@
     --danger-strong: oklch(0.50 0.19 25);
     --danger-tint:   oklch(0.962 0.03 25);
 
-    --info-tint:     var(--accent-tint);       /* alias semántico */
+    /* Estados: mismo significado en todas las pantallas */
+    --ok:            oklch(0.60 0.15 155);
+    --ok-strong:     oklch(0.45 0.13 155);
+    --ok-tint:       oklch(0.955 0.04 155);
+    --warn:          oklch(0.68 0.15 70);
+    --warn-strong:   oklch(0.50 0.12 65);
+    --warn-tint:     oklch(0.96 0.05 85);
+    --info:          oklch(0.60 0.13 240);
+    --info-strong:   oklch(0.47 0.12 240);
+    --info-tint:     oklch(0.955 0.03 235);
+
+    /* Fondo de marca (login, portada, activación de cuentas) */
+    --escena: radial-gradient(120% 90% at 15% 0%, oklch(0.32 0.14 296) 0%, transparent 55%),
+              radial-gradient(110% 80% at 100% 100%, oklch(0.42 0.20 318 / 0.38) 0%, transparent 50%),
+              oklch(0.14 0 0);
 
     /* --- Tipografía --- */
     --font-sans: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -56,11 +70,12 @@
     --r-sm: 8px;  --r-md: 12px;  --r-lg: 16px;  --r-xl: 22px;  --r-full: 999px;
 
     /* --- Sombras (negro neutro, con profundidad) --- */
-    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.05),
-                 0 1px 2px oklch(0 0 0 / 0.04);
-    --shadow-md: 0 1px 3px oklch(0 0 0 / 0.06),
-                 0 8px 20px oklch(0 0 0 / 0.07);
-    --shadow-lg: 0 16px 44px oklch(0 0 0 / 0.16);
+    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.04),
+                 0 2px 6px oklch(0 0 0 / 0.05);
+    --shadow-md: 0 2px 4px oklch(0 0 0 / 0.05),
+                 0 10px 24px oklch(0 0 0 / 0.08);
+    --shadow-lg: 0 4px 10px oklch(0 0 0 / 0.06),
+                 0 24px 56px oklch(0 0 0 / 0.16);
     /* CTA sin glow: sombra neutra sutil (minimal/profesional) */
     --shadow-primary: 0 1px 2px oklch(0 0 0 / 0.08),
                       0 4px 12px oklch(0 0 0 / 0.08);
@@ -78,10 +93,10 @@
     /* --- Motion (curvas estilo Emil Kowalski: entrada suave, "glide") --- */
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);      /* easeOutExpo: arranca rápido, aterriza suave */
     --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-    --ease-spring: cubic-bezier(0.34, 1.5, 0.5, 1); /* rebote sutil para pops (botones, agregar) */
-    --dur-fast: 140ms;
-    --dur: 220ms;
-    --dur-slow: 360ms;
+    --ease-spring: cubic-bezier(0.34, 1.2, 0.5, 1); /* apenas un rebote, para pops (agregar) */
+    --dur-fast: 150ms;
+    --dur: 240ms;
+    --dur-slow: 380ms;
 }
 
 /* ===== Base / reset suave ===== */
@@ -108,12 +123,12 @@ body {
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
     outline: none;
     box-shadow: var(--ring);
-    border-color: var(--accent);
+    border-color: var(--primary);
 }
 
 /* Movimiento base: todo lo interactivo transiciona suave (color, sombra, forma).
    El compositor lo hace (transform/opacity), liviano. reduced-motion lo anula. */
-:where(button, a, input, select, textarea, .tabla-card, .emp-card, .card, .accion-card) {
+:where(button, a, input, select, textarea, .emp-card, .card, .accion-card) {
     transition: background-color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out),
         color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out),
         transform var(--dur-fast) var(--ease-out);
@@ -123,11 +138,48 @@ body {
 
 .oculto { display: none !important; }
 
+/* ===== Entradas suaves (una sola animación para todo el sistema) =====
+   fill "backwards": al terminar no queda transform, así no afecta a los position:fixed. */
+@keyframes aparecer { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes caja-in  { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
+.content > section:not(.oculto), .pos, [id^="vista-"]:not(.oculto), .ventas-wrap, .legal, .pagina-simple {
+    animation: aparecer var(--dur-slow) var(--ease-out) backwards;
+}
+
+/* ===== Botones base ===== */
+.btn-primary, .btn-secundario {
+    padding: var(--sp-3) var(--sp-4); border-radius: var(--r-md); cursor: pointer;
+    font-family: inherit; font-size: var(--text-sm); font-weight: 600; white-space: nowrap;
+}
+.btn-primary { border: none; background: var(--primary); color: var(--on-primary); box-shadow: var(--shadow-primary); }
+.btn-primary:not(:disabled):hover { background: var(--primary-strong); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-primary:disabled { background: var(--surface-sunk); color: var(--ink-muted); box-shadow: none; cursor: not-allowed; }
+.btn-secundario { border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); }
+.btn-secundario:hover { background: var(--surface-2); border-color: var(--ink-muted); }
+
+/* ===== Modales base (cada pantalla define solo su ancho) ===== */
+.modal {
+    position: fixed; inset: 0; background: oklch(0.13 0 0 / 0.45); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; padding: var(--sp-4);
+    z-index: var(--z-modal); animation: fade-in var(--dur) var(--ease-out) both;
+}
+.modal-caja {
+    background: var(--surface); border-radius: var(--r-lg); padding: var(--sp-5);
+    width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto;
+    box-shadow: var(--shadow-lg); animation: caja-in var(--dur-slow) var(--ease-out) both;
+}
+.modal-caja h2 { margin: 0 0 var(--sp-4); font-size: var(--text-lg); font-weight: 800; letter-spacing: -0.02em; }
+
+/* Barra de scroll discreta */
+* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+
 /* reduced-motion: NO exterminar. Mantener micro-interacciones (hover, fades) y solo
    calmar el scroll suave. La marcha del marquee es lenta y lineal → se conserva.
    ponytail: decisión del dueño (motion es parte de la marca); sube la barrera a11y. */
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
+    .content > section, .pos, [id^="vista-"], .ventas-wrap, .legal, .pagina-simple, .modal-caja { animation: none !important; }
 }
 
 /* ============================================================
@@ -142,17 +194,26 @@ body {
     --ink-muted:     oklch(0.72 0 0);
     --line:          oklch(0.30 0 0);
     --line-strong:   oklch(0.40 0 0);
-    --primary:       oklch(0.66 0.16 290);     /* morado sobrio, legible sobre negro */
+    --primary:       oklch(0.60 0.16 290);     /* morado sobrio, con texto blanco legible */
     --primary-strong:oklch(0.58 0.16 290);
     --primary-tint:  oklch(0.30 0.06 290);
     --accent:        oklch(0.66 0.17 320);
     --accent-tint:   oklch(0.30 0.07 320);
     --danger-tint:   oklch(0.30 0.08 25);
+    --danger-strong: oklch(0.83 0.13 25);
+    --ok-strong:     oklch(0.84 0.13 155);
+    --ok-tint:       oklch(0.30 0.06 155);
+    --warn-strong:   oklch(0.84 0.12 80);
+    --warn-tint:     oklch(0.32 0.06 75);
+    --info-strong:   oklch(0.84 0.09 235);
+    --info-tint:     oklch(0.30 0.05 240);
     --shadow-primary: 0 1px 2px oklch(0 0 0 / 0.5),
                       0 6px 18px oklch(0 0 0 / 0.45);
-    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.4);
-    --shadow-md: 0 2px 10px oklch(0 0 0 / 0.45);
-    --shadow-lg: 0 14px 40px oklch(0 0 0 / 0.55);
+    --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.40);
+    --shadow-md: 0 2px 4px oklch(0 0 0 / 0.30),
+                 0 10px 24px oklch(0 0 0 / 0.40);
+    --shadow-lg: 0 4px 10px oklch(0 0 0 / 0.35),
+                 0 24px 56px oklch(0 0 0 / 0.55);
 }
 
 /* ===== Logo Britech (marca B+play, imagen real) ===== */
@@ -182,6 +243,6 @@ body {
 }
 
 /* Pulso del contador del carrito al agregar */
-@keyframes cart-bump { 0% { transform: scale(1); } 35% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes cart-bump { 0% { transform: scale(1); } 35% { transform: scale(1.15); } 100% { transform: scale(1); } }
 .cart-bump { animation: cart-bump 0.34s var(--ease-out); }
 @media (prefers-reduced-motion: reduce) { .cart-bump { animation: none; } }

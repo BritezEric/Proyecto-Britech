@@ -24,22 +24,68 @@
             <div class="side-logo brand-lockup">
                 <img class="brand-mark" src="/assets/img/britech-mark-blanco.png" alt="">
                 <span class="brand-word">Britech <span>Admin</span></span></div>
+            <button type="button" id="btn-menu" class="side-menu-btn" aria-expanded="false" aria-controls="side-cuerpo">Menú</button>
+            <div class="side-cuerpo" id="side-cuerpo">
+            <div class="nav-buscar">
+                <input id="nav-q" type="search" placeholder="Buscar: stock, sueldos…" aria-label="Buscar una sección del panel" autocomplete="off">
+            </div>
             <nav class="side-nav" id="nav">
-                <button data-ent="inicio"    class="nav-item" data-admin>Inicio</button>
-                <button data-ent="vendedor"  class="nav-item">Mi panel</button>
-                <button data-ent="pedidos"   class="nav-item">Pedidos</button>
-                <button data-ent="mapa"      class="nav-item">Mapa envíos</button>
-                <button data-ent="reclamos"  class="nav-item">Reclamos</button>
-                <button data-ent="reportes"  class="nav-item">Reportes</button>
-                <button data-ent="cajas"     class="nav-item" data-admin>Cajas</button>
-                <button data-ent="voz"       class="nav-item" data-admin>Asistente</button>
-                <button data-ent="tablas"    class="nav-item" data-admin>Tablas</button>
-                <button data-ent="bloques"   class="nav-item" data-admin>Inicio tienda</button>
-                <button data-ent="ajustes"   class="nav-item" data-admin>Ajustes</button>
+                <button data-ent="inicio" class="nav-item" data-admin data-k="resumen dashboard hoy"><span data-nav-ic="home"></span>Inicio</button>
+                <button data-ent="vendedor" class="nav-item" data-k="mis ventas desempeno"><span data-nav-ic="chart"></span>Mi panel</button>
+                <a href="/pos.html" class="nav-item" data-k="pos cobrar punto de venta caja mostrador"><span data-nav-ic="receipt"></span>Vender (POS)</a>
+                <div class="nav-grupo">
+                    <button type="button" class="nav-grupo-tit" aria-expanded="false"><span data-nav-ic="bike"></span>Ventas y envíos<span class="nav-chev" data-nav-ic="chevron"></span></button>
+                    <div class="nav-grupo-items">
+                        <button data-ent="pedidos" class="nav-item" data-k="online tienda despacho estado comprobante">Pedidos y envíos</button>
+                        <button data-ent="repartos" class="nav-item" data-admin data-k="repartos motos asignar derivar ticket">Repartir envíos</button>
+                        <button data-ent="mapa" class="nav-item" data-k="seguimiento motos gps ubicacion">Mapa de envíos</button>
+                        <button data-ent="reclamos" class="nav-item" data-k="quejas problemas devolucion">Reclamos</button>
+                    </div>
+                </div>
+                <div class="nav-grupo" data-admin>
+                    <button type="button" class="nav-grupo-tit" aria-expanded="false"><span data-nav-ic="package"></span>Productos y stock<span class="nav-chev" data-nav-ic="chevron"></span></button>
+                    <div class="nav-grupo-items">
+                        <button data-ent="productos" class="nav-item" data-admin data-k="catalogo precios articulos inventario stock">Productos</button>
+                        <button data-ent="reposicion" class="nav-item" data-admin data-k="reposicion faltantes minimo pedir">Reponer stock</button>
+                        <button data-ent="compras" class="nav-item" data-admin data-k="ordenes mercaderia recepcion ingreso">Compras a proveedores</button>
+                        <button data-ent="proveedores" class="nav-item" data-admin data-k="distribuidores">Proveedores</button>
+                        <button data-ent="categorias" class="nav-item" data-admin data-k="rubros">Categorías</button>
+                        <button data-ent="marcas" class="nav-item" data-admin data-k="logos">Marcas</button>
+                    </div>
+                </div>
+                <div class="nav-grupo" data-admin>
+                    <button type="button" class="nav-grupo-tit" aria-expanded="false"><span data-nav-ic="users"></span>Personas<span class="nav-chev" data-nav-ic="chevron"></span></button>
+                    <div class="nav-grupo-items">
+                        <button data-ent="clientes" class="nav-item" data-admin data-k="compradores cuentas">Clientes</button>
+                        <button data-ent="solicitudes" class="nav-item" data-admin data-k="precios aprobar">Solicitudes mayoristas</button>
+                        <button data-ent="empleados" class="nav-item" data-admin data-k="sueldos rendimiento personal pagar">Empleados</button>
+                        <button data-ent="repartidores" class="nav-item" data-admin data-k="motoqueros paga">Repartidores</button>
+                    </div>
+                </div>
+                <div class="nav-grupo">
+                    <button type="button" class="nav-grupo-tit" aria-expanded="false"><span data-nav-ic="coins"></span>Dinero e informes<span class="nav-chev" data-nav-ic="chevron"></span></button>
+                    <div class="nav-grupo-items">
+                        <button data-ent="cajas" class="nav-item" data-admin data-k="arqueo cierre apertura historial">Cajas</button>
+                        <button data-ent="gastos" class="nav-item" data-admin data-k="egresos pagos finanzas">Gastos</button>
+                        <button data-ent="reportes" class="nav-item" data-k="localidades estadisticas pdf excel csv informes medios de pago">Reportes</button>
+                    </div>
+                </div>
+                <div class="nav-grupo" data-admin>
+                    <button type="button" class="nav-grupo-tit" aria-expanded="false"><span data-nav-ic="sliders"></span>Configuración<span class="nav-chev" data-nav-ic="chevron"></span></button>
+                    <div class="nav-grupo-items">
+                        <button data-ent="bloques" class="nav-item" data-admin data-k="inicio home bloques banner">Portada de la tienda</button>
+                        <button data-ent="barrios" class="nav-item" data-admin data-k="zonas moto precio">Barrios de envío</button>
+                        <button data-ent="envios" class="nav-item" data-admin data-k="correo costo">Empresas de envío</button>
+                        <button data-ent="ajustes" class="nav-item" data-admin data-k="ajustes transferencia alias cbu">Datos de pago</button>
+                        <button data-ent="voz" class="nav-item" data-admin data-k="conversaciones auditoria">Asistente de voz</button>
+                    </div>
+                </div>
+                <p id="nav-vacio" class="nav-vacio oculto">No encontramos esa sección.</p>
             </nav>
             <div class="side-foot">
                 <button id="btn-tema" class="side-link"><span id="tema-ic" class="ico"></span> <span id="tema-tx">Tema oscuro</span></button>
                 <button id="btn-salir" class="side-link side-salir">Salir</button>
+            </div>
             </div>
         </aside>
 
@@ -55,7 +101,6 @@
             <section id="vista-abm" class="oculto">
                 <header class="content-top">
                     <div>
-                        <button id="btn-volver" class="volver-link oculto"></button>
                         <h1 id="ent-title">—</h1>
                         <p id="ent-sub" class="sub"></p>
                     </div>
@@ -87,11 +132,12 @@
             <section id="vista-inicio" class="oculto">
                 <header class="content-top">
                     <div>
-                        <h1>Panel de administración</h1>
-                        <p class="sub">Datos para tomar decisiones: ventas, pedidos y reposición.</p>
+                        <h1>Inicio</h1>
+                        <p class="sub">Qué tenés que atender hoy y cómo viene el negocio.</p>
                     </div>
                 </header>
                 <div id="dash-accesos" class="dash-accesos"></div>
+                <div class="dash-panel dash-atender" id="dash-acciones"></div>
                 <div id="kpis" class="cards"></div>
 
                 <h2 class="dash-h" data-ico="coins">Finanzas</h2>
@@ -115,7 +161,6 @@
                 <h2 class="dash-h" data-ico="package">Resumen</h2>
                 <div class="dash-grid">
                     <div class="dash-panel" id="dash-split"></div>
-                    <div class="dash-panel" id="dash-acciones"></div>
                     <div class="dash-panel" id="dash-stock"></div>
                     <div class="dash-panel" id="dash-gastos"></div>
                     <div class="dash-panel" id="dash-sinmov"></div>
@@ -149,17 +194,6 @@
                 </div>
             </section>
 
-            <!-- Vista: Tablas (datos maestros en cuadritos) -->
-            <section id="vista-tablas" class="oculto">
-                <header class="content-top">
-                    <div>
-                        <h1>Tablas</h1>
-                        <p class="sub">Datos maestros del sistema. Tocá una tabla para verla y editarla.</p>
-                    </div>
-                </header>
-                <div id="tablas-grid" class="tablas-grid"></div>
-            </section>
-
             <!-- Vista: empleados (rendimiento + sueldos) -->
             <section id="vista-empleados" class="oculto">
                 <header class="content-top">
@@ -176,7 +210,7 @@
                 <header class="content-top">
                     <div>
                         <button class="volver-link" data-ir-inicio>‹ Panel</button>
-                        <h1>Repartos</h1>
+                        <h1>Repartir envíos</h1>
                         <p class="sub">Derivá cada envío a un repartidor y sacá el ticket con los envíos que tiene que hacer.</p>
                     </div>
                 </header>
@@ -191,7 +225,7 @@
                 <header class="content-top">
                     <div>
                         <button class="volver-link" data-ir-inicio>‹ Panel</button>
-                        <h1>Reposición</h1>
+                        <h1>Reponer stock</h1>
                         <p class="sub">Productos por debajo del stock mínimo, agrupados por proveedor. Ajustá las cantidades y enviá el pedido por WhatsApp.</p>
                     </div>
                 </header>
@@ -425,7 +459,7 @@
                 <header class="content-top">
                     <div>
                         <button class="volver-link" data-ir-inicio>‹ Panel</button>
-                        <h1>Compras</h1>
+                        <h1>Compras a proveedores</h1>
                         <p class="sub">Órdenes de compra a proveedores y recepción de mercadería (suma stock).</p>
                     </div>
                     <button class="btn-primary" id="compras-nueva">+ Nueva orden</button>
@@ -437,8 +471,8 @@
             <section id="vista-ajustes" class="oculto">
                 <header class="content-top">
                     <div>
-                        <h1>Ajustes</h1>
-                        <p class="sub">Configuración de la tienda.</p>
+                        <h1>Datos de pago</h1>
+                        <p class="sub">Los datos que ve el cliente para pagarte por transferencia.</p>
                     </div>
                 </header>
                 <div id="ajustes-cont" class="ajustes-cont"></div>
@@ -448,7 +482,7 @@
             <section id="vista-bloques" class="oculto">
                 <header class="content-top">
                     <div>
-                        <h1>Inicio de la tienda</h1>
+                        <h1>Portada de la tienda</h1>
                         <p class="sub">Armá la home con bloques: ordenalos, activalos y editá su contenido.</p>
                     </div>
                     <button id="btn-nuevo-bloque" class="btn-primary">+ Nuevo bloque</button>

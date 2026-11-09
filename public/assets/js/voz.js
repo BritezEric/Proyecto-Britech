@@ -36,21 +36,21 @@ window.Voz = (function () {
         st.id = 'voz-estilo';
         st.textContent = `
         #voz-btn{position:fixed;right:22px;bottom:22px;z-index:9000;width:50px;height:50px;border-radius:50%;
-            cursor:pointer;background:var(--superficie,#fff);color:var(--texto,#1f2937);
-            border:1px solid var(--borde,#e5e7eb);display:flex;align-items:center;justify-content:center;
+            cursor:pointer;background:var(--surface,#fff);color:var(--ink,#1f2937);
+            border:1px solid var(--line,#e5e7eb);display:flex;align-items:center;justify-content:center;
             box-shadow:0 2px 12px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .2s ease,background .2s,color .2s,border-color .2s;-webkit-tap-highlight-color:transparent}
         #voz-btn svg{width:21px;height:21px;position:relative;z-index:1}
         #voz-btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.12)}
         #voz-btn:active{transform:scale(.95)}
-        #voz-btn:focus-visible{outline:2px solid var(--primario,#2563eb);outline-offset:3px}
+        #voz-btn:focus-visible{outline:2px solid var(--primary,#2563eb);outline-offset:3px}
         /* Activo (conversación): superficie oscura sobria + anillos que respiran. */
-        #voz-btn.escuchando{background:var(--texto,#111827);color:#fff;border-color:transparent;box-shadow:0 4px 18px rgba(0,0,0,.22)}
+        #voz-btn.escuchando{background:var(--ink,#111827);color:#fff;border-color:transparent;box-shadow:0 4px 18px rgba(0,0,0,.22)}
         #voz-btn.escuchando::before,#voz-btn.escuchando::after{content:'';position:absolute;inset:-1px;border-radius:50%;
-            border:1.5px solid var(--primario,#2563eb);opacity:0;animation:voz-ring 2.4s cubic-bezier(.33,0,.2,1) infinite}
+            border:1.5px solid var(--primary,#2563eb);opacity:0;animation:voz-ring 2.4s cubic-bezier(.33,0,.2,1) infinite}
         #voz-btn.escuchando::after{animation-delay:1.2s}
         @keyframes voz-ring{0%{transform:scale(1);opacity:.45}100%{transform:scale(2.2);opacity:0}}
         @media (prefers-reduced-motion:reduce){#voz-btn.escuchando::before,#voz-btn.escuchando::after{animation:none}}
-        #voz-toast{position:fixed;right:22px;bottom:84px;z-index:9000;max-width:320px;background:var(--texto,#111827);color:#f9fafb;
+        #voz-toast{position:fixed;right:22px;bottom:84px;z-index:9000;max-width:320px;background:var(--ink,#111827);color:#f9fafb;
             padding:10px 13px;border-radius:12px;font:13.5px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.18);
             opacity:0;transform:translateY(6px);transition:opacity .18s,transform .18s;pointer-events:none}
         #voz-toast.ver{opacity:1;transform:translateY(0)}

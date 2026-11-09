@@ -1,6 +1,6 @@
 /* ============================================================
    Auth (login, usuarios, olvidé, verificar, restablecer).
-   Consume tokens.css. Escena de marca: verde profundo con luz cálida.
+   Consume tokens.css. Fondo: --escena (misma escena de marca que la portada).
    ============================================================ */
 
 body {
@@ -9,24 +9,17 @@ body {
     align-items: center;
     justify-content: center;
     padding: var(--sp-4);
-    background:
-        radial-gradient(120% 90% at 15% 0%, oklch(0.32 0.14 296) 0%, transparent 55%),
-        radial-gradient(110% 80% at 100% 100%, oklch(0.42 0.20 318 / 0.38) 0%, transparent 50%),
-        oklch(0.14 0 0);
+    background: var(--escena);
 }
 
 .login-caja {
     background: var(--surface);
-    border-radius: var(--r-xl);
+    border-radius: var(--r-lg);
     padding: var(--sp-6) var(--sp-5);
     width: 100%;
     max-width: 380px;
     box-shadow: var(--shadow-lg);
     animation: caja-in var(--dur-slow) var(--ease-out) both;
-}
-@keyframes caja-in {
-    from { opacity: 0; transform: translateY(18px) scale(0.98); }
-    to   { opacity: 1; transform: none; }
 }
 
 /* Ícono circular de contexto (candado / sobre) arriba del logo. */
@@ -35,7 +28,7 @@ body {
     display: grid; place-items: center;
     border-radius: var(--r-full);
     background: var(--primary-tint); color: var(--primary-strong);
-    box-shadow: inset 0 0 0 1px oklch(0.52 0.24 296 / 0.18);
+    box-shadow: inset 0 0 0 1px var(--line);
     animation: auth-icon-in var(--dur-slow) var(--ease-out) both;
 }
 .auth-icon svg { width: 27px; height: 27px; }
@@ -74,7 +67,7 @@ label {
 input, select {
     padding: var(--sp-3);
     margin-bottom: var(--sp-4);
-    border: 1.5px solid var(--line);
+    border: 1px solid var(--line);
     border-radius: var(--r-md);
     font-size: var(--text-base);
     font-family: inherit;
@@ -121,12 +114,12 @@ button {
     font-weight: 700;
     font-family: inherit;
     cursor: pointer;
-    box-shadow: 0 2px 8px oklch(0.52 0.24 296 / 0.30);
+    box-shadow: var(--shadow-primary);
     transition: background var(--dur-fast) var(--ease-out),
                 transform var(--dur-fast) var(--ease-out),
                 box-shadow var(--dur-fast) var(--ease-out);
 }
-button:not(:disabled):hover { background: var(--primary-strong); transform: translateY(-1px); box-shadow: 0 6px 16px oklch(0.52 0.24 296 / 0.34); }
+button:not(:disabled):hover { background: var(--primary-strong); transform: translateY(-1px); box-shadow: var(--shadow-md); }
 button:not(:disabled):active { transform: translateY(0); }
 button:disabled { background: var(--surface-sunk); color: var(--ink-muted); box-shadow: none; cursor: not-allowed; }
 
@@ -154,8 +147,8 @@ button:disabled { background: var(--surface-sunk); color: var(--ink-muted); box-
 .login-sep span { font-size: var(--text-xs); color: var(--ink-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 .login-registro {
     display: block; text-align: center; text-decoration: none;
-    padding: var(--sp-3); border: 1.5px solid var(--accent); border-radius: var(--r-md);
-    background: var(--accent-tint); color: var(--accent-strong); font-weight: 700; font-size: var(--text-sm);
+    padding: var(--sp-3); border: 1px solid var(--line-strong); border-radius: var(--r-md);
+    background: var(--surface); color: var(--ink); font-weight: 700; font-size: var(--text-sm);
     transition: background var(--dur-fast) var(--ease-out);
 }
-.login-registro:hover { background: var(--accent); color: var(--on-accent); }
+.login-registro:hover { background: var(--surface-2); border-color: var(--ink-muted); }
