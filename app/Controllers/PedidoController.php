@@ -53,6 +53,18 @@ class PedidoController
         Response::json(['ok' => true, 'pedidos' => (new PedidoRepository())->deCliente((int) $c['id'])]);
     }
 
+    /** Geocodifica calle+altura para prellenar el pin del mapa en el checkout. Público. */
+    public function geocodificar(): void
+    {
+        $p = (new \App\Services\GeocoderService())->geocodificar([
+            'direccion' => trim((string) Request::query('dir', '')),
+            'numero'    => trim((string) Request::query('num', '')),
+            'localidad' => trim((string) Request::query('loc', 'Formosa')),
+            'provincia' => 'Formosa',
+        ]);
+        Response::json(['ok' => true, 'punto' => $p]);   // punto = {lat,lng} o null
+    }
+
     /** El cliente sube el comprobante de transferencia de un pedido propio. */
     public function subirComprobante(): void
     {

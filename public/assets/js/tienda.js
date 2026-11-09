@@ -423,6 +423,7 @@ function elegirBarrio(id, costo, nombre) {
     $('barrio-opciones').classList.add('oculto');
     $('barrio-elegido').classList.remove('oculto');
     $('moto-direccion').classList.remove('oculto');
+    motoMapaInit();   // el mapa vive una vez que hay barrio elegido
     actualizarMontos();
 }
 
@@ -433,6 +434,33 @@ function cambiarBarrio() {
     $('moto-direccion').classList.add('oculto');
     $('barrio-opciones').classList.remove('oculto');
     actualizarMontos();
+}
+
+// ----- Mapa del checkout: el cliente arrastra el pin a su casa (precisión del envío) -----
+let motoMapa = null, motoPin = null;
+function motoMapaInit() {
+    if (motoMapa || !window.L) { if (motoMapa) setTimeout(() => motoMapa.invalidateSize(), 60); return; }
+    motoMapa = L.map('moto-mapa', { zoomControl: true }).setView([-26.1849, -58.1731], 14);   // Formosa
+    tileBritech().addTo(motoMapa);
+    motoPin = L.marker([-26.1849, -58.1731], { draggable: true, icon: markerDropoff() }).addTo(motoMapa);
+    motoPin.on('dragend', guardarMotoPin);
+    setTimeout(() => { motoMapa.invalidateSize(); brkIcons(); }, 80);
+    guardarMotoPin();
+}
+function guardarMotoPin() {
+    if (!motoPin) return;
+    const ll = motoPin.getLatLng();
+    $('moto-lat').value = ll.lat.toFixed(7);
+    $('moto-lng').value = ll.lng.toFixed(7);
+}
+// Geocodifica calle+altura y mueve el pin ahí (el cliente lo ajusta arrastrando).
+async function ubicarMoto() {
+    const dir = $('moto-calle').value.trim(), num = $('moto-altura').value.trim();
+    if (!dir) return;
+    try {
+        const r = await api.get(`/api/tienda/geocodificar?dir=${encodeURIComponent(dir)}&num=${encodeURIComponent(num)}&loc=Formosa`);
+        if (r.punto && motoPin) { motoPin.setLatLng([r.punto.lat, r.punto.lng]); motoMapa.setView([r.punto.lat, r.punto.lng], 16); guardarMotoPin(); }
+    } catch (e) { /* si falla, el cliente igual arrastra el pin */ }
 }
 
 // Retiro → sin datos. Moto Express → barrio + dirección. Envío → dirección completa.
@@ -477,6 +505,8 @@ function datosEnvioForm() {
             direccion: $('moto-calle').value.trim(),
             numero: $('moto-altura').value.trim(),
             referencia: $('moto-referencia').value.trim(),
+            lat: $('moto-lat').value || null,   // pin exacto que puso el cliente
+            lng: $('moto-lng').value || null,
         };
     }
     return {
@@ -1141,6 +1171,9 @@ async function iniciar() {
         if (c) elegirBarrio(Number(c.dataset.barrio), Number(c.dataset.costo), c.querySelector('.barrio-nom').textContent);
     });
     $('barrio-cambiar').addEventListener('click', cambiarBarrio);
+    // Pin del checkout: botón "buscar" + auto-ubicar al terminar la altura.
+    $('moto-ubicar').addEventListener('click', ubicarMoto);
+    $('moto-altura').addEventListener('change', ubicarMoto);
 
     // acceso mayorista (toggle modo / solicitar)
     $('mayorista-zona').addEventListener('click', (e) => {

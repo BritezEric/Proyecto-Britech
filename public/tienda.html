@@ -181,6 +181,14 @@
                                 <input id="moto-calle" type="text" placeholder="Calle *" autocomplete="address-line1">
                                 <input id="moto-altura" type="text" placeholder="Altura (número) *" autocomplete="address-line2">
                                 <input id="moto-referencia" type="text" placeholder="Referencia / piso / depto (opcional)" class="envio-ancho">
+                                <div id="moto-ubic" class="moto-ubic envio-ancho">
+                                    <div class="moto-ubic-top">
+                                        <span>Ubicá tu casa en el mapa <small>arrastrá el pin al lugar exacto</small></span>
+                                        <button type="button" id="moto-ubicar" class="moto-ubic-btn">Buscar mi dirección</button>
+                                    </div>
+                                    <div id="moto-mapa" class="moto-mapa"></div>
+                                    <input type="hidden" id="moto-lat"><input type="hidden" id="moto-lng">
+                                </div>
                             </div>
                         </div>
 

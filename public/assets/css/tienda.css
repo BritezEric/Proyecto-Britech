@@ -861,3 +861,11 @@ body { min-height: 100vh; }
 .seg-mapa { height: 54vh; min-height: 320px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); z-index: 0; }
 .seg-eta { text-align: center; font-weight: 700; margin: 12px 0 0; color: var(--ink); }
 .moto-icon, .dest-icon { font-size: 26px; line-height: 1; text-align: center; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+
+/* ===== Pin de ubicación en el checkout (Moto Express) ===== */
+.moto-ubic { display: grid; gap: var(--sp-2); }
+.moto-ubic-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; font-size: var(--text-sm); color: var(--ink); }
+.moto-ubic-top small { display: block; color: var(--ink-muted); font-size: var(--text-xs); font-weight: 400; }
+.moto-ubic-btn { border: 1px solid var(--line-strong, var(--line)); background: var(--surface-2); color: var(--ink); border-radius: var(--r-md); padding: var(--sp-2) var(--sp-3); font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
+.moto-ubic-btn:hover { border-color: var(--primary); }
+.moto-mapa { width: 100%; height: 220px; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--line); }

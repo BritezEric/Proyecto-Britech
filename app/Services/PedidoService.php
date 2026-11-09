@@ -151,15 +151,21 @@ class PedidoService
         // Aviso de stock bajo (fuera de la transacción: nunca frena el pedido).
         $this->avisarStockBajo(array_column($lineas, 'pid'));
 
-        // Geocodificar el destino (calle+altura) para el mapa y el ETA. Si falla,
-        // el pedido ya está hecho y el admin puede fijar el pin a mano.
+        // Destino en el mapa: si el cliente fijó el pin en el checkout, ESE manda;
+        // si no, geocodificamos calle+altura. El pedido ya está hecho: nunca frena.
         if (!$esRetiro) {
-            try {
-                $punto = (new GeocoderService())->geocodificar($datosEnvio);
-                if ($punto !== null) {
-                    (new EnvioRepository())->fijarDestino($pedidoId, $punto['lat'], $punto['lng']);
-                }
-            } catch (\Throwable $e) { /* geocode opcional: nunca frena el pedido */ }
+            $pinLat = isset($envio['lat']) && $envio['lat'] !== '' ? (float) $envio['lat'] : null;
+            $pinLng = isset($envio['lng']) && $envio['lng'] !== '' ? (float) $envio['lng'] : null;
+            if ($pinLat !== null && $pinLng !== null && $pinLat >= -90 && $pinLat <= 90 && $pinLng >= -180 && $pinLng <= 180) {
+                (new EnvioRepository())->fijarDestino($pedidoId, $pinLat, $pinLng);
+            } else {
+                try {
+                    $punto = (new GeocoderService())->geocodificar($datosEnvio);
+                    if ($punto !== null) {
+                        (new EnvioRepository())->fijarDestino($pedidoId, $punto['lat'], $punto['lng']);
+                    }
+                } catch (\Throwable $e) { /* geocode opcional */ }
+            }
         }
 
         // Avisos: al staff (bandeja del panel) y al cliente (bandeja de la tienda).

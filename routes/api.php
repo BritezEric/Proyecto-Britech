@@ -226,6 +226,7 @@ $router->get('/api/tienda/barrios',    [RepartidorController::class, 'barrios'])
 // Pedidos del cliente
 $router->post('/api/tienda/pedidos',     [PedidoController::class, 'crear']);
 $router->get('/api/tienda/mis-pedidos',  [PedidoController::class, 'mis']);
+$router->get('/api/tienda/geocodificar', [PedidoController::class, 'geocodificar']);   // pin del checkout
 $router->post('/api/tienda/comprobante', [PedidoController::class, 'subirComprobante']);
 // Pago online con Mercado Pago (Checkout Pro). webhook = notificación pública de MP.
 $router->post('/api/tienda/pago/iniciar',   [PagoController::class, 'iniciar']);
