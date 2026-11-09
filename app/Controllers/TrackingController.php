@@ -69,6 +69,140 @@ class TrackingController
         Response::json(['ok' => true, 'envio' => $env]);
     }
 
+    /**
+     * Seguimiento PÚBLICO por token (link sin login para el cliente).
+     * Query: ?t=<token>. Token inválido → 404. No expone datos personales.
+     */
+    public function seguimientoPublico(): void
+    {
+        $token = trim((string) Request::query('t', ''));
+        if ($token === '') { Response::json(['ok' => false, 'error' => 'Falta el token.'], 404); return; }
+
+        $env = (new TrackingRepository())->seguimientoPorToken($token);
+        if ($env === null) { Response::json(['ok' => false, 'error' => 'Seguimiento no encontrado.'], 404); return; }
+
+        $env['eta_min'] = $this->eta($env);
+        Response::json(['ok' => true, 'envio' => $env]);
+    }
+
+    /**
+     * Ruta por calles (estilo Uber) del envío público: desde la moto hasta el
+     * destino. Query: ?t=<token>. Devuelve la polyline + duración (ETA de manejo).
+     * Se consulta con menos frecuencia que la posición (cuida la cuota del motor).
+     */
+    public function rutaPublica(): void
+    {
+        $token = trim((string) Request::query('t', ''));
+        if ($token === '') { Response::json(['ok' => false, 'error' => 'Falta el token.'], 404); return; }
+
+        $e = (new TrackingRepository())->seguimientoPorToken($token);
+        if ($e === null) { Response::json(['ok' => false, 'error' => 'No encontrado.'], 404); return; }
+        if ($e['ult_lat'] === null || $e['dest_lat'] === null) {
+            Response::json(['ok' => true, 'ruta' => null]); return;   // sin moto o sin destino todavía
+        }
+
+        $r = (new \App\Services\RoutingService())->ruta(
+            (float) $e['ult_lat'], (float) $e['ult_lng'], (float) $e['dest_lat'], (float) $e['dest_lng']
+        );
+        Response::json([
+            'ok'   => true,
+            'ruta' => $r ? ['coords' => $r['coords'], 'eta_min' => (int) ceil($r['dur_s'] / 60)] : null,
+        ]);
+    }
+
+    /**
+     * Vista del cadete: su envío activo con punto de retiro (local), destino y la
+     * ruta hacia el objetivo actual. Query: ?token=<token del repartidor>.
+     */
+    public function miEnvio(): void
+    {
+        $token = trim((string) Request::query('token', ''));
+        $repo = new TrackingRepository();
+        $rep = $token !== '' ? $repo->repartidorPorToken($token) : null;
+        if ($rep === null) { Response::json(['ok' => false, 'error' => 'Token inválido.'], 401); return; }
+
+        $e = $repo->envioActivoDeRepartidor((int) $rep['id']);
+        if ($e === null) { Response::json(['ok' => true, 'envio' => null]); return; }
+
+        $cfg = require dirname(__DIR__, 2) . '/config/config.php';
+        $pickup = [
+            'lat' => (float) $cfg['mapas']['local_lat'],
+            'lng' => (float) $cfg['mapas']['local_lng'],
+            'dir' => (string) $cfg['mapas']['local_dir'],
+        ];
+        $dropDir = trim(($e['direccion'] ?? '') . ' ' . ($e['numero'] ?? ''))
+            . ($e['localidad'] ? ', ' . $e['localidad'] : '');
+        $dropoff = [
+            'lat' => $e['dest_lat'] !== null ? (float) $e['dest_lat'] : null,
+            'lng' => $e['dest_lng'] !== null ? (float) $e['dest_lng'] : null,
+            'dir' => trim($dropDir) ?: 'Dirección del cliente',
+        ];
+        // En camino → va al cliente (dropoff); antes → va a retirar al local (pickup).
+        $target = $e['estado'] === 'en_camino' ? $dropoff : $pickup;
+
+        $ruta = null;
+        if ($e['ult_lat'] !== null && $target['lat'] !== null) {
+            $r = (new \App\Services\RoutingService())->ruta(
+                (float) $e['ult_lat'], (float) $e['ult_lng'], (float) $target['lat'], (float) $target['lng']
+            );
+            if ($r) $ruta = ['coords' => $r['coords'], 'eta_min' => (int) ceil($r['dur_s'] / 60)];
+        }
+
+        Response::json(['ok' => true, 'envio' => [
+            'envio_id' => (int) $e['envio_id'],
+            'numero'   => $e['numero'],
+            'estado'   => $e['estado'],
+            'pickup'   => $pickup,
+            'dropoff'  => $dropoff,
+            'target'   => $e['estado'] === 'en_camino' ? 'dropoff' : 'pickup',
+            'ruta'     => $ruta,
+        ]]);
+    }
+
+    /**
+     * El cadete cambia el estado de SU envío (aceptar/retiré/entregué).
+     * Body: {token, envio_id, estado}. Valida que el envío sea de ese repartidor.
+     */
+    public function estadoCadete(): void
+    {
+        $d = Request::json();
+        $token = trim((string) ($d['token'] ?? ''));
+        $envioId = (int) ($d['envio_id'] ?? 0);
+        $estado = (string) ($d['estado'] ?? '');
+
+        $rep = $token !== '' ? (new TrackingRepository())->repartidorPorToken($token) : null;
+        if ($rep === null) { Response::json(['ok' => false, 'error' => 'Token inválido.'], 401); return; }
+        if (!in_array($estado, ['despachado', 'en_camino', 'entregado'], true)) {
+            Response::json(['ok' => false, 'error' => 'Estado inválido.'], 422); return;
+        }
+        $env = (new \App\Repositories\EnvioRepository())->buscarPorId($envioId);
+        if ($env === null || (int) $env['repartidor_id'] !== (int) $rep['id']) {
+            Response::json(['ok' => false, 'error' => 'Ese envío no es tuyo.'], 403); return;
+        }
+        try {
+            (new \App\Services\RepartidorService())->cambiarEstadoEnvio($envioId, $estado);
+            Response::json(['ok' => true]);
+        } catch (\App\Core\ValidacionException $e) {
+            Response::json(['ok' => false, 'error' => $e->getMessage()], 422);
+        }
+    }
+
+    /** Admin fija el destino del envío a mano (pin en el mapa). Body: {envio_id, lat, lng}. */
+    public function fijarDestino(): void
+    {
+        if (!Session::esStaff()) { Response::json(['ok' => false, 'error' => 'Solo staff.'], 403); return; }
+        $d = Request::json();
+        $envioId = (int) ($d['envio_id'] ?? 0);
+        $lat = isset($d['lat']) ? (float) $d['lat'] : null;
+        $lng = isset($d['lng']) ? (float) $d['lng'] : null;
+        if ($envioId <= 0 || $lat === null || $lng === null
+            || $lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            Response::json(['ok' => false, 'error' => 'Datos inválidos.'], 422); return;
+        }
+        (new \App\Repositories\EnvioRepository())->fijarDestinoPorId($envioId, $lat, $lng);
+        Response::json(['ok' => true]);
+    }
+
     /** ETA en minutos hasta el destino (null si falta la posición o el destino). */
     private function eta(array $e): ?int
     {

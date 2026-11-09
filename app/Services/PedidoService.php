@@ -151,6 +151,17 @@ class PedidoService
         // Aviso de stock bajo (fuera de la transacción: nunca frena el pedido).
         $this->avisarStockBajo(array_column($lineas, 'pid'));
 
+        // Geocodificar el destino (calle+altura) para el mapa y el ETA. Si falla,
+        // el pedido ya está hecho y el admin puede fijar el pin a mano.
+        if (!$esRetiro) {
+            try {
+                $punto = (new GeocoderService())->geocodificar($datosEnvio);
+                if ($punto !== null) {
+                    (new EnvioRepository())->fijarDestino($pedidoId, $punto['lat'], $punto['lng']);
+                }
+            } catch (\Throwable $e) { /* geocode opcional: nunca frena el pedido */ }
+        }
+
         // Avisos: al staff (bandeja del panel) y al cliente (bandeja de la tienda).
         $notif = new \App\Repositories\NotificacionRepository();
         $notif->crear('pedido_nuevo', "Nuevo pedido {$numero} · " . number_format($totalFinal, 0, ',', '.'), 'pedidos', $pedidoId);

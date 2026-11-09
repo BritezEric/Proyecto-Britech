@@ -67,7 +67,7 @@ class PedidoRepository
     {
         $st = Database::conexion()->prepare(
             "SELECT p.id, p.numero, p.estado, p.estado_pago, p.comprobante_url, p.total, p.creado_en,
-                    e.costo AS envio_costo, e.estado AS envio_estado, e.tracking,
+                    e.costo AS envio_costo, e.estado AS envio_estado, e.tracking, e.token AS envio_token,
                     em.nombre AS envio_empresa, em.url_tracking
              FROM pedido p
              LEFT JOIN envio e ON e.pedido_id = p.id

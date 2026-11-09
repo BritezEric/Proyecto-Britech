@@ -86,4 +86,17 @@ return [
         'groq_stt'     => $leer('GROQ_STT_MODEL', 'whisper-large-v3-turbo'),
         'groq_model'   => $leer('GROQ_MODEL', 'llama-3.3-70b-versatile'),
     ],
+    // Mapas / ruteo del seguimiento de envíos (estilo Uber).
+    'mapas' => [
+        // OpenRouteService: ruta real por las calles + ETA. Key gratis en openrouteservice.org.
+        // Si queda vacía, se usa el servidor demo de OSRM (sin key, solo para la demo).
+        'ors_key'   => $leer('ORS_API_KEY', ''),
+        // Punto de retiro (el local): a dónde va el cadete a buscar el paquete.
+        'local_lat' => (float) $leer('LOCAL_LAT', '-26.1861644'),
+        'local_lng' => (float) $leer('LOCAL_LNG', '-58.1661652'),
+        'local_dir' => $leer('LOCAL_DIRECCION', 'Hipólito Yrigoyen 3563, Formosa'),
+        // Acotar la geocodificación a Formosa capital (evita que Nominatim matchee
+        // calles del mismo nombre en otra parte). viewbox = lon_izq,lat_sup,lon_der,lat_inf.
+        'geo_viewbox' => $leer('GEO_VIEWBOX', '-58.30,-26.10,-58.05,-26.28'),
+    ],
 ];

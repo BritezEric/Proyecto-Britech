@@ -133,8 +133,13 @@ $router->post('/api/admin/repartidores/guardar', [RepartidorController::class, '
 $router->post('/api/admin/repartidores/baja',    [RepartidorController::class, 'baja'],     true);
 // Seguimiento en tiempo real (estilo Uber)
 $router->post('/api/repartidor/posicion', [TrackingController::class, 'posicion']);   // emisor (celular/TrackingTag), token
+$router->get('/api/repartidor/envio',     [TrackingController::class, 'miEnvio']);    // cadete: su envío activo + ruta (token)
+$router->post('/api/repartidor/envio/estado', [TrackingController::class, 'estadoCadete']); // cadete: aceptar/retiré/entregué (token)
 $router->get('/api/admin/envios/mapa',    [TrackingController::class, 'adminMapa'], true);
 $router->get('/api/tienda/seguimiento',   [TrackingController::class, 'seguimiento']);   // cliente (valida sesión dentro)
+$router->get('/api/seguimiento/publico',  [TrackingController::class, 'seguimientoPublico']);   // link público por token, sin login
+$router->get('/api/seguimiento/ruta',     [TrackingController::class, 'rutaPublica']);          // ruta por calles (estilo Uber), sin login
+$router->post('/api/admin/envios/destino', [TrackingController::class, 'fijarDestino'], true);   // admin: pin manual del destino
 // Envíos sin repartidor + derivar (dispatch) — solo admin
 $router->get('/api/admin/envios/sin-asignar',    [RepartidorController::class, 'sinAsignar'], true);
 $router->post('/api/admin/envios/derivar',       [RepartidorController::class, 'derivar'],    true);

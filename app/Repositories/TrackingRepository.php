@@ -66,6 +66,49 @@ class TrackingRepository
         return $st->fetch() ?: null;
     }
 
+    /**
+     * Seguimiento PÚBLICO por token de envío (link sin login). Devuelve solo lo
+     * necesario para el mapa: estado, destino, moto y referencia (nº de pedido/venta).
+     * NO expone datos personales del cliente (nombre, dirección, teléfono).
+     */
+    public function seguimientoPorToken(string $token): ?array
+    {
+        $st = Database::conexion()->prepare(
+            "SELECT e.id AS envio_id, e.estado, e.dest_lat, e.dest_lng,
+                    COALESCE(p.numero, CONCAT('V-', e.venta_id)) AS referencia,
+                    r.nombre AS repartidor, r.ult_lat, r.ult_lng, r.ult_pos_en, r.en_linea,
+                    TIMESTAMPDIFF(SECOND, r.ult_pos_en, NOW()) AS hace_seg
+             FROM envio e
+             LEFT JOIN repartidor r ON r.id = e.repartidor_id
+             LEFT JOIN pedido p     ON p.id = e.pedido_id
+             WHERE e.token = ?"
+        );
+        $st->execute([$token]);
+        return $st->fetch() ?: null;
+    }
+
+    /**
+     * Envío activo (en curso) asignado a un repartidor, para la vista del cadete.
+     * Trae destino + dirección + la última posición del propio repartidor (origen).
+     * shortcut: devuelve uno solo (el más reciente); si el cadete tuviera varios, los ve de a uno.
+     */
+    public function envioActivoDeRepartidor(int $repartidorId): ?array
+    {
+        $st = Database::conexion()->prepare(
+            "SELECT e.id AS envio_id, e.estado, e.dest_lat, e.dest_lng,
+                    e.direccion, e.numero, e.localidad, e.referencia AS ref_entrega,
+                    COALESCE(p.numero, CONCAT('V-', e.venta_id)) AS numero,
+                    r.ult_lat, r.ult_lng
+             FROM envio e
+             JOIN repartidor r ON r.id = e.repartidor_id
+             LEFT JOIN pedido p ON p.id = e.pedido_id
+             WHERE e.repartidor_id = ? AND e.estado IN ('pendiente','despachado','en_camino')
+             ORDER BY e.id DESC LIMIT 1"
+        );
+        $st->execute([$repartidorId]);
+        return $st->fetch() ?: null;
+    }
+
     /** Últimas N posiciones de un repartidor (rastro del recorrido). */
     public function rastro(int $repartidorId, int $limit = 50): array
     {
