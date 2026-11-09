@@ -105,6 +105,19 @@ class RepartidorService
             }
         }
         $repo->cambiarEstadoPorId($envioId, $estado);
+
+        // Al salir la moto, avisamos al cliente por WhatsApp con el link de seguimiento.
+        if ($estado === 'en_camino') {
+            try {
+                $cfg = require dirname(__DIR__, 2) . '/config/config.php';
+                $link = $cfg['app']['url'] . '/seguimiento.html?t=' . ($env['token'] ?? '');
+                (new \App\Services\WhatsAppService())->enviarTemplate(
+                    (string) ($env['telefono'] ?? ''),
+                    $cfg['whatsapp']['tpl_camino'] ?? 'pedido_en_camino',
+                    [$env['destinatario'] ?: 'Cliente', $link]
+                );
+            } catch (\Throwable $e) { /* el aviso nunca frena el cambio de estado */ }
+        }
     }
 
     /** Deriva un envío a un repartidor (o lo desasigna si $repartidorId es null). */

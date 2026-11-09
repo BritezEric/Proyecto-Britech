@@ -194,6 +194,16 @@ class PedidoService
             $this->enviarConfirmacion($clienteId, $numero, $lineas, $productos, $costoEnvio, $totalFinal);
         } catch (\Throwable $e) { /* no rompemos la compra por un fallo de email */ }
 
+        // WhatsApp: aviso de pedido recibido (si hay teléfono y WhatsApp configurado).
+        try {
+            $cfg = require dirname(__DIR__, 2) . '/config/config.php';
+            (new \App\Services\WhatsAppService())->enviarTemplate(
+                (string) ($datosEnvio['telefono'] ?? ''),
+                $cfg['whatsapp']['tpl_recibido'] ?? 'pedido_recibido',
+                [$datosEnvio['destinatario'] ?: 'Cliente', $numero]
+            );
+        } catch (\Throwable $e) { /* el aviso nunca frena la compra */ }
+
         return [
             'pedido_id'    => $pedidoId,
             'numero'       => $numero,

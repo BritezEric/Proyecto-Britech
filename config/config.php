@@ -99,4 +99,15 @@ return [
         // calles del mismo nombre en otra parte). viewbox = lon_izq,lat_sup,lon_der,lat_inf.
         'geo_viewbox' => $leer('GEO_VIEWBOX', '-58.30,-26.10,-58.05,-26.28'),
     ],
+    // WhatsApp (Cloud API de Meta) para avisos automáticos al cliente del envío.
+    // Si WA_TOKEN/WA_PHONE_ID quedan vacíos, queda desactivado (no-op).
+    'whatsapp' => [
+        'token'    => $leer('WA_TOKEN', ''),
+        'phone_id' => $leer('WA_PHONE_ID', ''),
+        'version'  => $leer('WA_VERSION', 'v21.0'),
+        'lang'     => $leer('WA_LANG', 'es_AR'),   // debe coincidir con el idioma de la plantilla en Meta
+        // Nombres de las plantillas aprobadas (category UTILITY) en Meta.
+        'tpl_recibido' => $leer('WA_TPL_RECIBIDO', 'pedido_recibido'),   // vars: {{1}} nombre, {{2}} nº pedido
+        'tpl_camino'   => $leer('WA_TPL_CAMINO', 'pedido_en_camino'),    // vars: {{1}} nombre, {{2}} link
+    ],
 ];
