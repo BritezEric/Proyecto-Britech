@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#4c1d95">
     <title>Britech — Repartidor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/lucide@0.544.0/dist/umd/lucide.min.js"></script>
+    <script defer src="/assets/js/mapas.js"></script>
     <style>
         :root { --bg:#0f0b1e; --card:#1b1530; --line:#2e2648; --ink:#f3f1f9; --muted:#a9a2c4;
             --primary:#7c3aed; --primary-strong:#6d28d9; --ok:#16a34a; --off:#6b7280; --danger:#dc2626; }
@@ -31,11 +35,35 @@
         .info b { color:var(--ink); }
         .err { color:var(--danger); font-size:13px; max-width:340px; }
         footer { padding:14px; text-align:center; color:var(--muted); font-size:12px; }
+        /* Vista del envío asignado (estilo Uber) */
+        .job { width:min(420px,92vw); background:var(--card); border:1px solid var(--line);
+            border-radius:16px; overflow:hidden; display:none; }
+        .job.show { display:block; }
+        .job-map { width:100%; height:240px; background:#0a0716; }
+        .job-body { padding:16px; display:grid; gap:12px; }
+        .job-paso { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+        .job-target { display:flex; align-items:flex-start; gap:12px; }
+        .job-ic { width:42px; height:42px; border-radius:12px; display:grid; place-items:center; font-size:22px; flex:none;
+            background:#241b3f; }
+        .job-dir { font-size:16px; font-weight:800; line-height:1.25; }
+        .job-eta { color:var(--muted); font-size:13px; margin-top:2px; }
+        .job-num { color:var(--muted); font-size:12px; }
+        .btn-accion { width:100%; border:none; border-radius:14px; padding:18px; font-size:17px; font-weight:800;
+            color:#fff; cursor:pointer; font-family:inherit; background:linear-gradient(180deg,var(--primary),var(--primary-strong)); }
+        .btn-accion:disabled { opacity:.6; }
+        .job-sin { width:min(420px,92vw); text-align:center; color:var(--muted); font-size:14px; padding:10px; }
+        /* Iconos (Lucide) */
+        .logo svg { width:18px; height:18px; color:#fff; }
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; }
+        .btn svg { width:20px; height:20px; }
+        .job-ic svg { width:22px; height:22px; color:#fff; }
+        .btn-accion { display:flex; align-items:center; justify-content:center; gap:10px; }
+        .btn-accion svg { width:20px; height:20px; }
     </style>
 </head>
 <body>
     <header>
-        <div class="logo">🛵</div>
+        <div class="logo"><i data-lucide="bike"></i></div>
         <div><b>Britech</b> <span>Repartidor</span></div>
     </header>
 
@@ -47,7 +75,7 @@
 
         <div class="estado" id="estado"><span class="dot"></span><span id="estado-txt">Desconectado</span></div>
 
-        <button class="btn btn-on" id="btn-toggle">▶ Ponerme en línea</button>
+        <button class="btn btn-on" id="btn-toggle"><i data-lucide="play"></i><span>Ponerme en línea</span></button>
 
         <div class="info">
             <div>Última posición: <b id="i-pos">—</b></div>
@@ -56,15 +84,51 @@
         </div>
 
         <p class="err" id="err"></p>
+
+        <!-- Envío asignado (estilo Uber): retirar → entregar -->
+        <div class="job" id="job">
+            <div class="job-map" id="job-map"></div>
+            <div class="job-body">
+                <div>
+                    <div class="job-paso" id="job-paso">Retirar</div>
+                    <div class="job-target">
+                        <div class="job-ic" id="job-ic"><i data-lucide="package"></i></div>
+                        <div>
+                            <div class="job-dir" id="job-dir">—</div>
+                            <div class="job-eta" id="job-eta"></div>
+                            <div class="job-num" id="job-num"></div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-accion" id="job-accion">Aceptar envío</button>
+            </div>
+        </div>
+        <p class="job-sin" id="job-sin">No tenés envíos asignados ahora.</p>
     </main>
 
-    <footer>Mantené esta pantalla abierta mientras hacés el reparto.</footer>
+    <footer id="footer">⚠ Dejá esta pantalla prendida y abierta mientras repartís, o se corta el GPS.</footer>
 
     <script>
         const q = new URLSearchParams(location.search);
         const token = q.get('token') || '';
         const $ = (id) => document.getElementById(id);
-        let watchId = null, enviadas = 0, ultimoEnvio = 0;
+        let watchId = null, enviadas = 0, ultimoEnvio = 0, wakeLock = null;
+
+        // Wake Lock: evita que la pantalla se apague mientras el repartidor está en línea.
+        async function pedirWakeLock() {
+            if (!('wakeLock' in navigator)) return;   // no soportado: queda el aviso del footer
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => { wakeLock = null; });
+            } catch (e) { /* denegado o no disponible: seguimos igual */ }
+        }
+        async function soltarWakeLock() {
+            try { if (wakeLock) { await wakeLock.release(); wakeLock = null; } } catch (e) {}
+        }
+        // Al volver de segundo plano, si seguimos en línea, re-pedimos el lock.
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && watchId !== null && !wakeLock) pedirWakeLock();
+        });
 
         if (!token) {
             $('err').textContent = 'Falta el token. Pedí tu link de seguimiento al administrador.';
@@ -75,8 +139,11 @@
         function setEstado(on) {
             $('estado').classList.toggle('on', on);
             $('estado-txt').textContent = on ? 'En línea' : 'Desconectado';
-            $('btn-toggle').textContent = on ? '⏹ Ponerme fuera de línea' : '▶ Ponerme en línea';
+            $('btn-toggle').innerHTML = on
+                ? '<i data-lucide="square"></i><span>Ponerme fuera de línea</span>'
+                : '<i data-lucide="play"></i><span>Ponerme en línea</span>';
             $('btn-toggle').className = 'btn ' + (on ? 'btn-off' : 'btn-on');
+            brkIcons();
         }
 
         async function enviar(lat, lng) {
@@ -108,14 +175,87 @@
 
         $('btn-toggle').addEventListener('click', () => {
             if (watchId !== null) {
-                navigator.geolocation.clearWatch(watchId); watchId = null; setEstado(false); return;
+                navigator.geolocation.clearWatch(watchId); watchId = null; soltarWakeLock(); setEstado(false); return;
             }
             if (!navigator.geolocation) { $('err').textContent = 'Este dispositivo no tiene GPS.'; return; }
             watchId = navigator.geolocation.watchPosition(onPos, onErr, {
                 enableHighAccuracy: true, maximumAge: 2000, timeout: 10000,
             });
+            pedirWakeLock();
             setEstado(true);
             $('err').textContent = '';
+        });
+
+        // ===== Envío asignado (cadete): retirar → entregar, estilo Uber =====
+        let jobMap = null, jobRoute = null, jobTargetM = null, jobMeM = null, jobData = null;
+        const ACC = {
+            pendiente:  { paso: 'Nuevo envío', icon: 'circle-check', btn: 'Aceptar envío',     next: 'despachado' },
+            despachado: { paso: 'Retirar en',  icon: 'package',      btn: 'Retiré el paquete', next: 'en_camino' },
+            en_camino:  { paso: 'Entregar en', icon: 'flag',         btn: 'Entregué',          next: 'entregado' },
+        };
+
+        function jobInitMapa() {
+            if (jobMap || !window.L) return;
+            jobMap = L.map('job-map', { zoomControl: false, attributionControl: false }).setView([-26.1849, -58.1731], 14);
+            tileBritech().addTo(jobMap);
+        }
+
+        async function cargarJob() {
+            if (!token) return;
+            let r; try { r = await fetch('/api/repartidor/envio?token=' + encodeURIComponent(token)); } catch { return; }
+            let d; try { d = await r.json(); } catch { return; }
+            if (!d.ok) return;
+            jobData = d.envio;
+            if (!jobData) { $('job').classList.remove('show'); $('job-sin').style.display = 'block'; return; }
+            $('job-sin').style.display = 'none'; $('job').classList.add('show');
+            jobInitMapa(); setTimeout(() => jobMap && jobMap.invalidateSize(), 80);
+
+            const a = ACC[jobData.estado] || ACC.pendiente;
+            const esDrop = jobData.target === 'dropoff';
+            const tgt = esDrop ? jobData.dropoff : jobData.pickup;
+            const tgtMarker = () => esDrop ? markerDropoff() : markerPickup();
+            $('job-paso').textContent = a.paso;
+            $('job-ic').innerHTML = '<i data-lucide="' + (esDrop ? 'map-pin' : 'package') + '"></i>';
+            $('job-dir').textContent = tgt.dir;
+            $('job-num').textContent = 'Envío ' + (jobData.numero || '');
+            $('job-eta').textContent = (jobData.ruta && jobData.ruta.eta_min != null) ? ('A ~' + jobData.ruta.eta_min + ' min') : '';
+            $('job-accion').innerHTML = '<i data-lucide="' + a.icon + '"></i><span>' + a.btn + '</span>';
+            $('job-accion').disabled = false;
+
+            if (jobData.ruta && jobData.ruta.coords) {
+                const cs = jobData.ruta.coords;
+                if (jobRoute) jobRoute.setLatLngs(cs); else jobRoute = L.polyline(cs, { color: '#a99bf0', weight: 5, opacity: .85 }).addTo(jobMap);
+                const me = cs[0], end = cs[cs.length - 1];
+                if (jobMeM) jobMeM.setLatLng(me); else jobMeM = L.marker(me, { icon: markerMoto() }).addTo(jobMap);
+                if (jobTargetM) { jobTargetM.setLatLng(end); jobTargetM.setIcon(tgtMarker()); } else jobTargetM = L.marker(end, { icon: tgtMarker() }).addTo(jobMap);
+                jobMap.fitBounds(cs, { padding: [40, 40], maxZoom: 16 });
+            } else if (tgt.lat != null) {
+                if (jobTargetM) { jobTargetM.setLatLng([tgt.lat, tgt.lng]); jobTargetM.setIcon(tgtMarker()); } else jobTargetM = L.marker([tgt.lat, tgt.lng], { icon: tgtMarker() }).addTo(jobMap);
+                jobMap.setView([tgt.lat, tgt.lng], 15);
+            }
+            brkIcons();   // renderiza iconos SVG (tarjeta, botón, pines)
+        }
+
+        $('job-accion').addEventListener('click', async () => {
+            if (!jobData) return;
+            const a = ACC[jobData.estado]; if (!a) return;
+            $('job-accion').disabled = true;
+            try {
+                const r = await fetch('/api/repartidor/envio/estado', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, envio_id: jobData.envio_id, estado: a.next }),
+                });
+                const d = await r.json();
+                if (!d.ok) { $('err').textContent = d.error || 'No se pudo actualizar.'; $('job-accion').disabled = false; return; }
+                $('err').textContent = '';
+                cargarJob();
+            } catch (e) { $('err').textContent = 'Sin conexión.'; $('job-accion').disabled = false; }
+        });
+
+        // Arranca cuando ya cargaron los scripts defer (leaflet, lucide, mapas.js).
+        window.addEventListener('load', () => {
+            if (window.brkIcons) window.brkIcons();
+            if (token) { cargarJob(); setInterval(cargarJob, 5000); }
         });
     </script>
 </body>

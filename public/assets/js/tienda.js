@@ -898,9 +898,10 @@ async function verMisPedidos() {
         const subir = (p.estado_pago === 'pendiente' || p.estado_pago === 'rechazado')
             ? `<label class="badge-link">📎 Comprobante<input type="file" accept="image/*,application/pdf" hidden data-pago="${p.id}"></label>`
             : '';
-        // Seguimiento en vivo cuando la moto ya salió (despachado / en camino).
-        const enVivo = (p.envio_estado === 'despachado' || p.envio_estado === 'en_camino')
-            ? `<button class="mp-seguir" data-seguir="${p.id}" data-num="${esc(p.numero)}">🛵 Seguir en el mapa</button>`
+        // Seguimiento en vivo cuando la moto ya salió (despachado / en camino):
+        // abre la página pública de seguimiento (mapa oscuro + ruta + ETA).
+        const enVivo = ((p.envio_estado === 'despachado' || p.envio_estado === 'en_camino') && p.envio_token)
+            ? `<a class="mp-seguir" href="/seguimiento.html?t=${encodeURIComponent(p.envio_token)}" target="_blank" rel="noopener">Seguir en el mapa</a>`
             : '';
         // El progreso del envío es lo que el cliente quiere ver; si no hay envío, el estado del pedido.
         const seguimiento = p.envio_estado
@@ -944,7 +945,7 @@ async function abrirSeguimiento(pedidoId, numero) {
         if (!window.L) { setTimeout(initMapa, 300); return; }
         if (!_segMapa) {
             _segMapa = L.map('seg-mapa', { zoomControl: true }).setView([-26.1849, -58.1731], 14);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(_segMapa);
+            tileBritech().addTo(_segMapa);
         }
         setTimeout(() => _segMapa.invalidateSize(), 60);
         clearInterval(_segInterval);
@@ -957,8 +958,8 @@ async function abrirSeguimiento(pedidoId, numero) {
     initMapa();
 }
 
-const segMotoIcon = () => L.divIcon({ className: 'moto-icon', html: '🛵', iconSize: [34, 34], iconAnchor: [17, 17] });
-const segDestIcon = () => L.divIcon({ className: 'dest-icon', html: '🏁', iconSize: [24, 24], iconAnchor: [6, 24] });
+const segMotoIcon = () => markerMoto();    // pines SVG compartidos (mapas.js)
+const segDestIcon = () => markerDropoff();
 
 async function cargarSeguimiento(pedidoId) {
     let r;
@@ -966,22 +967,24 @@ async function cargarSeguimiento(pedidoId) {
     const e = r.envio;
     if (!e) return;
     if (e.dest_lat != null && !_segDest) {
-        _segDest = L.marker([Number(e.dest_lat), Number(e.dest_lng)], { icon: segDestIcon() }).addTo(_segMapa).bindPopup('🏁 Tu dirección');
+        _segDest = L.marker([Number(e.dest_lat), Number(e.dest_lng)], { icon: segDestIcon() }).addTo(_segMapa).bindPopup('Tu dirección');
     }
     if (e.ult_lat == null) {
-        $('seg-eta').textContent = e.estado === 'entregado' ? '✓ Entregado' : 'La moto todavía no está emitiendo su ubicación.';
+        $('seg-eta').textContent = e.estado === 'entregado' ? 'Entregado' : 'La moto todavía no está emitiendo su ubicación.';
+        brkIcons();
         return;
     }
     const ll = [Number(e.ult_lat), Number(e.ult_lng)];
-    if (_segMoto) { _segMoto.setLatLng(ll); } else { _segMoto = L.marker(ll, { icon: segMotoIcon() }).addTo(_segMapa).bindPopup('🛵 ' + esc(e.repartidor || 'Tu pedido')); }
+    if (_segMoto) { _segMoto.setLatLng(ll); } else { _segMoto = L.marker(ll, { icon: segMotoIcon() }).addTo(_segMapa).bindPopup(esc(e.repartidor || 'Tu pedido')); }
     const pts = [ll]; if (_segDest) pts.push(_segDest.getLatLng());
     _segMapa.fitBounds(pts, { padding: [50, 50], maxZoom: 15 });
+    brkIcons();   // renderiza los pines SVG
     const viva = e.hace_seg != null && Number(e.hace_seg) <= 30;
     $('seg-eta').textContent = !viva
-        ? `🛵 ${esc(e.repartidor || 'Tu pedido')} · sin señal por un momento…`
+        ? `${esc(e.repartidor || 'Tu pedido')} · sin señal por un momento…`
         : e.eta_min != null
-        ? `🛵 ${esc(e.repartidor || 'Tu pedido')} · llega en ~${e.eta_min} min`
-        : `🛵 ${esc(e.repartidor || 'En camino')}`;
+        ? `${esc(e.repartidor || 'Tu pedido')} · llega en ~${e.eta_min} min`
+        : `${esc(e.repartidor || 'En camino')}`;
 }
 
 // Progreso del envío como pasos claros. "cancelado" se muestra aparte.

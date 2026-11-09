@@ -777,6 +777,16 @@ async function verPedido(id, numero) {
             (r.repartidores || []).map((rp) =>
                 `<option value="${rp.id}" ${Number(e.repartidor_id) === Number(rp.id) ? 'selected' : ''}>${esc(rp.nombre)}</option>`).join('')}</select>`;
 
+        // Seguimiento en vivo: link público (para WhatsApp) + destino en el mapa.
+        const pubUrl = e.token ? `${location.origin}/seguimiento.html?t=${e.token}` : '';
+        const tieneDest = e.dest_lat != null && e.dest_lng != null;
+        const trackHtml = `
+            <div class="track-admin">
+                ${pubUrl ? `<button type="button" class="btn-mini" data-copy-track="${esc(pubUrl)}">🔗 Copiar link de seguimiento</button>` : ''}
+                <button type="button" class="btn-mini ghost" data-pin-dest="${e.id}" data-lat="${tieneDest ? e.dest_lat : ''}" data-lng="${tieneDest ? e.dest_lng : ''}">📍 ${tieneDest ? 'Corregir' : 'Fijar'} destino en el mapa</button>
+                <span class="td-mute track-dest-ok">${tieneDest ? 'Destino ubicado ✓' : 'Sin destino en el mapa'}</span>
+            </div>`;
+
         if (esMoto) {
             // Moto Express: barrio (precio fijo) + dirección con altura + repartidor a cargo.
             envioHtml = `
@@ -794,6 +804,7 @@ async function verPedido(id, numero) {
                         <div><label>Estado del envío</label>${selEstado}</div>
                         <div><label>Repartidor a cargo</label>${selRepart}</div>
                     </div>
+                    ${trackHtml}
                     <button class="btn-primary" id="envio-guardar" data-id="${id}">Guardar envío</button>
                 </div>`;
         } else if (esRetiro) {
@@ -828,6 +839,7 @@ async function verPedido(id, numero) {
                         <div><label>Seguimiento (tracking)</label><input id="envio-tracking" placeholder="Nº de seguimiento" value="${esc(e.tracking || '')}"></div>
                     </div>
                     ${seg}
+                    ${trackHtml}
                     <button class="btn-primary" id="envio-guardar" data-id="${id}">Guardar envío</button>
                 </div>`;
         }
@@ -869,6 +881,19 @@ async function verPedido(id, numero) {
             verPedido(id, numero);
             cargar();   // refresca la columna "Pago" del listado de fondo
         } catch (ex) { alert(ex.message); }
+    }));
+
+    // Copiar link público de seguimiento (para mandar por WhatsApp).
+    cont.querySelectorAll('[data-copy-track]').forEach((b) => b.addEventListener('click', async () => {
+        const url = b.dataset.copyTrack;
+        try { await navigator.clipboard.writeText(url); toast('✓ Link de seguimiento copiado'); }
+        catch (e) { prompt('Link de seguimiento:', url); }
+    }));
+    // Fijar / corregir el destino en el mapa.
+    cont.querySelectorAll('[data-pin-dest]').forEach((b) => b.addEventListener('click', () => {
+        const lat = b.dataset.lat ? Number(b.dataset.lat) : null;
+        const lng = b.dataset.lng ? Number(b.dataset.lng) : null;
+        fijarDestinoMapa(Number(b.dataset.pinDest), lat, lng, () => verPedido(id, numero));
     }));
 
     const btn = $('envio-guardar');
@@ -1397,3 +1422,56 @@ let ES_ADMIN = true;   // el vendedor entra con acceso acotado (solo Pedidos)
     cargarNotificaciones();
     setInterval(cargarNotificaciones, 60000);   // refresca cada 60s
 })();
+
+// ===== Modal con mapa para fijar el destino del envío (pin manual del admin) =====
+function fijarDestinoMapa(envioId, lat, lng, onSaved) {
+    let m = document.getElementById('dest-modal');
+    if (!m) {
+        m = document.createElement('div');
+        m.id = 'dest-modal';
+        m.className = 'oculto';
+        m.innerHTML = `<div class="dm-card">
+            <div class="dm-head"><b>Fijar destino del envío</b><button class="dm-x" aria-label="Cerrar">✕</button></div>
+            <div id="dest-map" class="dm-map"></div>
+            <p class="dm-hint">Tocá el mapa donde queda la dirección del cliente.</p>
+            <button class="btn-primary" id="dest-guardar">Guardar destino</button>
+        </div>`;
+        document.body.appendChild(m);
+    }
+    m.classList.remove('oculto');
+    const cerrar = () => m.classList.add('oculto');
+    m.querySelector('.dm-x').onclick = cerrar;
+    m.onclick = (ev) => { if (ev.target === m) cerrar(); };
+
+    let sel = (lat != null && lng != null) ? { lat, lng } : null;
+    const centro = sel ? [sel.lat, sel.lng] : [-26.1849, -58.1731];   // Formosa capital
+    const guardarBtn = m.querySelector('#dest-guardar');
+    guardarBtn.disabled = !sel;
+
+    const init = () => {
+        if (!window.L) { setTimeout(init, 200); return; }
+        const cont = m.querySelector('#dest-map');
+        cont.innerHTML = '';
+        const map = L.map(cont).setView(centro, sel ? 16 : 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(map);
+        setTimeout(() => map.invalidateSize(), 80);
+        let marker = sel ? L.marker([sel.lat, sel.lng]).addTo(map) : null;
+        map.on('click', (ev) => {
+            sel = { lat: ev.latlng.lat, lng: ev.latlng.lng };
+            if (marker) marker.setLatLng(ev.latlng); else marker = L.marker(ev.latlng).addTo(map);
+            guardarBtn.disabled = false;
+        });
+    };
+    init();
+
+    guardarBtn.onclick = async () => {
+        if (!sel) return;
+        guardarBtn.disabled = true;
+        try {
+            await api.post('/api/admin/envios/destino', { envio_id: envioId, lat: sel.lat, lng: sel.lng });
+            toast('✓ Destino guardado');
+            cerrar();
+            if (onSaved) onSaved();
+        } catch (e) { alert(e.message); guardarBtn.disabled = false; }
+    };
+}

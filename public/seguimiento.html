@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#6d28d9">
+    <title>Britech — Seguí tu envío</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/lucide@0.544.0/dist/umd/lucide.min.js"></script>
+    <script defer src="/assets/js/mapas.js"></script>
+    <style>
+        :root { --bg:#f6f5fb; --card:#fff; --line:#e7e5ee; --ink:#1b1b22; --muted:#6b6a78;
+            --primary:#6d28d9; --primary-tint:#efecfb; --ok:#16a34a; --warn:#d97706; }
+        * { box-sizing: border-box; }
+        html, body { margin:0; height:100%; }
+        body { background:var(--bg); color:var(--ink);
+            font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+            display:flex; flex-direction:column; min-height:100dvh; }
+        header { padding:14px 18px calc(14px + env(safe-area-inset-top)); display:flex; align-items:center; gap:10px;
+            background:var(--card); border-bottom:1px solid var(--line); }
+        .logo { width:30px; height:30px; background:var(--primary); border-radius:8px; display:grid; place-items:center; font-size:16px; }
+        header b { font-size:16px; letter-spacing:-.02em; } header span { color:var(--muted); font-size:13px; display:block; }
+        #mapa { flex:1; width:100%; min-height:300px; }
+        .panel { background:var(--card); border-top:1px solid var(--line);
+            padding:16px 18px calc(16px + env(safe-area-inset-bottom)); }
+        .estado-eta { display:flex; align-items:center; gap:12px; }
+        .pin { width:42px; height:42px; border-radius:12px; background:var(--primary-tint); display:grid; place-items:center; font-size:22px; flex:none; }
+        .eta-tx { font-size:17px; font-weight:800; letter-spacing:-.01em; }
+        .eta-sub { color:var(--muted); font-size:13px; margin-top:2px; }
+        .pasos { display:flex; gap:6px; margin-top:14px; }
+        .paso { flex:1; height:5px; border-radius:999px; background:var(--line); }
+        .paso.on { background:var(--primary); }
+        .err { margin:auto; padding:40px 24px; text-align:center; color:var(--muted); max-width:340px; }
+        .err h2 { color:var(--ink); }
+        .logo svg { width:16px; height:16px; color:#fff; }
+        .pin svg { width:22px; height:22px; color:var(--primary); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo"><i data-lucide="bike"></i></div>
+        <div><b>Britech</b> <span id="ref">Seguí tu envío</span></div>
+    </header>
+
+    <div id="mapa"></div>
+
+    <div class="panel" id="panel" hidden>
+        <div class="estado-eta">
+            <div class="pin"><i data-lucide="bike"></i></div>
+            <div>
+                <div class="eta-tx" id="eta">Buscando tu moto…</div>
+                <div class="eta-sub" id="eta-sub">Actualizando en vivo</div>
+            </div>
+        </div>
+        <div class="pasos" id="pasos"></div>
+    </div>
+
+    <div class="err" id="err" hidden>
+        <h2>Seguimiento no encontrado</h2>
+        <p>El link no es válido o el envío ya finalizó.</p>
+    </div>
+
+    <script>
+    (function () {
+        const token = new URLSearchParams(location.search).get('t') || '';
+        const $ = (id) => document.getElementById(id);
+        const PASOS = ['pendiente', 'despachado', 'en_camino', 'entregado'];
+        let mapa = null, moto = null, dest = null, timer = null, rutaLayer = null, rutaEta = null;
+
+        const motoIcon = () => markerMoto();       // pines SVG compartidos (mapas.js)
+        const destIcon = () => markerDropoff();
+
+        function initMapa() {
+            if (!window.L) { setTimeout(initMapa, 200); return; }
+            mapa = L.map('mapa', { zoomControl: true }).setView([-26.1849, -58.1731], 14);  // Formosa
+            tileBritech().addTo(mapa);
+            cargar();
+            timer = setInterval(cargar, 3000);
+            cargarRuta();
+            setInterval(cargarRuta, 18000);   // la ruta cambia poco: cuidamos la cuota del motor
+        }
+
+        // Ruta real por las calles (estilo Uber): desde la moto hasta el destino.
+        async function cargarRuta() {
+            if (!mapa) return;
+            let r; try { r = await fetch('/api/seguimiento/ruta?t=' + encodeURIComponent(token)); } catch { return; }
+            let d; try { d = await r.json(); } catch { return; }
+            if (!d.ok || !d.ruta || !d.ruta.coords) return;
+            rutaEta = d.ruta.eta_min;
+            if (rutaLayer) rutaLayer.setLatLngs(d.ruta.coords);
+            else rutaLayer = L.polyline(d.ruta.coords, { color: '#a99bf0', weight: 5, opacity: .85, lineJoin: 'round' }).addTo(mapa);
+        }
+
+        function pintarPasos(estado) {
+            const cur = PASOS.indexOf(estado);
+            $('pasos').innerHTML = PASOS.map((_, i) => `<div class="paso${i <= cur ? ' on' : ''}"></div>`).join('');
+        }
+
+        async function cargar() {
+            let r;
+            try { r = await fetch('/api/seguimiento/publico?t=' + encodeURIComponent(token)); }
+            catch { return; }
+            if (r.status === 404) { clearInterval(timer); $('mapa').style.display = 'none'; $('panel').hidden = true; $('err').hidden = false; return; }
+            let d; try { d = await r.json(); } catch { return; }
+            if (!d.ok || !d.envio) return;
+            const e = d.envio;
+            $('panel').hidden = false;
+            $('ref').textContent = 'Envío ' + (e.referencia || '');
+            pintarPasos(e.estado);
+
+            if (e.estado === 'entregado') {
+                $('eta').textContent = 'Entregado';
+                $('eta-sub').textContent = '¡Gracias por tu compra!';
+                clearInterval(timer);
+            }
+            if (e.dest_lat != null && !dest) {
+                dest = L.marker([+e.dest_lat, +e.dest_lng], { icon: destIcon() }).addTo(mapa).bindPopup('Tu dirección');
+            }
+            if (e.ult_lat == null) {
+                if (e.estado !== 'entregado') { $('eta').textContent = 'En preparación'; $('eta-sub').textContent = 'La moto todavía no salió.'; }
+                brkIcons();
+                return;
+            }
+            const viva = e.hace_seg != null && Number(e.hace_seg) <= 30;
+            const ll = [+e.ult_lat, +e.ult_lng];
+            if (moto) { moto.setLatLng(ll).setOpacity(viva ? 1 : .55); }
+            else { moto = L.marker(ll, { icon: motoIcon(), opacity: viva ? 1 : .55 }).addTo(mapa).bindPopup(e.repartidor || 'Tu pedido'); }
+            const pts = [ll]; if (dest) pts.push(dest.getLatLng());
+            mapa.fitBounds(pts, { padding: [60, 60], maxZoom: 16 });
+            brkIcons();   // renderiza los pines SVG
+
+            if (e.estado !== 'entregado') {
+                const eta = rutaEta != null ? rutaEta : e.eta_min;   // ETA de manejo (motor de ruta) si está
+                if (!viva) { $('eta').textContent = 'Sin señal por un momento…'; $('eta-sub').textContent = 'Reconectando con la moto.'; }
+                else if (eta != null) { $('eta').textContent = 'Llega en ~' + eta + ' min'; $('eta-sub').textContent = (e.repartidor || 'En camino') + ' · en vivo'; }
+                else { $('eta').textContent = 'En camino'; $('eta-sub').textContent = (e.repartidor || '') + ' · en vivo'; }
+            }
+        }
+
+        // Arranca cuando ya cargaron los scripts defer (leaflet, lucide, mapas.js).
+        window.addEventListener('load', () => {
+            if (window.brkIcons) window.brkIcons();
+            if (!token) { $('mapa').style.display = 'none'; $('err').hidden = false; }
+            else { initMapa(); }
+        });
+    })();
+    </script>
+</body>
+</html>
