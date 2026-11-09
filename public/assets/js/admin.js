@@ -1402,6 +1402,29 @@ function wire() {
         window.location.href = '/login.html';
     });
 
+    // Conectar Telegram: pide el link de vinculación y lo muestra en el modal de detalle.
+    if ($('tg-ic')) $('tg-ic').innerHTML = ICO.send || ICO.bell || '';
+    const btnTg = $('btn-telegram');
+    if (btnTg) btnTg.addEventListener('click', async () => {
+        let r;
+        try { r = await api.get('/api/admin/telegram/vincular'); } catch { r = null; }
+        $('detalle-titulo').textContent = 'Conectar Telegram';
+        if (!r || !r.ok) {
+            $('detalle-items').innerHTML = `<p>El bot de Telegram todavía no está configurado. Avisá al administrador para cargar el token.</p>`;
+        } else {
+            $('detalle-items').innerHTML = `
+                <p>Para recibir los avisos del sistema en tu Telegram:</p>
+                <ol style="margin:0 0 14px 18px;line-height:1.7">
+                    <li>Tocá el botón de abajo (abre el bot <b>@${r.bot}</b>).</li>
+                    <li>En Telegram, presioná <b>Iniciar / Start</b>.</li>
+                    <li>Listo: te van a llegar tus avisos acá.</li>
+                </ol>
+                <a href="${r.url}" target="_blank" rel="noopener" class="btn-primary" style="display:inline-block;text-decoration:none">Abrir el bot y vincular</a>
+                <p style="color:var(--muted,#888);font-size:12px;margin-top:12px">Si no se abre, buscá <b>@${r.bot}</b> en Telegram y mandá:<br><code>/start ${r.codigo}</code></p>`;
+        }
+        $('modal-detalle').classList.remove('oculto');
+    });
+
     // Íconos de línea en el chrome fijo (campana + headers del dashboard).
     $('noti-ic').innerHTML = ICO.bell;
     document.querySelectorAll('[data-ico]').forEach((el) => {
