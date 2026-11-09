@@ -14,6 +14,10 @@
  *   DB_HOST=127.0.0.1 DB_NAME=britech_v2 php tests/telegram_test.php
  */
 
+// Forzamos el bot "desactivado" para que el test sea determinístico y NO mande
+// nada real por red, aunque el .env ya tenga TG_TOKEN configurado.
+putenv('TG_TOKEN='); $_ENV['TG_TOKEN'] = '';
+
 require dirname(__DIR__) . '/config/config.php';
 
 use App\Core\Database;
@@ -58,6 +62,16 @@ try {
             'message'   => ['chat' => ['id' => 987654321], 'text' => '/start ' . $codigo],
         ]);
         verdad($repo->telegramChatId($uid) === '987654321', 'no guardó el chat_id del código válido');
+    });
+
+    check('código pegado solo (sin /start) también vincula', function () use ($tg, $repo, $pdo) {
+        $cod2 = strtoupper(bin2hex(random_bytes(4)));   // 8 hex, como genera el panel
+        $em2  = 'tg_test2_' . bin2hex(random_bytes(4)) . '@britech.local';
+        $pdo->prepare("INSERT INTO usuario (nombre, email, password_hash, rol_id, email_verificado, activo, telegram_codigo)
+                       VALUES ('TG Test 2', ?, '', 2, 1, 1, ?)")->execute([$em2, $cod2]);
+        $uid2 = (int) $pdo->lastInsertId();
+        $tg->procesarUpdate(['update_id' => 200, 'message' => ['chat' => ['id' => 111222333], 'text' => $cod2]]);
+        verdad($repo->telegramChatId($uid2) === '111222333', 'el código pegado solo no vinculó');
     });
 
     check('código inexistente no vincula a nadie', function () use ($tg, $pdo) {

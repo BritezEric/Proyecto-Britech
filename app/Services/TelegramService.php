@@ -82,17 +82,23 @@ class TelegramService
         $chatId = (string) ($msg['chat']['id'] ?? '');
         $texto  = trim((string) ($msg['text'] ?? ''));
 
-        if ($chatId !== '' && preg_match('/^\/start\s+(\S+)/', $texto, $m)) {
-            $usr = (new UsuarioRepository())->porTelegramCodigo($m[1]);
+        // Aceptamos el código de dos formas: "/start CODIGO" (deep link) o el código
+        // pegado solo (8 hex). Así anda aunque el usuario toque START sin el link.
+        $codigo = null;
+        if (preg_match('/^\/start\s+([A-Za-z0-9]{4,32})/', $texto, $m)) { $codigo = $m[1]; }
+        elseif (preg_match('/^[A-Fa-f0-9]{8}$/', $texto)) { $codigo = $texto; }
+
+        if ($chatId !== '' && $codigo !== null) {
+            $usr = (new UsuarioRepository())->porTelegramCodigo($codigo);
             if ($usr) {
                 (new UsuarioRepository())->vincularTelegram((int) $usr['id'], $chatId);
                 $this->enviar($chatId, '<b>Britech</b>: listo ' . htmlspecialchars((string) $usr['nombre'])
                     . ', vas a recibir los avisos del sistema por acá.');
             } else {
-                $this->enviar($chatId, '<b>Britech</b>: ese código no es válido o ya venció. Generá uno nuevo desde el panel.');
+                $this->enviar($chatId, '<b>Britech</b>: ese código no es válido o ya venció. Generá uno nuevo desde el panel (Conectar Telegram).');
             }
         } elseif ($chatId !== '' && str_starts_with($texto, '/start')) {
-            $this->enviar($chatId, '<b>Britech</b>: para vincular tu cuenta, entrá al panel → Conectar Telegram y tocá el enlace.');
+            $this->enviar($chatId, '<b>Britech</b>: pegá acá el código que te muestra el panel en <b>Conectar Telegram</b> (8 caracteres) y listo.');
         }
 
         return $update['update_id'] ?? null;

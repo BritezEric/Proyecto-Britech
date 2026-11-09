@@ -1413,14 +1413,22 @@ function wire() {
             $('detalle-items').innerHTML = `<p>El bot de Telegram todavía no está configurado. Avisá al administrador para cargar el token.</p>`;
         } else {
             $('detalle-items').innerHTML = `
-                <p>Para recibir los avisos del sistema en tu Telegram:</p>
-                <ol style="margin:0 0 14px 18px;line-height:1.7">
-                    <li>Tocá el botón de abajo (abre el bot <b>@${r.bot}</b>).</li>
-                    <li>En Telegram, presioná <b>Iniciar / Start</b>.</li>
-                    <li>Listo: te van a llegar tus avisos acá.</li>
+                <ol style="margin:0 0 14px 18px;line-height:1.8">
+                    <li>Abrí el bot <b>@${r.bot}</b> en Telegram (buscalo o tocá el botón de abajo).</li>
+                    <li>Presioná <b>Iniciar / Start</b>.</li>
+                    <li>Pegá este código en el chat y envialo:</li>
                 </ol>
-                <a href="${r.url}" target="_blank" rel="noopener" class="btn-primary" style="display:inline-block;text-decoration:none">Abrir el bot y vincular</a>
-                <p style="color:var(--muted,#888);font-size:12px;margin-top:12px">Si no se abre, buscá <b>@${r.bot}</b> en Telegram y mandá:<br><code>/start ${r.codigo}</code></p>`;
+                <div style="display:flex;gap:8px;align-items:center;margin:0 0 14px">
+                    <code id="tg-codigo" style="font-size:22px;letter-spacing:3px;font-weight:700;padding:8px 14px;border:1px solid var(--borde,#ccc);border-radius:8px">${r.codigo}</code>
+                    <button type="button" id="tg-copiar" class="btn-secundario">Copiar</button>
+                </div>
+                <a href="${r.url}" target="_blank" rel="noopener" class="btn-primary" style="display:inline-block;text-decoration:none">Abrir @${r.bot}</a>
+                <p style="color:var(--muted,#888);font-size:12px;margin-top:12px">Cuando el bot te responda “listo”, ya estás conectado.</p>`;
+            const bc = $('tg-copiar');
+            if (bc) bc.addEventListener('click', async () => {
+                try { await navigator.clipboard.writeText(r.codigo); bc.textContent = 'Copiado'; }
+                catch { const n = document.getElementById('tg-codigo'); if (n) { const rg = document.createRange(); rg.selectNode(n); getSelection().removeAllRanges(); getSelection().addRange(rg); } }
+            });
         }
         $('modal-detalle').classList.remove('oculto');
     });
