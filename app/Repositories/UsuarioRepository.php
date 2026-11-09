@@ -68,4 +68,49 @@ class UsuarioRepository
             ->prepare("UPDATE usuario SET password_hash = ? WHERE id = ?")
             ->execute([$passwordHash, $id]);
     }
+
+    // ---- Telegram (avisos al staff) ----
+    // Las columnas telegram_* las agrega database/schema_telegram.sql. Si todavía no
+    // se corrió, estos métodos se tragan el error y el sistema sigue andando (no-op).
+
+    /** chat_id de Telegram del usuario, o null si no está vinculado. */
+    public function telegramChatId(int $id): ?string
+    {
+        try {
+            $st = Database::conexion()->prepare("SELECT telegram_chat_id FROM usuario WHERE id = ?");
+            $st->execute([$id]);
+            $v = $st->fetchColumn();
+            return $v !== false && $v !== null && $v !== '' ? (string) $v : null;
+        } catch (\Throwable $e) { return null; }
+    }
+
+    /** Guarda (o regenera) el código temporal de vinculación del usuario. */
+    public function fijarTelegramCodigo(int $id, string $codigo): void
+    {
+        try {
+            Database::conexion()
+                ->prepare("UPDATE usuario SET telegram_codigo = ? WHERE id = ?")
+                ->execute([$codigo, $id]);
+        } catch (\Throwable $e) { /* schema no aplicado: no-op */ }
+    }
+
+    /** Busca al usuario dueño de un código de vinculación (para completar el /start). */
+    public function porTelegramCodigo(string $codigo): ?array
+    {
+        try {
+            $st = Database::conexion()->prepare("SELECT id, nombre FROM usuario WHERE telegram_codigo = ? AND activo = 1");
+            $st->execute([$codigo]);
+            return $st->fetch() ?: null;
+        } catch (\Throwable $e) { return null; }
+    }
+
+    /** Vincula el chat de Telegram al usuario y limpia el código ya usado. */
+    public function vincularTelegram(int $id, string $chatId): void
+    {
+        try {
+            Database::conexion()
+                ->prepare("UPDATE usuario SET telegram_chat_id = ?, telegram_codigo = NULL WHERE id = ?")
+                ->execute([$chatId, $id]);
+        } catch (\Throwable $e) { /* schema no aplicado: no-op */ }
+    }
 }

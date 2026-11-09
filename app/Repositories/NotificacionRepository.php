@@ -21,6 +21,13 @@ class NotificacionRepository
                            VALUES (?, ?, ?, ?, ?, ?, ?)")
                 ->execute([$usuarioId, $clienteId, $tipo, $nivel, mb_substr($titulo, 0, 200), $ir, $refId]);
         } catch (\Throwable $e) { /* no rompemos el flujo real por un aviso */ }
+
+        // Reenvío al Telegram del staff (no-op si no hay bot o el usuario no está vinculado).
+        // Sólo staff: los clientes usan la campana in-app / email / WhatsApp, no Telegram.
+        if ($usuarioId !== null) {
+            try { (new \App\Services\TelegramService())->avisar($usuarioId, mb_substr($titulo, 0, 400)); }
+            catch (\Throwable $e) { /* el aviso es secundario */ }
+        }
     }
 
     /** Avisa a TODO el staff activo (admin + vendedores). Firma compatible con el código previo. */

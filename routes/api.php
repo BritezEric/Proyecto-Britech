@@ -79,6 +79,10 @@ $router->get('/api/admin/dashboard/serie', [DashboardController::class, 'serie']
 $router->get('/api/admin/notificaciones',        [NotificacionController::class, 'listar'],     true);
 $router->post('/api/admin/notificaciones/leer',  [NotificacionController::class, 'leer'],       true);
 $router->post('/api/admin/notificaciones/leer-todas', [NotificacionController::class, 'leerTodas'], true);
+// Telegram: vincular la cuenta del staff y recibir mensajes del bot
+$router->get('/api/admin/telegram/vincular', [\App\Controllers\TelegramController::class, 'vincular'], true);
+$router->get('/api/admin/telegram/estado',   [\App\Controllers\TelegramController::class, 'estado'],   true);
+$router->post('/api/telegram/webhook',       [\App\Controllers\TelegramController::class, 'webhook']);  // público (lo llama Telegram)
 $router->get('/api/admin/clientes',            [ClienteController::class, 'admin'],   true);
 $router->post('/api/admin/clientes/guardar',   [ClienteController::class, 'guardar'], true);
 $router->post('/api/admin/clientes/baja',      [ClienteController::class, 'baja'],    true);

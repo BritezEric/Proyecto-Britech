@@ -110,4 +110,10 @@ return [
         'tpl_recibido' => $leer('WA_TPL_RECIBIDO', 'pedido_recibido'),   // vars: {{1}} nombre, {{2}} nº pedido
         'tpl_camino'   => $leer('WA_TPL_CAMINO', 'pedido_en_camino'),    // vars: {{1}} nombre, {{2}} link
     ],
+    // Telegram: bot interno para avisos del sistema al staff (vendedor/admin).
+    // Si TG_TOKEN queda vacío, queda desactivado (no-op). Token = el que da @BotFather.
+    'telegram' => [
+        'token' => $leer('TG_TOKEN', ''),
+        'bot'   => $leer('TG_BOT', ''),   // usuario del bot sin @ (para armar el link t.me/<bot>?start=...)
+    ],
 ];
