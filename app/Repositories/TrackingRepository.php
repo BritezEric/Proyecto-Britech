@@ -89,21 +89,27 @@ class TrackingRepository
 
     /**
      * Envío activo (en curso) asignado a un repartidor, para la vista del cadete.
-     * Trae destino + dirección + la última posición del propio repartidor (origen).
-     * shortcut: devuelve uno solo (el más reciente); si el cadete tuviera varios, los ve de a uno.
+     * SOLO viajes de moto: el JOIN a barrio excluye retiros en el local y envíos por
+     * correo (que no tienen barrio) — esos no son viajes de cadete.
+     * Trae destino + dirección + barrio + la última posición del propio repartidor (origen).
+     * Orden de la cola: primero lo que ya lleva encima (en_camino), después lo nuevo.
+     * shortcut: devuelve uno solo; si el cadete tuviera varios, los ve de a uno.
      */
     public function envioActivoDeRepartidor(int $repartidorId): ?array
     {
         $st = Database::conexion()->prepare(
             "SELECT e.id AS envio_id, e.estado, e.dest_lat, e.dest_lng,
                     e.direccion, e.numero, e.localidad, e.referencia AS ref_entrega,
+                    e.destinatario, b.nombre AS barrio, b.costo AS envio_costo,
                     COALESCE(p.numero, CONCAT('V-', e.venta_id)) AS numero,
                     r.ult_lat, r.ult_lng
              FROM envio e
              JOIN repartidor r ON r.id = e.repartidor_id
+             JOIN barrio b      ON b.id = e.barrio_id
              LEFT JOIN pedido p ON p.id = e.pedido_id
              WHERE e.repartidor_id = ? AND e.estado IN ('pendiente','despachado','en_camino')
-             ORDER BY e.id DESC LIMIT 1"
+             ORDER BY FIELD(e.estado, 'en_camino', 'despachado', 'pendiente'), e.id ASC
+             LIMIT 1"
         );
         $st->execute([$repartidorId]);
         return $st->fetch() ?: null;

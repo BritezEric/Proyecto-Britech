@@ -149,13 +149,16 @@ class TrackingController
         }
 
         Response::json(['ok' => true, 'envio' => [
-            'envio_id' => (int) $e['envio_id'],
-            'numero'   => $e['numero'],
-            'estado'   => $e['estado'],
-            'pickup'   => $pickup,
-            'dropoff'  => $dropoff,
-            'target'   => $e['estado'] === 'en_camino' ? 'dropoff' : 'pickup',
-            'ruta'     => $ruta,
+            'envio_id'     => (int) $e['envio_id'],
+            'numero'       => $e['numero'],
+            'estado'       => $e['estado'],
+            'destinatario' => $e['destinatario'] ?? null,
+            'barrio'       => $e['barrio'] ?? null,
+            'costo'        => isset($e['envio_costo']) ? (float) $e['envio_costo'] : null,
+            'pickup'       => $pickup,
+            'dropoff'      => $dropoff,
+            'target'       => $e['estado'] === 'en_camino' ? 'dropoff' : 'pickup',
+            'ruta'         => $ruta,
         ]]);
     }
 
