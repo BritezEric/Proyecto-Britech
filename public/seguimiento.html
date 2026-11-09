@@ -66,7 +66,7 @@
         const token = new URLSearchParams(location.search).get('t') || '';
         const $ = (id) => document.getElementById(id);
         const PASOS = ['pendiente', 'despachado', 'en_camino', 'entregado'];
-        let mapa = null, moto = null, dest = null, timer = null, rutaLayer = null, rutaEta = null;
+        let mapa = null, moto = null, dest = null, timer = null, rutaLayer = null, rutaEta = null, rutaFull = null;
 
         const motoIcon = () => markerMoto();       // pines SVG compartidos (mapas.js)
         const destIcon = () => markerDropoff();
@@ -81,15 +81,24 @@
             setInterval(cargarRuta, 18000);   // la ruta cambia poco: cuidamos la cuota del motor
         }
 
-        // Ruta real por las calles (estilo Uber): desde la moto hasta el destino.
+        // Ruta real por las calles (estilo Uber): la traemos entera y la recortamos
+        // en vivo a la posición de la moto (lo recorrido desaparece). No pegamos al
+        // servidor en cada tick: guardamos la ruta y la recorta `dibujarRuta`.
         async function cargarRuta() {
             if (!mapa) return;
             let r; try { r = await fetch('/api/seguimiento/ruta?t=' + encodeURIComponent(token)); } catch { return; }
             let d; try { d = await r.json(); } catch { return; }
             if (!d.ok || !d.ruta || !d.ruta.coords) return;
             rutaEta = d.ruta.eta_min;
-            if (rutaLayer) rutaLayer.setLatLngs(d.ruta.coords);
-            else rutaLayer = L.polyline(d.ruta.coords, { color: '#a99bf0', weight: 5, opacity: .85, lineJoin: 'round' }).addTo(mapa);
+            rutaFull = d.ruta.coords;
+            dibujarRuta();
+        }
+        function dibujarRuta() {
+            if (!rutaFull || !mapa) return;
+            const ll = moto && moto.getLatLng ? moto.getLatLng() : null;
+            const cs = ll ? recortarRuta(rutaFull, [ll.lat, ll.lng]) : rutaFull;
+            if (rutaLayer) rutaLayer.setLatLngs(cs);
+            else rutaLayer = L.polyline(cs, { color: '#a99bf0', weight: 5, opacity: .9, lineJoin: 'round' }).addTo(mapa);
         }
 
         function pintarPasos(estado) {
@@ -124,11 +133,14 @@
             }
             const viva = e.hace_seg != null && Number(e.hace_seg) <= 30;
             const ll = [+e.ult_lat, +e.ult_lng];
-            if (moto) { moto.setLatLng(ll).setOpacity(viva ? 1 : .55); }
-            else { moto = L.marker(ll, { icon: motoIcon(), opacity: viva ? 1 : .55 }).addTo(mapa).bindPopup(e.repartidor || 'Tu pedido'); }
-            const pts = [ll]; if (dest) pts.push(dest.getLatLng());
-            mapa.fitBounds(pts, { padding: [60, 60], maxZoom: 16 });
-            brkIcons();   // renderiza los pines SVG
+            if (moto) { moverMarcadorSuave(moto, ll, 2600); moto.setOpacity(viva ? 1 : .55); }
+            else {
+                moto = L.marker(ll, { icon: motoIcon(), opacity: viva ? 1 : .55 }).addTo(mapa).bindPopup(e.repartidor || 'Tu pedido');
+                const pts = [ll]; if (dest) pts.push(dest.getLatLng());
+                mapa.fitBounds(pts, { padding: [60, 60], maxZoom: 16 });   // encuadre solo la primera vez
+            }
+            dibujarRuta();   // recorta la ruta al tramo que falta
+            brkIcons();      // renderiza los pines SVG
 
             if (e.estado !== 'entregado') {
                 const eta = rutaEta != null ? rutaEta : e.eta_min;   // ETA de manejo (motor de ruta) si está

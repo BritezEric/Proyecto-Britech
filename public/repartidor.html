@@ -226,11 +226,11 @@
 
             if (jobData.ruta && jobData.ruta.coords) {
                 const cs = jobData.ruta.coords;
-                if (jobRoute) jobRoute.setLatLngs(cs); else jobRoute = L.polyline(cs, { color: '#a99bf0', weight: 5, opacity: .85 }).addTo(jobMap);
+                if (jobRoute) jobRoute.setLatLngs(cs); else jobRoute = L.polyline(cs, { color: '#a99bf0', weight: 5, opacity: .9 }).addTo(jobMap);
                 const me = cs[0], end = cs[cs.length - 1];
-                if (jobMeM) jobMeM.setLatLng(me); else jobMeM = L.marker(me, { icon: markerMoto() }).addTo(jobMap);
+                if (jobMeM) { moverMarcadorSuave(jobMeM, me, 2600); }
+                else { jobMeM = L.marker(me, { icon: markerMoto() }).addTo(jobMap); jobMap.fitBounds(cs, { padding: [40, 40], maxZoom: 16 }); }  // encuadre solo la 1ra vez
                 if (jobTargetM) { jobTargetM.setLatLng(end); jobTargetM.setIcon(tgtMarker()); } else jobTargetM = L.marker(end, { icon: tgtMarker() }).addTo(jobMap);
-                jobMap.fitBounds(cs, { padding: [40, 40], maxZoom: 16 });
             } else if (tgt.lat != null) {
                 if (jobTargetM) { jobTargetM.setLatLng([tgt.lat, tgt.lng]); jobTargetM.setIcon(tgtMarker()); } else jobTargetM = L.marker([tgt.lat, tgt.lng], { icon: tgtMarker() }).addTo(jobMap);
                 jobMap.setView([tgt.lat, tgt.lng], 15);

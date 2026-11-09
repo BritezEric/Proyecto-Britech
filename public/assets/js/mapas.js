@@ -35,3 +35,30 @@ const markerMoto    = () => _pin('bike', '#7c3aed');        // moto en vivo — 
 
 // Renderiza los <i data-lucide> que ya estén en el DOM (markers, botones, etc.).
 function brkIcons() { if (window.lucide) window.lucide.createIcons(); }
+
+// Mueve un marcador suavemente (glide) de donde está a `to` ([lat,lng]) en `ms`.
+function moverMarcadorSuave(marker, to, ms) {
+    ms = ms || 900;
+    const from = marker.getLatLng();
+    if (!from || (Math.abs(from.lat - to[0]) < 1e-7 && Math.abs(from.lng - to[1]) < 1e-7)) { marker.setLatLng(to); return; }
+    const t0 = performance.now();
+    (function step(t) {
+        let k = Math.min(1, (t - t0) / ms);
+        k = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;   // easeInOutQuad
+        marker.setLatLng([from.lat + (to[0] - from.lat) * k, from.lng + (to[1] - from.lng) * k]);
+        if (k < 1) requestAnimationFrame(step);
+    })(t0);
+}
+
+// Recorta la ruta al tramo que FALTA: desde la posición de la moto hasta el final.
+// Así lo recorrido desaparece y la línea va de la moto al destino. (`coords` = [[lat,lng],…])
+function recortarRuta(coords, moto) {
+    if (!coords || coords.length < 2) return coords || [];
+    let mejor = 0, md = Infinity;
+    for (let i = 0; i < coords.length; i++) {
+        const dx = coords[i][0] - moto[0], dy = coords[i][1] - moto[1];
+        const d = dx * dx + dy * dy;
+        if (d < md) { md = d; mejor = i; }
+    }
+    return [moto].concat(coords.slice(mejor));
+}
