@@ -28,9 +28,34 @@ class RoutingService
      */
     public function ruta(float $oLat, float $oLng, float $dLat, float $dLng): ?array
     {
-        return $this->orsKey !== ''
-            ? $this->viaOrs($oLat, $oLng, $dLat, $dLng)
-            : $this->viaOsrm($oLat, $oLng, $dLat, $dLng);
+        // Cache por celda (~100 m): el polling en vivo no vuelve a pedir la misma ruta.
+        $key = md5(implode(',', [round($oLat, 3), round($oLng, 3), round($dLat, 3), round($dLng, 3)]));
+        $hit = $this->cacheGet($key);
+        if ($hit !== null) return $hit;
+
+        // ORS si hay key; si falla (sin key, cuota agotada, error) cae a OSRM.
+        $r = $this->orsKey !== '' ? $this->viaOrs($oLat, $oLng, $dLat, $dLng) : null;
+        if ($r === null) $r = $this->viaOsrm($oLat, $oLng, $dLat, $dLng);
+        if ($r !== null) $this->cachePut($key, $r);
+        return $r;
+    }
+
+    private function cacheFile(string $key): string
+    {
+        return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'britech_ruta_' . $key . '.json';
+    }
+
+    private function cacheGet(string $key): ?array
+    {
+        $f = $this->cacheFile($key);
+        if (!is_file($f) || (time() - filemtime($f)) > 3600) return null;   // TTL 1 h
+        $d = json_decode((string) @file_get_contents($f), true);
+        return is_array($d) ? $d : null;
+    }
+
+    private function cachePut(string $key, array $ruta): void
+    {
+        @file_put_contents($this->cacheFile($key), json_encode($ruta));
     }
 
     /** OpenRouteService (con key). GeoJSON. */
