@@ -25,7 +25,7 @@ class NotificacionRepository
         // Reenvío al Telegram del staff (no-op si no hay bot o el usuario no está vinculado).
         // Sólo staff: los clientes usan la campana in-app / email / WhatsApp, no Telegram.
         if ($usuarioId !== null) {
-            try { (new \App\Services\TelegramService())->avisar($usuarioId, mb_substr($titulo, 0, 400)); }
+            try { (new \App\Services\TelegramService())->avisar($usuarioId, mb_substr($titulo, 0, 400), $tipo, $nivel); }
             catch (\Throwable $e) { /* el aviso es secundario */ }
         }
     }

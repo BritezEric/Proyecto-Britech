@@ -38,15 +38,44 @@ class TelegramService
         return $this->bot;
     }
 
-    /** Avisa a un usuario staff por su id (si está vinculado a Telegram). No-op si no. */
-    public function avisar(int $usuarioId, string $texto): void
+    /**
+     * Avisa a un usuario staff por su id (si está vinculado a Telegram). No-op si no.
+     * Antepone una etiqueta de categoría según $tipo para que se entienda de un vistazo.
+     */
+    public function avisar(int $usuarioId, string $texto, string $tipo = '', string $nivel = 'info'): void
     {
         if (!$this->activo()) return;
         try {
             $chatId = (new UsuarioRepository())->telegramChatId($usuarioId);
             if ($chatId === null) return;
-            $this->enviar($chatId, $texto);
+            $this->enviar($chatId, '<b>' . self::etiqueta($tipo, $nivel) . "</b>\n" . htmlspecialchars($texto));
         } catch (\Throwable $e) { /* el aviso es secundario */ }
+    }
+
+    /** Etiqueta de categoría (ícono + nombre) que encabeza el aviso según su tipo. */
+    private static function etiqueta(string $tipo, string $nivel = 'info'): string
+    {
+        static $map = [
+            'pedido_nuevo'        => '🛒 Pedido nuevo',
+            'pedido_confirmado'   => '🛒 Pedido',
+            'comprobante'         => '💳 Pago',
+            'pago_aprobado'       => '💳 Pago',
+            'venta_nueva'         => '🧾 Venta',
+            'venta_anulada'       => '🧾 Venta anulada',
+            'stock_bajo'          => '⚠️ Stock bajo',
+            'caja_cierre'         => '💰 Caja',
+            'caja_cierre_detalle' => '💰 Caja',
+            'caja_resumen'        => '💰 Resumen de caja',
+            'compra_creada'       => '🏷️ Compra',
+            'compra_recibida'     => '🏷️ Compra',
+            'compra_anulada'      => '🏷️ Compra',
+            'envio_asignado'      => '📦 Envío',
+            'envio_entregado'     => '📦 Entregado',
+            'reclamo'             => '📣 Reclamo',
+            'solicitud'           => '👤 Mayorista',
+        ];
+        if (isset($map[$tipo])) return $map[$tipo];
+        return $nivel === 'alerta' ? '⚠️ Sistema' : '🔔 Sistema';
     }
 
     /** Manda un mensaje a un chat. parse_mode HTML (podés usar <b>…</b>). */
