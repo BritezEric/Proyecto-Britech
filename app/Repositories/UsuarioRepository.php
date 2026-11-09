@@ -113,4 +113,16 @@ class UsuarioRepository
                 ->execute([$chatId, $id]);
         } catch (\Throwable $e) { /* schema no aplicado: no-op */ }
     }
+
+    /** Usuario staff dueño de un chat de Telegram ya vinculado (para el asistente). */
+    public function porTelegramChatId(string $chatId): ?array
+    {
+        try {
+            $st = Database::conexion()->prepare(
+                "SELECT id, nombre, rol_id FROM usuario WHERE telegram_chat_id = ? AND activo = 1"
+            );
+            $st->execute([$chatId]);
+            return $st->fetch() ?: null;
+        } catch (\Throwable $e) { return null; }
+    }
 }

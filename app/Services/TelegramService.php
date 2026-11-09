@@ -110,27 +110,110 @@ class TelegramService
 
         $chatId = (string) ($msg['chat']['id'] ?? '');
         $texto  = trim((string) ($msg['text'] ?? ''));
+        if ($chatId === '') return $update['update_id'] ?? null;
 
-        // Aceptamos el código de dos formas: "/start CODIGO" (deep link) o el código
-        // pegado solo (8 hex). Así anda aunque el usuario toque START sin el link.
+        // Nota de voz / audio: lo transcribimos y seguimos como si fuera texto.
+        $esAudio = false;
+        if ($texto === '' && (isset($msg['voice']) || isset($msg['audio']))) {
+            $esAudio = true;
+            $fileId = $msg['voice']['file_id'] ?? $msg['audio']['file_id'] ?? '';
+            $texto  = $fileId !== '' ? $this->transcribirAudio($fileId) : '';
+            if ($texto === '') {
+                $this->enviar($chatId, '<b>Britech</b>: no pude entender el audio, probá de nuevo.');
+                return $update['update_id'] ?? null;
+            }
+        }
+
+        // 1) Vinculación: "/start CODIGO" (deep link) o el código pegado solo (8 hex).
         $codigo = null;
         if (preg_match('/^\/start\s+([A-Za-z0-9]{4,32})/', $texto, $m)) { $codigo = $m[1]; }
         elseif (preg_match('/^[A-Fa-f0-9]{8}$/', $texto)) { $codigo = $texto; }
 
-        if ($chatId !== '' && $codigo !== null) {
+        if ($codigo !== null) {
             $usr = (new UsuarioRepository())->porTelegramCodigo($codigo);
             if ($usr) {
                 (new UsuarioRepository())->vincularTelegram((int) $usr['id'], $chatId);
                 $this->enviar($chatId, '<b>Britech</b>: listo ' . htmlspecialchars((string) $usr['nombre'])
-                    . ', vas a recibir los avisos del sistema por acá.');
+                    . ', vas a recibir los avisos del sistema por acá. También podés preguntarme por texto o audio.');
             } else {
                 $this->enviar($chatId, '<b>Britech</b>: ese código no es válido o ya venció. Generá uno nuevo desde el panel (Conectar Telegram).');
             }
-        } elseif ($chatId !== '' && str_starts_with($texto, '/start')) {
-            $this->enviar($chatId, '<b>Britech</b>: pegá acá el código que te muestra el panel en <b>Conectar Telegram</b> (8 caracteres) y listo.');
+            return $update['update_id'] ?? null;
+        }
+
+        // 2) Asistente: SOLO para staff ya vinculado (el cerebro puede operar el sistema).
+        $staff = (new UsuarioRepository())->porTelegramChatId($chatId);
+        if ($staff === null) {
+            $this->enviar($chatId, '<b>Britech</b>: pegá acá el código que te muestra el panel en <b>Conectar Telegram</b> (8 caracteres) para vincularte.');
+            return $update['update_id'] ?? null;
+        }
+
+        if ($texto !== '' && !str_starts_with($texto, '/')) {
+            if ($esAudio) $this->enviar($chatId, '🎤 <i>' . htmlspecialchars($texto) . '</i>');
+            $this->responderAsistente($chatId, $texto);
+        } elseif (str_starts_with($texto, '/start')) {
+            $this->enviar($chatId, '<b>Britech</b>: ya estás conectado. Preguntame lo que quieras por texto o audio.');
         }
 
         return $update['update_id'] ?? null;
+    }
+
+    /** Pregunta al cerebro (n8n/IA) y responde en el chat, con memoria por chat. */
+    private function responderAsistente(string $chatId, string $texto): void
+    {
+        $this->api('sendChatAction', ['chat_id' => $chatId, 'action' => 'typing']);
+        $hist = $this->historialCargar($chatId);
+        $r = (new VozService())->interpretar($texto, $hist);
+        $this->historialGuardar($chatId, $r['historial'] ?? []);
+        $this->enviar($chatId, htmlspecialchars((string) ($r['respuesta'] ?? 'No entendí, probá de nuevo.')));
+    }
+
+    /** Descarga la nota de voz de Telegram y la transcribe a texto. '' si falla. */
+    private function transcribirAudio(string $fileId): string
+    {
+        $f = $this->api('getFile', ['file_id' => $fileId]);
+        $path = $f['result']['file_path'] ?? '';
+        if ($path === '') return '';
+        $bytes = $this->descargar("https://api.telegram.org/file/bot{$this->token}/{$path}");
+        if ($bytes === '') return '';
+        // Telegram manda las notas de voz en OGG/Opus; el mime deja que Gemini lo entienda.
+        return (new VozService())->transcribir(base64_encode($bytes), 'audio/ogg');
+    }
+
+    /** GET crudo (para bajar el archivo de audio). Devuelve los bytes o ''. */
+    private function descargar(string $url): string
+    {
+        $ch = curl_init($url);
+        $opts = [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20];
+        $ca = getenv('CURL_CA_BUNDLE') ?: null;
+        if (!$ca && class_exists(\Composer\CaBundle\CaBundle::class)) {
+            $ca = \Composer\CaBundle\CaBundle::getSystemCaRootBundlePath();
+        }
+        if ($ca) { $opts[is_dir($ca) ? CURLOPT_CAPATH : CURLOPT_CAINFO] = $ca; }
+        curl_setopt_array($ch, $opts);
+        $raw  = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        return ($raw !== false && $code >= 200 && $code < 300) ? (string) $raw : '';
+    }
+
+    private function historialPath(string $chatId): string
+    {
+        return sys_get_temp_dir() . '/britech_tg_hist_' . preg_replace('/\D/', '', $chatId) . '.json';
+    }
+
+    private function historialCargar(string $chatId): array
+    {
+        $j = @file_get_contents($this->historialPath($chatId));
+        $h = $j !== false ? json_decode($j, true) : null;
+        return is_array($h) ? $h : [];
+    }
+
+    private function historialGuardar(string $chatId, array $historial): void
+    {
+        // Guardamos solo los últimos turnos para no crecer sin límite.
+        if (count($historial) > 20) $historial = array_slice($historial, -20);
+        @file_put_contents($this->historialPath($chatId), json_encode($historial, JSON_UNESCAPED_UNICODE));
     }
 
     /** Llamada cruda a la Bot API. Devuelve el JSON decodificado o null si falló. */
