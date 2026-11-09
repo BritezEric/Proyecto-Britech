@@ -15,7 +15,7 @@ class EnvioRepository
      * Crea el envío de un pedido (tienda) O de una venta (POS): pasar uno u otro.
      * $datos trae los campos de CAMPOS (los que falten van null).
      */
-    public function crear(?int $pedidoId, ?int $empresaId, array $datos, float $costo, ?int $barrioId = null, ?int $ventaId = null): void
+    public function crear(?int $pedidoId, ?int $empresaId, array $datos, float $costo, ?int $barrioId = null, ?int $ventaId = null): int
     {
         $cols = array_merge(['pedido_id', 'venta_id', 'empresa_envio_id', 'barrio_id'], self::CAMPOS, ['costo', 'token']);
         $vals = array_merge(
@@ -24,9 +24,9 @@ class EnvioRepository
             [$costo, bin2hex(random_bytes(16))]   // token aleatorio para el link público de seguimiento
         );
         $ph = implode(', ', array_fill(0, count($cols), '?'));
-        Database::conexion()
-            ->prepare('INSERT INTO envio (' . implode(', ', $cols) . ") VALUES ($ph)")
-            ->execute($vals);
+        $pdo = Database::conexion();
+        $pdo->prepare('INSERT INTO envio (' . implode(', ', $cols) . ") VALUES ($ph)")->execute($vals);
+        return (int) $pdo->lastInsertId();
     }
 
     /** Fija las coordenadas de destino del envío de un pedido (geocodificación o pin manual). */

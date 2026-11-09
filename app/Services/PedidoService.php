@@ -141,7 +141,7 @@ class PedidoService
                     $inv->descontar($l['pid'], $l['cant']);   // reserva stock (salvo sobre pedido)
                 }
             }
-            (new EnvioRepository())->crear($pedidoId, $empresaId, $datosEnvio, $costoEnvio, $barrioId);
+            $envioId = (new EnvioRepository())->crear($pedidoId, $empresaId, $datosEnvio, $costoEnvio, $barrioId);
             $pdo->commit();
         } catch (\Throwable $e) {
             $pdo->rollBack();
@@ -166,6 +166,22 @@ class PedidoService
                     }
                 } catch (\Throwable $e) { /* geocode opcional */ }
             }
+        }
+
+        // Auto-asignar un cadete a los envíos de Moto Express (el de menos carga en línea).
+        // Si no hay cadetes, queda sin asignar para que el admin lo derive a mano.
+        if ($esMoto && $empresaId !== null && isset($envioId)) {
+            try {
+                $cadete = (new \App\Repositories\RepartidorRepository())->mejorDisponible();
+                if ($cadete !== null) {
+                    (new EnvioRepository())->derivar((int) $envioId, (int) $cadete['id']);
+                    (new NotificacionRepository())->crear(
+                        'envio_asignado',
+                        "Pedido {$numero}: envío asignado a {$cadete['nombre']} (automático)",
+                        'repartos', $pedidoId
+                    );
+                }
+            } catch (\Throwable $e) { /* sin cadete disponible: lo asigna el admin */ }
         }
 
         // Avisos: al staff (bandeja del panel) y al cliente (bandeja de la tienda).

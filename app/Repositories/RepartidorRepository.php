@@ -61,6 +61,27 @@ class RepartidorRepository
             ->fetchAll();
     }
 
+    /**
+     * Mejor cadete para auto-asignar un envío: prioriza al que está EN LÍNEA
+     * (emitió hace <=2 min) y, entre ellos, al de MENOS envíos en curso (balanceo).
+     * Si no hay ninguno en línea, toma el activo con menos carga. null = no hay cadetes.
+     */
+    public function mejorDisponible(): ?array
+    {
+        $sql = "SELECT r.id, r.nombre,
+                       (r.en_linea = 1 AND r.ult_pos_en IS NOT NULL
+                        AND TIMESTAMPDIFF(SECOND, r.ult_pos_en, NOW()) <= 120) AS en_vivo,
+                       (SELECT COUNT(*) FROM envio e
+                        WHERE e.repartidor_id = r.id
+                          AND e.estado IN ('pendiente','despachado','en_camino')) AS carga
+                FROM repartidor r
+                WHERE r.activo = 1
+                ORDER BY en_vivo DESC, carga ASC, r.id ASC
+                LIMIT 1";
+        $r = Database::conexion()->query($sql)->fetch();
+        return $r ?: null;
+    }
+
     public function buscarPorId(int $id): ?array
     {
         $st = Database::conexion()->prepare("SELECT * FROM repartidor WHERE id = ?");
