@@ -183,6 +183,16 @@ class VentaService
         // debe frenar ni deshacer la venta ya confirmada).
         $this->avisarStockBajo(array_column($lineas, 'producto_id'));
 
+        // Aviso a los admin de cada venta del local (nunca frena la venta ya hecha).
+        try {
+            $vend = (new \App\Repositories\UsuarioRepository())->buscarPorId($usuarioId);
+            (new NotificacionRepository())->crearRol(
+                1, 'venta_nueva',
+                "Venta {$numero} · $ " . number_format($total, 0, ',', '.') . ' · ' . ($vend['nombre'] ?? 'Vendedor'),
+                'ventas', $ventaId, 'info'
+            );
+        } catch (\Throwable $e) { /* el aviso es secundario */ }
+
         return ['venta_id' => $ventaId, 'numero' => $numero, 'total' => $total, 'envio_costo' => $envioCosto];
     }
 

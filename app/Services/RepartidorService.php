@@ -106,6 +106,18 @@ class RepartidorService
         }
         $repo->cambiarEstadoPorId($envioId, $estado);
 
+        // Al entregar, avisamos al staff (campana + Telegram).
+        if ($estado === 'entregado') {
+            try {
+                $ref = !empty($env['pedido_id']) ? "pedido #{$env['pedido_id']}"
+                    : (!empty($env['destinatario']) ? $env['destinatario'] : "envío #{$envioId}");
+                (new \App\Repositories\NotificacionRepository())->crear(
+                    'envio_entregado', "Entregado · {$ref}", 'repartos',
+                    (int) ($env['pedido_id'] ?? $envioId), 'exito'
+                );
+            } catch (\Throwable $e) { /* el aviso es secundario */ }
+        }
+
         // Al salir la moto, avisamos al cliente por WhatsApp con el link de seguimiento.
         if ($estado === 'en_camino') {
             try {
