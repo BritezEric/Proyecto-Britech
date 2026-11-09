@@ -6,33 +6,22 @@
 > Estratégico (quién/por qué): ver [PRODUCT.md](PRODUCT.md).
 
 ## Concepto
-Mood: *"mercado de barrio moderno al mediodía"* — verde de feria, calidez ámbar,
-luz limpia. Comercial y cálido pero despejado. La calidez la lleva el **acento**
-y la **tipografía**, nunca un fondo beige (cliché IA que evitamos).
+Blanco y negro con morado: minimal, alto contraste, sombras suaves y movimiento
+leve. Un solo patrón para POS, tienda, panel, login, legales y repartidor.
 
 ## Color (OKLCH)
-Estrategia: **comprometida** — un verde de marca con significado (confirmar /
-plata / fresco) + un ámbar cálido de atención. Nada de color decorativo.
+| Rol | Token | Uso |
+|---|---|---|
+| Canvas | `--bg` | Fondo de la app |
+| Superficie | `--surface`, `--surface-2`, `--surface-sunk` | Tarjetas, hover, inputs |
+| Tinta | `--ink`, `--ink-muted` | Texto principal y secundario |
+| Línea | `--line`, `--line-strong` | Bordes y divisores |
+| **Primario** | `--primary`, `--primary-strong`, `--primary-tint` | Marca: botones, activo, enlaces |
+| Acento | `--accent`, `--accent-tint` | Solo ofertas y atención |
+| Estados | `--ok`, `--warn`, `--info`, `--danger` (+ `-strong` y `-tint`) | Pagado, pendiente, información, error |
+| Escena | `--escena` | Fondo de marca de login y portada |
 
-| Rol | Token | Aprox | Uso |
-|---|---|---|---|
-| Canvas | `--bg` | `#f1f6f3` | Fondo de la app (susurro verde, no beige) |
-| Superficie | `--surface` | `#ffffff` | Tarjetas / paneles |
-| Superficie 2 | `--surface-2` | gris-verde muy claro | Hover, líneas de carrito |
-| Hundido | `--surface-sunk` | | Inputs, tracks |
-| Tinta | `--ink` | `#19221d` | Texto principal (16:1) |
-| Tinta suave | `--ink-muted` | `#5f6d66` | Texto secundario (5.4:1) |
-| Línea | `--line` / `--line-strong` | | Bordes, divisores |
-| **Primario** | `--primary` | `#048b56` | Verde marca: CTA, confirmar, activo |
-| Primario fuerte | `--primary-strong` | `#007240` | Hover, texto verde (links) |
-| Primario tenue | `--primary-tint` | verde muy claro | Fondo de badges "ok" |
-| **Acento** | `--accent` | `#e18600` | Ámbar: atención, oferta, foco, punto de marca |
-| Peligro | `--danger` | `#d33a3c` | Quitar, error, anulada |
-
-**Semántica del color:** verde = ok/confirmar/plata · ámbar = atención/oferta ·
-rojo = quitar/error. El estado **nunca depende solo del color**: los badges de
-stock/estado llevan un punto (`::before`) además del color.
-Contraste verificado a WCAG AA (cuerpo ≥4.5:1, grande/bold ≥3:1).
+El estado **nunca depende solo del color**: los badges llevan un punto además del color.
 
 ## Tipografía
 **Hanken Grotesk** (Google Fonts, `@import` en tokens.css), fallback
@@ -50,19 +39,17 @@ Escala (ratio ~1.25): `--text-xs .75` · `sm .875` · `base 1` · `lg 1.25` ·
 - Foco visible: halo ámbar (`--ring`) en todo control (accesibilidad).
 
 ## Motion
-Intencional y contenido (no ruidoso). Curva `--ease-out` (ease-out-quint), sin
-rebote. Duraciones `--dur-fast 120ms` / `--dur 200ms` / `--dur-slow 340ms`.
-- Líneas del carrito: entran con `linea-in` (fade + slide corto).
-- Modales: backdrop con `blur` + fade, caja con entrada física (scale + translate).
-- Botones/rows: transición de color y micro-desplazamiento en hover/active.
-- `@media (prefers-reduced-motion: reduce)`: todo se reduce a ~0 (global en tokens.css).
+Una sola curva (`--ease-out`) y tres duraciones: `--dur-fast` 150ms, `--dur` 240ms, `--dur-slow` 380ms.
+- Pantallas y secciones entran con `aparecer` (fade + 8px). Modales con `fade-in` + `caja-in`.
+- Tarjetas clickeables y botones suben 1-3px al pasar el mouse y ganan sombra.
+- Con `prefers-reduced-motion` se anulan las entradas.
 
 ## Z-index (semántico)
 `--z-dropdown 100` < `sticky 200` < `modal-backdrop 300` < `modal 310` <
 `toast 400` < `tooltip 500`. Nunca valores mágicos tipo 9999.
 
 ## Componentes (dónde viven)
-- **tokens.css** — variables + reset base + foco + reduced-motion. Se importa primero.
+- **tokens.css** — variables, reset, foco, entradas, `.btn-primary`, `.btn-secundario`, `.modal`, `.modal-caja`, toast. Se importa primero. Las pantallas solo ajustan el ancho del modal.
 - **pos.css** — POS: barra, paneles, buscador, producto, carrito, resumen,
   botón cobrar, modales (cobro/ticket), pago mixto, ticket térmico, responsive.
 - **login.css** — auth (login, usuarios, olvidé, verificar, restablecer): escena
@@ -71,9 +58,9 @@ rebote. Duraciones `--dur-fast 120ms` / `--dur 200ms` / `--dur-slow 340ms`.
 
 ## Reglas al extender
 1. Importá `tokens.css` primero; usá **variables**, nunca colores/medidas hardcodeadas.
-2. Un solo acento por vista. Jerarquía por peso+tamaño+espacio, no por adornos.
+2. Morado para la marca; `--accent` solo para ofertas. Jerarquía por peso+tamaño+espacio, no por adornos.
 3. Estado = color **+** texto/ícono. Plata siempre tabular.
-4. Si parece plantilla de admin, rehacelo. La marca se reconoce por verde-feria + ámbar.
+4. Colores de estado siempre con tokens (`--ok`, `--warn`, `--info`, `--danger`), nunca hexadecimales sueltos.
 
 ## Pase de pulido 2026-08-23 (skill impeccable, registro "producto")
 Criterio: el sistema ya estaba muy pulido (micro-interacciones, modales animados,
