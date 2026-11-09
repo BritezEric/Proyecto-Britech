@@ -772,14 +772,16 @@ async function verPedido(id, numero) {
             (r.repartidores || []).map((rp) =>
                 `<option value="${rp.id}" ${Number(e.repartidor_id) === Number(rp.id) ? 'selected' : ''}>${esc(rp.nombre)}</option>`).join('')}</select>`;
 
-        // Seguimiento en vivo: link público (para WhatsApp) + destino en el mapa.
+        // Seguimiento en vivo: avisar por WhatsApp + link público + destino en el mapa.
         const pubUrl = e.token ? `${location.origin}/seguimiento.html?t=${e.token}` : '';
         const tieneDest = e.dest_lat != null && e.dest_lng != null;
+        const metodoPago = (r.pago || {}).metodo_pago || '';
         const trackHtml = `
             <div class="track-admin">
-                ${pubUrl ? `<button type="button" class="btn-mini" data-copy-track="${esc(pubUrl)}">🔗 Copiar link de seguimiento</button>` : ''}
-                <button type="button" class="btn-mini ghost" data-pin-dest="${e.id}" data-lat="${tieneDest ? e.dest_lat : ''}" data-lng="${tieneDest ? e.dest_lng : ''}">📍 ${tieneDest ? 'Corregir' : 'Fijar'} destino en el mapa</button>
-                <span class="td-mute track-dest-ok">${tieneDest ? 'Destino ubicado ✓' : 'Sin destino en el mapa'}</span>
+                ${(e.token && e.telefono) ? `<button type="button" class="btn-mini" data-wa data-tel="${esc(e.telefono)}" data-dest="${esc(e.destinatario || '')}" data-num="${esc(numero || '')}" data-token="${esc(e.token)}" data-total="${total}" data-efectivo="${metodoPago === 'efectivo' ? 1 : ''}">Avisar por WhatsApp</button>` : ''}
+                ${pubUrl ? `<button type="button" class="btn-mini ghost" data-copy-track="${esc(pubUrl)}">Copiar link de seguimiento</button>` : ''}
+                <button type="button" class="btn-mini ghost" data-pin-dest="${e.id}" data-lat="${tieneDest ? e.dest_lat : ''}" data-lng="${tieneDest ? e.dest_lng : ''}">${tieneDest ? 'Corregir' : 'Fijar'} destino en el mapa</button>
+                <span class="td-mute track-dest-ok">${tieneDest ? 'Destino ubicado' : 'Sin destino en el mapa'}</span>
             </div>`;
 
         if (esMoto) {
@@ -878,7 +880,16 @@ async function verPedido(id, numero) {
         } catch (ex) { alert(ex.message); }
     }));
 
-    // Copiar link público de seguimiento (para mandar por WhatsApp).
+    // Avisar al cliente por WhatsApp (abre WhatsApp con el mensaje + link ya escritos).
+    cont.querySelectorAll('[data-wa]').forEach((b) => b.addEventListener('click', () => {
+        const num = waNumero(b.dataset.tel);
+        if (!num) { alert('El cliente no tiene un teléfono válido cargado.'); return; }
+        const link = `${location.origin}/seguimiento.html?t=${encodeURIComponent(b.dataset.token)}`;
+        let msg = `Hola ${b.dataset.dest || ''}, tu pedido ${b.dataset.num} de Britech está en camino. Seguilo en vivo acá: ${link}.`;
+        if (b.dataset.efectivo) msg += ` Tené ${money.format(Number(b.dataset.total))} en efectivo listo para pagar.`;
+        window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+    }));
+    // Copiar link público de seguimiento (para mandar por WhatsApp a mano).
     cont.querySelectorAll('[data-copy-track]').forEach((b) => b.addEventListener('click', async () => {
         const url = b.dataset.copyTrack;
         try { await navigator.clipboard.writeText(url); toast('✓ Link de seguimiento copiado'); }
@@ -1480,4 +1491,14 @@ function fijarDestinoMapa(envioId, lat, lng, onSaved) {
             if (onSaved) onSaved();
         } catch (e) { alert(e.message); guardarBtn.disabled = false; }
     };
+}
+
+// Normaliza un teléfono al formato de WhatsApp (Argentina). Mejor esfuerzo; el admin verifica.
+function waNumero(tel) {
+    let d = String(tel || '').replace(/\D/g, '');
+    if (!d) return '';
+    if (d.startsWith('54')) return d;        // ya tiene código de país
+    if (d.startsWith('0')) d = d.slice(1);   // saca el 0 de larga distancia
+    if (d.startsWith('15')) d = d.slice(2);  // saca el 15 del celular local
+    return '549' + d;                        // 54 (AR) + 9 (celular) + número
 }
