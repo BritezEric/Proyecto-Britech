@@ -184,6 +184,10 @@ class TrackingController
             'costo'        => isset($e['envio_costo']) ? (float) $e['envio_costo'] : null,
             'pickup'       => $pickup,
             'dropoff'      => $dropoff,
+            'moto'         => [   // última posición del propio cadete (para verse aunque no haya ruta)
+                'lat' => $e['ult_lat'] !== null ? (float) $e['ult_lat'] : null,
+                'lng' => $e['ult_lng'] !== null ? (float) $e['ult_lng'] : null,
+            ],
             'target'       => $e['estado'] === 'en_camino' ? 'dropoff' : 'pickup',
             'ruta'         => $ruta,
         ]]);

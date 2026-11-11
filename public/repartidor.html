@@ -282,7 +282,7 @@
         });
 
         // ===== Viaje asignado (cadete): aceptar → retirar → entregar =====
-        let jobMap = null, jobRoute = null, jobTargetM = null, jobMeM = null, jobData = null;
+        let jobMap = null, jobRoute = null, jobPickupM = null, jobDropM = null, jobMeM = null, jobData = null, jobFitted = false;
         const ACC = {
             pendiente:  { chip: 'Viaje asignado',      icon: 'bell',         btn: 'Aceptar viaje', btnIcon: 'circle-check', next: 'despachado' },
             despachado: { chip: 'Andá a retirar',      icon: 'package',      btn: 'Ya retiré',     btnIcon: 'package-check', next: 'en_camino' },
@@ -323,6 +323,7 @@
             const meta = [];
             if (jobData.barrio) meta.push(jobData.barrio);
             if (jobData.destinatario) meta.push(jobData.destinatario);
+            if (jobData.dropoff.lat == null) meta.push('⚠ sin ubicar en el mapa (el admin tiene que fijar el destino)');
             $('drop-meta').textContent = meta.join(' · ');
             $('leg-pickup').classList.toggle('activo', !esDrop);
             $('leg-drop').classList.toggle('activo', esDrop);
@@ -335,19 +336,27 @@
             $('job-accion').disabled = false;
             $('job-nudge').hidden = !(watchId === null);   // si no estás en línea, empujá
 
-            // Mapa: moto + ruta al objetivo actual (local si va a retirar, cliente si va a entregar).
-            const tgt = esDrop ? jobData.dropoff : jobData.pickup;
-            const tgtMarker = () => esDrop ? markerDropoff() : markerPickup();
+            // Mapa: SIEMPRE el local (retiro) y el destino (entrega), la moto, y la ruta
+            // al objetivo actual. Así el cadete ve todo el viaje, no solo un punto.
+            const pu = jobData.pickup, dp = jobData.dropoff;
+            if (pu.lat != null) { if (jobPickupM) jobPickupM.setLatLng([pu.lat, pu.lng]); else jobPickupM = L.marker([pu.lat, pu.lng], { icon: markerPickup() }).addTo(jobMap); }
+            if (dp.lat != null) { if (jobDropM) jobDropM.setLatLng([dp.lat, dp.lng]); else jobDropM = L.marker([dp.lat, dp.lng], { icon: markerDropoff() }).addTo(jobMap); }
             if (jobData.ruta && jobData.ruta.coords) {
                 const cs = jobData.ruta.coords;
                 if (jobRoute) jobRoute.setLatLngs(cs); else jobRoute = L.polyline(cs, { color: '#a99bf0', weight: 5, opacity: .9 }).addTo(jobMap);
-                const me = cs[0], end = cs[cs.length - 1];
-                if (jobMeM) { moverMarcadorSuave(jobMeM, me, 2600); }
-                else { jobMeM = L.marker(me, { icon: markerMoto() }).addTo(jobMap); jobMap.fitBounds(cs, { padding: [36, 36], maxZoom: 16 }); }
-                if (jobTargetM) { jobTargetM.setLatLng(end); jobTargetM.setIcon(tgtMarker()); } else jobTargetM = L.marker(end, { icon: tgtMarker() }).addTo(jobMap);
-            } else if (tgt.lat != null) {
-                if (jobTargetM) { jobTargetM.setLatLng([tgt.lat, tgt.lng]); jobTargetM.setIcon(tgtMarker()); } else jobTargetM = L.marker([tgt.lat, tgt.lng], { icon: tgtMarker() }).addTo(jobMap);
-                jobMap.setView([tgt.lat, tgt.lng], 15);
+                const me = cs[0];
+                if (jobMeM) moverMarcadorSuave(jobMeM, me, 2600); else jobMeM = L.marker(me, { icon: markerMoto() }).addTo(jobMap);
+            } else if (jobData.moto && jobData.moto.lat != null) {   // sin ruta: igual mostramos la moto
+                const me = [jobData.moto.lat, jobData.moto.lng];
+                if (jobMeM) moverMarcadorSuave(jobMeM, me, 2600); else jobMeM = L.marker(me, { icon: markerMoto() }).addTo(jobMap);
+            }
+            if (!jobFitted) {   // encuadre inicial con todos los puntos que haya
+                const pts = [];
+                if (jobMeM) pts.push(jobMeM.getLatLng());
+                if (pu.lat != null) pts.push([pu.lat, pu.lng]);
+                if (dp.lat != null) pts.push([dp.lat, dp.lng]);
+                if (pts.length === 1) { jobMap.setView(pts[0], 15); jobFitted = true; }
+                else if (pts.length > 1) { jobMap.fitBounds(pts, { padding: [36, 36], maxZoom: 16 }); jobFitted = true; }
             }
             brkIcons();
         }
