@@ -39,9 +39,19 @@ class RepartidorService
                 throw new ValidacionException('El repartidor no existe.');
             }
             $this->repo->actualizar($id, $nombre, $telefono, $activo);
-            return $id;
+        } else {
+            $id = $this->repo->crear($nombre, $telefono, $activo);
         }
-        return $this->repo->crear($nombre, $telefono, $activo);
+
+        // PIN para que entre a su app: sólo lo tocamos si el admin cargó uno nuevo.
+        $pin = trim((string) ($in['pin'] ?? ''));
+        if ($pin !== '') {
+            if (!preg_match('/^\d{4,6}$/', $pin)) {
+                throw new ValidacionException('El PIN tiene que ser de 4 a 6 números.');
+            }
+            $this->repo->fijarPin($id, password_hash($pin, PASSWORD_DEFAULT));
+        }
+        return $id;
     }
 
     public function baja(int $id): void

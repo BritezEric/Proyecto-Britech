@@ -61,6 +61,32 @@ class RepartidorRepository
             ->fetchAll();
     }
 
+    /** Lista para el login del cadete (nombre + si ya tiene PIN cargado). */
+    public function paraLogin(): array
+    {
+        return Database::conexion()->query(
+            "SELECT id, nombre, (pin IS NOT NULL) AS tiene_pin
+             FROM repartidor WHERE activo = 1 ORDER BY nombre"
+        )->fetchAll();
+    }
+
+    /** PIN (hash) + token de un repartidor activo, para validar el login. null si no existe. */
+    public function pinYToken(int $id): ?array
+    {
+        $st = Database::conexion()->prepare(
+            "SELECT nombre, pin, token FROM repartidor WHERE id = ? AND activo = 1"
+        );
+        $st->execute([$id]);
+        return $st->fetch() ?: null;
+    }
+
+    /** Fija (o cambia) el PIN hasheado del repartidor. */
+    public function fijarPin(int $id, string $hash): void
+    {
+        Database::conexion()->prepare("UPDATE repartidor SET pin = ? WHERE id = ?")
+            ->execute([$hash, $id]);
+    }
+
     /**
      * Mejor cadete para auto-asignar un envío: prioriza al que está EN LÍNEA
      * (emitió hace <=2 min) y, entre ellos, al de MENOS envíos en curso (balanceo).

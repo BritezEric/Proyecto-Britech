@@ -41,6 +41,33 @@ class TrackingController
         Response::json(['ok' => true]);
     }
 
+    /** Público: lista de repartidores activos para el login de su app (nombre + si tiene PIN). */
+    public function listaCadetes(): void
+    {
+        $reps = (new \App\Repositories\RepartidorRepository())->paraLogin();
+        $out = array_map(fn($r) => [
+            'id' => (int) $r['id'], 'nombre' => $r['nombre'], 'tiene_pin' => (bool) $r['tiene_pin'],
+        ], $reps);
+        Response::json(['ok' => true, 'repartidores' => $out]);
+    }
+
+    /** Público: login del cadete. Body: {id, pin}. Devuelve el token para su app. */
+    public function loginCadete(): void
+    {
+        $d = Request::json();
+        $id  = (int) ($d['id'] ?? 0);
+        $pin = trim((string) ($d['pin'] ?? ''));
+
+        $r = (new \App\Repositories\RepartidorRepository())->pinYToken($id);
+        if ($r === null) { Response::json(['ok' => false, 'error' => 'Repartidor inválido.'], 401); return; }
+
+        // Si el admin le cargó un PIN, es obligatorio y tiene que coincidir.
+        if ($r['pin'] !== null && ($pin === '' || !password_verify($pin, $r['pin']))) {
+            Response::json(['ok' => false, 'error' => 'PIN incorrecto.'], 401); return;
+        }
+        Response::json(['ok' => true, 'token' => $r['token'], 'nombre' => $r['nombre']]);
+    }
+
     /** Mapa del admin: todas las motos en curso con su posición y ETA. */
     public function adminMapa(): void
     {

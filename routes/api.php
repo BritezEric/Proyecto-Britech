@@ -136,6 +136,8 @@ $router->get('/api/admin/repartidores/detalle',  [RepartidorController::class, '
 $router->post('/api/admin/repartidores/guardar', [RepartidorController::class, 'guardar'],  true);
 $router->post('/api/admin/repartidores/baja',    [RepartidorController::class, 'baja'],     true);
 // Seguimiento en tiempo real (estilo Uber)
+$router->get('/api/repartidor/lista',     [TrackingController::class, 'listaCadetes']);  // login del cadete: lista de nombres
+$router->post('/api/repartidor/login',    [TrackingController::class, 'loginCadete']);   // login del cadete: nombre + PIN → token
 $router->post('/api/repartidor/posicion', [TrackingController::class, 'posicion']);   // emisor (celular/TrackingTag), token
 $router->get('/api/repartidor/envio',     [TrackingController::class, 'miEnvio']);    // cadete: su envío activo + ruta (token)
 $router->post('/api/repartidor/envio/estado', [TrackingController::class, 'estadoCadete']); // cadete: aceptar/retiré/entregué (token)

@@ -13,6 +13,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/lucide@0.544.0/dist/umd/lucide.min.js"></script>
     <script defer src="/assets/js/mapas.js"></script>
     <style>
+        [hidden] { display: none !important; }   /* el atributo hidden gana a las clases con display */
         body { min-height: 100dvh; display: flex; flex-direction: column; }
         header { padding: calc(var(--sp-4) + env(safe-area-inset-top)) var(--sp-5) var(--sp-3); display: flex; align-items: center; gap: var(--sp-2); }
         header img { height: 24px; width: auto; }
@@ -79,6 +80,12 @@
         .err { color: var(--danger-strong); font-size: var(--text-sm); max-width: 340px; margin: 0; text-align: center; }
         footer { padding: var(--sp-4); text-align: center; color: var(--ink-muted); font-size: var(--text-xs); }
         footer svg { width: 14px; height: 14px; vertical-align: -2px; }
+
+        /* Login del cadete */
+        .login { width: min(420px, 92vw); flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: var(--sp-3); padding: var(--sp-5) 0; }
+        .login-inp { width: min(340px, 86vw); padding: var(--sp-3) var(--sp-4); border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 16px; font-family: inherit; }
+        .btn-logout { background: none; border: none; color: var(--ink-muted); font-size: var(--text-xs); cursor: pointer; font-family: inherit; text-decoration: underline; padding: 0; }
+        .job-precio { font-size: var(--text-sm); font-weight: 800; color: var(--ok); white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -88,16 +95,27 @@
     </header>
 
     <main class="pagina-simple">
-        <div class="rep-top">
+        <!-- LOGIN: el cadete entra con su nombre + PIN -->
+        <section class="login" id="login" hidden>
+            <div class="espera-ic"><i data-lucide="bike"></i></div>
+            <h2 class="espera-tit">Entrá a tu app</h2>
+            <p class="espera-sub">Elegí tu nombre y poné tu PIN.</p>
+            <select class="login-inp" id="login-rep"><option value="">Elegí tu nombre…</option></select>
+            <input class="login-inp" id="login-pin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off">
+            <button class="btn-accion" id="login-btn" style="width:min(340px,86vw)"><i data-lucide="log-in"></i><span>Entrar</span></button>
+            <p class="err" id="login-err"></p>
+        </section>
+
+        <div class="rep-top" id="rep-top" hidden>
             <div>
                 <div class="rep-nombre" id="rep-nombre">…</div>
-                <div class="estado" id="estado"><span class="dot"></span><span id="estado-txt">Desconectado</span></div>
+                <div class="estado" id="estado"><span class="dot"></span><span id="estado-txt">Desconectado</span> · <button class="btn-logout" id="btn-logout">salir</button></div>
             </div>
             <button class="btn-online" id="btn-toggle"><i data-lucide="play"></i><span>En línea</span></button>
         </div>
 
         <!-- SIN VIAJE: index / esperando -->
-        <section class="espera" id="espera">
+        <section class="espera" id="espera" hidden>
             <div class="espera-ic"><i data-lucide="bike"></i></div>
             <h2 class="espera-tit">Esperando viaje…</h2>
             <p class="espera-sub">Apenas te asignen un envío te aparece acá. Dejá la pantalla abierta.</p>
@@ -112,7 +130,10 @@
         <section class="job" id="job">
             <div class="job-head">
                 <span class="job-chip" id="job-chip"><span id="job-chip-ic"><i data-lucide="bell"></i></span><span id="job-chip-txt">Viaje asignado</span></span>
-                <span class="job-num" id="job-num"></span>
+                <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+                    <span class="job-precio" id="job-precio"></span>
+                    <span class="job-num" id="job-num"></span>
+                </span>
             </div>
             <div class="job-map" id="job-map"></div>
             <div class="job-body">
@@ -144,8 +165,9 @@
 
     <script>
         const q = new URLSearchParams(location.search);
-        const token = q.get('token') || '';
         const $ = (id) => document.getElementById(id);
+        let token = q.get('token') || localStorage.getItem('britech_rep_token') || '';
+        let repNombre = localStorage.getItem('britech_rep_nombre') || 'Repartidor';
         let watchId = null, enviadas = 0, ultimoEnvio = 0, wakeLock = null;
 
         // Wake Lock: evita que la pantalla se apague mientras el repartidor está en línea.
@@ -163,11 +185,49 @@
             if (document.visibilityState === 'visible' && watchId !== null && !wakeLock) pedirWakeLock();
         });
 
-        if (!token) {
-            $('err').textContent = 'Falta el token. Pedí tu link al administrador.';
-            $('btn-toggle').disabled = true;
+        // ===== Login del cadete (nombre + PIN) =====
+        async function cargarLista() {
+            try {
+                const r = await fetch('/api/repartidor/lista');
+                const d = await r.json();
+                if (!d.ok) return;
+                $('login-rep').innerHTML = '<option value="">Elegí tu nombre…</option>' +
+                    d.repartidores.map(rp => `<option value="${rp.id}" data-pin="${rp.tiene_pin ? 1 : 0}">${rp.nombre}${rp.tiene_pin ? ' 🔒' : ''}</option>`).join('');
+            } catch (e) { $('login-err').textContent = 'No se pudo cargar la lista. ¿Hay internet?'; }
         }
-        $('rep-nombre').textContent = token ? 'Repartidor' : 'Sin token';
+        async function hacerLogin() {
+            const id = $('login-rep').value;
+            if (!id) { $('login-err').textContent = 'Elegí tu nombre.'; return; }
+            $('login-err').textContent = '';
+            $('login-btn').disabled = true;
+            try {
+                const r = await fetch('/api/repartidor/login', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: Number(id), pin: $('login-pin').value.trim() }),
+                });
+                const d = await r.json();
+                if (!d.ok) { $('login-err').textContent = d.error || 'No se pudo entrar.'; $('login-btn').disabled = false; return; }
+                token = d.token; repNombre = d.nombre;
+                try { localStorage.setItem('britech_rep_token', token); localStorage.setItem('britech_rep_nombre', repNombre); } catch (e) {}
+                iniciarApp();
+            } catch (e) { $('login-err').textContent = 'Sin conexión.'; $('login-btn').disabled = false; }
+        }
+        function logout() {
+            try { localStorage.removeItem('britech_rep_token'); localStorage.removeItem('britech_rep_nombre'); } catch (e) {}
+            token = '';
+            if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; soltarWakeLock(); }
+            location.href = '/repartidor.html';
+        }
+        function mostrarLogin() {
+            $('login').hidden = false; $('rep-top').hidden = true; $('espera').hidden = true; $('job').classList.remove('show');
+            cargarLista();
+        }
+        function iniciarApp() {
+            $('login').hidden = true; $('rep-top').hidden = false;
+            $('rep-nombre').textContent = repNombre;
+            setEstado(false);
+            cargarJob(); setInterval(cargarJob, 5000);
+        }
 
         function setEstado(on) {
             $('estado').classList.toggle('on', on);
@@ -244,13 +304,13 @@
 
             if (!jobData) {   // sin viaje → pantalla de espera
                 $('job').classList.remove('show');
-                $('espera').style.display = '';
+                $('espera').hidden = false;
                 $('job-nudge').hidden = true;
                 return;
             }
 
             // con viaje → tarjeta
-            $('espera').style.display = 'none';
+            $('espera').hidden = true;
             $('job').classList.add('show');
             jobInitMapa(); setTimeout(() => jobMap && jobMap.invalidateSize(), 80);
 
@@ -270,6 +330,7 @@
             $('job-chip-txt').textContent = a.chip;
             $('job-chip-ic').innerHTML = '<i data-lucide="' + a.icon + '"></i>';
             $('job-num').textContent = 'Envío ' + (jobData.numero || '') + (jobData.ruta && jobData.ruta.eta_min != null ? ' · ~' + jobData.ruta.eta_min + ' min' : '');
+            $('job-precio').textContent = jobData.costo ? 'Cobrás $' + Number(jobData.costo).toLocaleString('es-AR') : '';
             $('job-accion').innerHTML = '<i data-lucide="' + a.btnIcon + '"></i><span>' + a.btn + '</span>';
             $('job-accion').disabled = false;
             $('job-nudge').hidden = !(watchId === null);   // si no estás en línea, empujá
@@ -307,9 +368,13 @@
             } catch (e) { $('err').textContent = 'Sin conexión.'; $('job-accion').disabled = false; }
         });
 
+        $('login-btn').addEventListener('click', hacerLogin);
+        $('login-pin').addEventListener('keydown', (e) => { if (e.key === 'Enter') hacerLogin(); });
+        $('btn-logout').addEventListener('click', logout);
+
         window.addEventListener('load', () => {
             if (window.brkIcons) window.brkIcons();
-            if (token) { cargarJob(); setInterval(cargarJob, 5000); }
+            if (token) iniciarApp(); else mostrarLogin();
         });
     </script>
 </body>

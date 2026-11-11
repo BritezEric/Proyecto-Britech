@@ -291,6 +291,7 @@ const ENTIDADES = {
         campos: [
             { key: 'nombre', label: 'Nombre', tipo: 'text', req: true, ancho: true },
             { key: 'telefono', label: 'Teléfono (opcional)', tipo: 'text' },
+            { key: 'pin', label: 'PIN para su app (4-6 números, dejá vacío para no cambiarlo)', tipo: 'text' },
             { key: 'activo', label: 'Activo', tipo: 'check', def: true },
         ],
     },
