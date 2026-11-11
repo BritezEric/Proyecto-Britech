@@ -350,6 +350,7 @@ async function renderAjustes() {
     cont.innerHTML = '<p class="td-mute">Cargando…</p>';
     const r = await api.get('/api/admin/config');
     const c = r.config || {};
+    const loc = r.local || {};
     cont.innerHTML = `
         <div class="ajustes-card">
             <h3>💳 Datos de transferencia</h3>
@@ -359,6 +360,15 @@ async function renderAjustes() {
             <div class="campo"><label for="cfg-cbu">CBU / CVU</label><input id="cfg-cbu" value="${esc(c.pago_cbu || '')}" placeholder="0000000000000000000000"></div>
             <div class="campo"><label for="cfg-banco">Banco / Billetera</label><input id="cfg-banco" value="${esc(c.pago_banco || '')}" placeholder="Ej: Mercado Pago"></div>
             <button class="btn-primary" id="cfg-guardar">Guardar</button>
+        </div>
+        <div class="ajustes-card">
+            <h3>📍 Ubicación del negocio</h3>
+            <p class="sub">Desde acá sale el cadete a buscar los pedidos. Arrastrá el pin (o tocá el mapa) a tu local.</p>
+            <div class="campo"><label for="cfg-local-dir">Dirección</label><input id="cfg-local-dir" value="${esc(loc.dir || '')}" placeholder="Calle y altura"></div>
+            <div id="cfg-local-mapa" style="height:220px;border-radius:12px;overflow:hidden;margin:10px 0"></div>
+            <input type="hidden" id="cfg-local-lat" value="${esc(loc.lat ?? '')}">
+            <input type="hidden" id="cfg-local-lng" value="${esc(loc.lng ?? '')}">
+            <button class="btn-primary" id="cfg-local-guardar">Guardar ubicación</button>
         </div>`;
     $('cfg-guardar').addEventListener('click', async () => {
         const btn = $('cfg-guardar'); btn.disabled = true;
@@ -368,6 +378,32 @@ async function renderAjustes() {
                 pago_cbu: $('cfg-cbu').value, pago_banco: $('cfg-banco').value,
             });
             toast('✓ Datos de pago guardados');
+        } catch (e) { toast('⚠ ' + e.message); }
+        btn.disabled = false;
+    });
+
+    // Mapa de la ubicación del negocio: pin arrastrable.
+    const llat = Number(loc.lat) || -26.1849, llng = Number(loc.lng) || -58.1731;
+    setTimeout(() => {
+        if (!window.L) return;
+        const map = L.map('cfg-local-mapa').setView([llat, llng], 15);
+        (window.tileBritech ? tileBritech() : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' })).addTo(map);
+        const icono = L.divIcon({ className: '', iconSize: [20, 20], iconAnchor: [10, 10],
+            html: '<div style="width:18px;height:18px;border-radius:50%;background:#e0a23b;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5)"></div>' });
+        const pin = L.marker([llat, llng], { draggable: true, icon: icono }).addTo(map);
+        const guardarPin = () => { const ll = pin.getLatLng(); $('cfg-local-lat').value = ll.lat.toFixed(7); $('cfg-local-lng').value = ll.lng.toFixed(7); };
+        guardarPin();
+        pin.on('dragend', guardarPin);
+        map.on('click', (ev) => { pin.setLatLng(ev.latlng); guardarPin(); });
+        setTimeout(() => map.invalidateSize(), 80);
+    }, 60);
+    $('cfg-local-guardar').addEventListener('click', async () => {
+        const btn = $('cfg-local-guardar'); btn.disabled = true;
+        try {
+            await api.post('/api/admin/config/local', {
+                lat: Number($('cfg-local-lat').value), lng: Number($('cfg-local-lng').value), dir: $('cfg-local-dir').value,
+            });
+            toast('✓ Ubicación del negocio guardada');
         } catch (e) { toast('⚠ ' + e.message); }
         btn.disabled = false;
     });

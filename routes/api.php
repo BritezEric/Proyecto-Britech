@@ -124,6 +124,7 @@ $router->post('/api/admin/pedidos/envio',   [PedidoController::class, 'adminEnvi
 // Config de la tienda (datos de transferencia) — solo admin
 $router->get('/api/admin/config',          [ConfigController::class, 'admin'],   true);
 $router->post('/api/admin/config/guardar', [ConfigController::class, 'guardar'], true);
+$router->post('/api/admin/config/local',   [ConfigController::class, 'guardarLocal'], true);   // ubicación del negocio (pin)
 
 // Empresas de envío (ABM admin)
 $router->get('/api/admin/empresas-envio',          [EmpresaEnvioController::class, 'admin'],   true);

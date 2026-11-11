@@ -151,12 +151,7 @@ class TrackingController
         $e = $repo->envioActivoDeRepartidor((int) $rep['id']);
         if ($e === null) { Response::json(['ok' => true, 'envio' => null]); return; }
 
-        $cfg = require dirname(__DIR__, 2) . '/config/config.php';
-        $pickup = [
-            'lat' => (float) $cfg['mapas']['local_lat'],
-            'lng' => (float) $cfg['mapas']['local_lng'],
-            'dir' => (string) $cfg['mapas']['local_dir'],
-        ];
+        $pickup = ConfigController::localEfectivo();   // ubicación del negocio: panel (DB) o .env
         $dropDir = trim(($e['direccion'] ?? '') . ' ' . ($e['numero'] ?? ''))
             . ($e['localidad'] ? ', ' . $e['localidad'] : '');
         $dropoff = [
