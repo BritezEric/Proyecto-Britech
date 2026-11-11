@@ -48,7 +48,7 @@ echo.
 echo   (No cierres esta ventana mientras uses la app)
 echo.
 start "" /b cmd /c "ping -n 3 127.0.0.1 >nul & start microsoft-edge:http://127.0.0.1:%PUERTO%/login.html"
-"%PHP%" -S 127.0.0.1:%PUERTO% -t public public\index.php
+"%PHP%" -S 127.0.0.1:%PUERTO% -t public server.php
 echo.
 echo   El servidor se detuvo.
 goto fin
