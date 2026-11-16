@@ -138,7 +138,7 @@ class PedidoService
             foreach ($lineas as $l) {
                 $this->repo->agregarDetalle($pedidoId, $l['pid'], $l['cant'], $l['precio'], $l['sub']);
                 if (!$l['sobre']) {
-                    $inv->descontar($l['pid'], $l['cant']);   // reserva stock (salvo sobre pedido)
+                    $inv->descontar($l['pid'], $l['cant'], "Pedido online $numero");   // reserva stock (salvo sobre pedido)
                 }
             }
             $envioId = (new EnvioRepository())->crear($pedidoId, $empresaId, $datosEnvio, $costoEnvio, $barrioId);
@@ -305,7 +305,7 @@ class PedidoService
             try {
                 $pdo->beginTransaction();
                 foreach ($this->repo->lineasParaStock($id) as $l) {
-                    $inv->reintegrar((int) $l['producto_id'], (int) $l['cantidad']);
+                    $inv->reintegrar((int) $l['producto_id'], (int) $l['cantidad'], 'Cancelación pedido ' . ($pedido['numero'] ?? '#' . $id));
                 }
                 $this->repo->cambiarEstado($id, $estado);
                 $pdo->commit();

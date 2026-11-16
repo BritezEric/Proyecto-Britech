@@ -58,6 +58,9 @@ class MayoristaService
         }
         $this->solic->resolver($id, $estado, $adminId);
         $this->clientes->aprobarMayorista((int) $s['cliente_id'], $estado === 'aprobada' ? 1 : 0);
+        // Permiso del cliente: acceso (o no) a la lista de precios mayorista.
+        Auditoria::campo('cliente', (int) $s['cliente_id'], 'acceso_mayorista', 'pendiente', $estado,
+            $estado === 'aprobada' ? 'aprobar' : 'rechazar', $adminId, 'Solicitud mayorista #' . $id);
 
         // Aviso in-app en la campana de la tienda.
         (new \App\Repositories\NotificacionRepository())->crearCliente(

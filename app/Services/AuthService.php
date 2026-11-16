@@ -18,13 +18,21 @@ class AuthService
         $usuario = (new UsuarioRepository())->buscarPorEmail(trim($email));
 
         // Mensaje genérico: no revelamos si falló el email o la contraseña.
+        // Auditoría de intentos fallidos: se guarda el email probado, nunca la contraseña.
+        $fallido = fn(string $motivo) => Auditoria::evento(
+            'sesion', $usuario ? (int) $usuario['id'] : null, 'login_fallido',
+            $motivo . ': ' . mb_substr(trim($email), 0, 120)
+        );
         if ($usuario === null || !password_verify($password, $usuario['password_hash'])) {
+            $fallido('Email o contraseña incorrectos');
             throw new ValidacionException('Email o contraseña incorrectos.');
         }
         if ((int) $usuario['activo'] !== 1) {
+            $fallido('Usuario inactivo');
             throw new ValidacionException('El usuario está inactivo.');
         }
         if ((int) $usuario['email_verificado'] !== 1) {
+            $fallido('Correo sin verificar');
             throw new ValidacionException('Tenés que verificar tu correo antes de entrar.');
         }
 
@@ -34,12 +42,15 @@ class AuthService
             'rol_id' => (int) $usuario['rol_id'],
             'rol'    => $usuario['rol'],   // nombre del rol (admin / vendedor)
         ]);
+        Auditoria::evento('sesion', (int) $usuario['id'], 'login', 'Inicio de sesión (' . $usuario['rol'] . ')');
 
         return ['id' => (int) $usuario['id'], 'nombre' => $usuario['nombre'], 'rol_id' => (int) $usuario['rol_id']];
     }
 
     public function logout(): void
     {
+        $id = Session::usuarioId();
+        if ($id !== null) Auditoria::evento('sesion', $id, 'logout', 'Cierre de sesión');
         Session::logout();
     }
 
@@ -96,6 +107,8 @@ class AuthService
             password_hash($password, PASSWORD_DEFAULT)
         );
         $tokens->marcarUsado((int) $t['id']);
+        Auditoria::evento('usuario', (int) $t['usuario_id'], 'cambio_password',
+            'Restableció su contraseña desde el correo', (int) $t['usuario_id']);
     }
 
     private function enviarReset(string $email, string $nombre, string $token): void

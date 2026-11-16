@@ -74,12 +74,12 @@ class ProductoService
             $anterior = $editando ? $this->inv->cantidadDe($id) : 0;
             $nuevo    = $d['stock'];
             if (!$editando) {
-                $this->inv->establecer($id, $nuevo);
+                $this->inv->establecer($id, $nuevo, 'Stock inicial');
                 if ($nuevo > 0) {
                     $this->inv->registrarMovimiento($id, 'ingreso', $nuevo, 'Stock inicial', null, $usuarioId);
                 }
             } elseif ($nuevo !== $anterior) {
-                $this->inv->establecer($id, $nuevo);
+                $this->inv->establecer($id, $nuevo, 'Ajuste de stock desde Productos');
                 $delta = abs($nuevo - $anterior);
                 $tipo  = $nuevo > $anterior ? 'ingreso' : 'egreso';
                 $this->inv->registrarMovimiento($id, $tipo, $delta, 'Ajuste de stock (ABM)', null, $usuarioId);

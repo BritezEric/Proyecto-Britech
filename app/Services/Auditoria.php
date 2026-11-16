@@ -6,29 +6,40 @@ use App\Core\Session;
 use App\Repositories\AuditoriaRepository;
 
 /**
- * Helper de auditoría. Se llama desde los servicios para registrar cambios.
+ * Helper de auditoría. Se llama desde el backend (servicios y repositorios)
+ * para registrar operaciones: nunca desde JavaScript.
  * Nunca rompe la acción real: si falla el registro, se traga la excepción.
  * El usuario se toma de la sesión salvo que se pase explícito.
+ * Los campos sensibles (contraseñas, tokens, PIN) se guardan enmascarados.
  */
 class Auditoria
 {
-    /** Registra un evento de operación (anular, aprobar pago, cambiar estado, baja…). */
+    /** Campos cuyo valor nunca se guarda en claro. */
+    private const SENSIBLE = '/pass|clave|token|secret|pin\b|^pin|cvv|tarjeta|api_?key/i';
+    private const OCULTO = '[oculto]';
+
+    /** Registra un evento de operación (anular, aprobar pago, cambiar estado, baja, login…). */
     public static function evento(string $entidad, ?int $id, string $accion, ?string $detalle = null, ?int $usuarioId = null): void
     {
         try {
             (new AuditoriaRepository())->registrar(
-                $usuarioId ?? Session::usuarioId(), $entidad, $id, $accion, null, null, null, $detalle
+                $usuarioId ?? Session::usuarioId(), $entidad, $id, $accion, null, null, null, $detalle, self::ip()
             );
         } catch (\Throwable $e) { /* la auditoría no debe frenar la operación */ }
     }
 
-    /** Registra un cambio de un campo puntual. */
-    public static function campo(string $entidad, ?int $id, string $campo, $anterior, $nuevo, string $accion = 'editar', ?int $usuarioId = null): void
-    {
+    /** Registra un cambio de un campo puntual (valor anterior → valor nuevo). */
+    public static function campo(
+        string $entidad, ?int $id, string $campo, $anterior, $nuevo,
+        string $accion = 'editar', ?int $usuarioId = null, ?string $detalle = null
+    ): void {
         try {
+            $sensible = preg_match(self::SENSIBLE, $campo) === 1;
             (new AuditoriaRepository())->registrar(
                 $usuarioId ?? Session::usuarioId(), $entidad, $id, $accion, $campo,
-                self::str($anterior), self::str($nuevo), null
+                $sensible && $anterior !== null ? self::OCULTO : self::str($anterior),
+                $sensible && $nuevo !== null ? self::OCULTO : self::str($nuevo),
+                $detalle, self::ip()
             );
         } catch (\Throwable $e) { /* idem */ }
     }
@@ -53,6 +64,18 @@ class Auditoria
         return $n;
     }
 
+    /**
+     * Movimiento de stock de un producto: cantidad anterior → nueva.
+     * $accion: entrada (compra, reintegro), salida (venta, pedido) o ajuste (ABM).
+     */
+    public static function stock(int $productoId, int $anterior, int $nuevo, string $accion, string $detalle): void
+    {
+        if ($anterior === $nuevo) return;
+        $dif = $nuevo - $anterior;
+        self::campo('stock', $productoId, 'stock', $anterior, $nuevo, $accion, null,
+            $detalle . ' (' . ($dif > 0 ? '+' : '') . $dif . ')');
+    }
+
     /** ¿Son iguales? Los numéricos se comparan con 2 decimales (evita 10 vs 10.00). */
     private static function igual($a, $b): bool
     {
@@ -65,5 +88,12 @@ class Auditoria
         if ($v === null) return null;
         if (is_bool($v)) return $v ? '1' : '0';
         return (string) $v;
+    }
+
+    /** IP de quien hace la acción (null en tareas de consola). */
+    private static function ip(): ?string
+    {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+        return is_string($ip) && filter_var($ip, FILTER_VALIDATE_IP) ? $ip : null;
     }
 }

@@ -51,8 +51,7 @@ class GastoService
                 $id = $this->repo->crear($d);
                 // Compra de stock: sumar al inventario + registrar el ingreso.
                 if ($d['producto_id'] !== null && $d['cantidad'] !== null && $d['cantidad'] > 0) {
-                    $actual = $this->inv->cantidadDe($d['producto_id']);
-                    $this->inv->establecer($d['producto_id'], $actual + $d['cantidad']);
+                    $this->inv->aumentar($d['producto_id'], $d['cantidad'], 'Compra a proveedor (gasto)');
                     $this->inv->registrarMovimiento(
                         $d['producto_id'], 'ingreso', $d['cantidad'],
                         'Compra a proveedor (gasto)', null, $usuarioId

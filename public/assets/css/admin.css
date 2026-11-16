@@ -933,3 +933,32 @@ td.acciones { text-align: right; white-space: nowrap; }
 
 /* Icono de la lista lateral del mapa de envíos (Lucide SVG) */
 .mapa-item-ic svg { width: 18px; height: 18px; vertical-align: middle; }
+
+/* ---- Auditoría (admin-auditoria.js): resumen, filtros y tipos de operación por color ---- */
+.au-resumen { margin-bottom: var(--sp-4); }
+.au-kpi { border-left: 3px solid var(--line-strong); }
+.au-kpi.au-alta { border-left-color: var(--ok); }
+.au-kpi.au-cambio { border-left-color: var(--info); }
+.au-kpi.au-baja { border-left-color: var(--danger); }
+.au-kpi.au-stock { border-left-color: var(--warn); }
+.au-filtros .filtros { align-items: center; }
+.au-fecha { display: inline-flex; align-items: center; gap: var(--sp-1); font-size: var(--text-xs); font-weight: 600; color: var(--ink-muted); }
+.au-fecha input { font-family: inherit; font-size: var(--text-sm); padding: 7px 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); }
+.au-error { margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); background: var(--danger-tint); color: var(--danger-strong); font-size: var(--text-sm); font-weight: 600; }
+.au-tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px var(--sp-2); border-radius: var(--r-full); font-size: var(--text-xs); font-weight: 600; white-space: nowrap; }
+.au-tag::before { content: ""; width: 6px; height: 6px; border-radius: var(--r-full); background: currentColor; }
+.au-tag.au-alta { background: var(--ok-tint); color: var(--ok-strong); }
+.au-tag.au-cambio { background: var(--info-tint); color: var(--info-strong); }
+.au-tag.au-baja { background: var(--danger-tint); color: var(--danger-strong); }
+.au-tag.au-stock { background: var(--warn-tint); color: var(--warn-strong); }
+.au-tag.au-sesion, .au-tag.au-otro { background: var(--surface-sunk); color: var(--ink-muted); }
+.au-tag.au-tag-alerta { background: var(--danger-tint); color: var(--danger-strong); }
+.au-nowrap { white-space: nowrap; }
+.au-dia { font-variant-numeric: tabular-nums; }
+.au-desc { max-width: 320px; }
+.au-cambio { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.au-antes { color: var(--ink-muted); text-decoration: line-through; text-decoration-color: var(--line-strong); }
+.au-flecha { color: var(--ink-muted); margin: 0 2px; }
+.au-despues { font-weight: 700; }
+.au-resumen { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); }
+#vista-auditoria .tabla-caja { overflow-x: auto; }

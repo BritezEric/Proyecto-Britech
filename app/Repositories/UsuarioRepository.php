@@ -61,6 +61,51 @@ class UsuarioRepository
             ->execute([$passwordHash, $id]);
     }
 
+    // ---- Gestión de usuarios del sistema (panel → Personas → Usuarios del sistema) ----
+
+    /** Listado paginado para el panel (sin datos sensibles: nunca devuelve el hash). */
+    public function listarAdmin(array $f, int $limit, int $offset): array
+    {
+        $where = [];
+        $params = [];
+        if (!empty($f['q'])) { $where[] = '(u.nombre LIKE ? OR u.email LIKE ?)'; $params[] = '%' . $f['q'] . '%'; $params[] = '%' . $f['q'] . '%'; }
+        if (isset($f['rol_id']) && $f['rol_id'] !== '') { $where[] = 'u.rol_id = ?'; $params[] = (int) $f['rol_id']; }
+        if (isset($f['activo']) && $f['activo'] !== '') { $where[] = 'u.activo = ?'; $params[] = (int) $f['activo']; }
+        $sqlWhere = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+        $pdo = Database::conexion();
+
+        $st = $pdo->prepare("SELECT COUNT(*) FROM usuario u $sqlWhere");
+        $st->execute($params);
+        $total = (int) $st->fetchColumn();
+
+        $st = $pdo->prepare(
+            "SELECT u.id, u.nombre, u.email, u.rol_id, r.nombre AS rol, u.activo, u.email_verificado
+             FROM usuario u JOIN rol r ON r.id = u.rol_id
+             $sqlWhere ORDER BY u.nombre LIMIT ? OFFSET ?"
+        );
+        foreach (array_merge($params, [$limit, $offset]) as $i => $v) {
+            $st->bindValue($i + 1, $v, is_int($v) ? \PDO::PARAM_INT : \PDO::PARAM_STR);
+        }
+        $st->execute();
+        return ['rows' => $st->fetchAll(), 'total' => $total];
+    }
+
+    /** Cambia nombre, rol y estado (el email y la contraseña no se tocan desde acá). */
+    public function actualizarDatos(int $id, string $nombre, int $rolId, int $activo): void
+    {
+        Database::conexion()
+            ->prepare("UPDATE usuario SET nombre = ?, rol_id = ?, activo = ? WHERE id = ?")
+            ->execute([$nombre, $rolId, $activo, $id]);
+    }
+
+    /** Administradores activos (para no dejar el sistema sin ninguno). */
+    public function contarAdminsActivos(): int
+    {
+        return (int) Database::conexion()
+            ->query("SELECT COUNT(*) FROM usuario WHERE rol_id = 1 AND activo = 1")
+            ->fetchColumn();
+    }
+
     /** Solo cambia la contraseña (al recuperar). */
     public function actualizarPassword(int $id, string $passwordHash): void
     {

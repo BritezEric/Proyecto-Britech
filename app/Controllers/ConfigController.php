@@ -77,7 +77,13 @@ class ConfigController
         foreach (self::CLAVES_PAGO as $k) {
             if (array_key_exists($k, $d)) { $kv[$k] = trim((string) $d[$k]); }
         }
-        (new ConfigRepository())->guardar($kv);
+        $repo  = new ConfigRepository();
+        $antes = $repo->todos();
+        $repo->guardar($kv);
+        // A dónde transfiere el cliente: cualquier cambio de alias/CBU queda auditado.
+        \App\Services\Auditoria::cambios('config', null, $antes, $kv, [
+            'pago_alias' => 'alias', 'pago_titular' => 'titular', 'pago_cbu' => 'cbu', 'pago_banco' => 'banco',
+        ]);
         Response::json(['ok' => true, 'mensaje' => 'Datos de pago guardados.']);
     }
 }

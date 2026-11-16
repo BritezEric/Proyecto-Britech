@@ -55,6 +55,9 @@ $router->post('/api/restablecer',  [AuthController::class, 'restablecer']);
 
 // --- Usuarios (crear: solo admin, verificado dentro del controlador) ---
 $router->post('/api/usuarios',   [UsuarioController::class, 'crear'], true);
+$router->get('/api/admin/usuarios',          [UsuarioController::class, 'admin'],   true);   // rol y estado: solo admin
+$router->post('/api/admin/usuarios/guardar', [UsuarioController::class, 'guardar'], true);
+$router->post('/api/admin/usuarios/baja',    [UsuarioController::class, 'baja'],    true);
 
 // --- POS (requieren login) ---
 $router->post('/api/voz/interpretar',  [VozController::class, 'interpretar'],  true);
@@ -155,8 +158,10 @@ $router->post('/api/admin/envios/estado',        [RepartidorController::class, '
 // Precios masivos (por marca / categoría / todo) — solo admin
 $router->post('/api/admin/precios/previsualizar', [PrecioController::class, 'previsualizar'], true);
 $router->post('/api/admin/precios/aplicar',       [PrecioController::class, 'aplicar'],       true);
-// Auditoría (quién cambió qué) — solo admin
-$router->get('/api/admin/auditoria', [AuditoriaController::class, 'listar'], true);
+// Auditoría (quién cambió qué) — solo admin y solo lectura: no hay rutas para editar ni borrar.
+$router->get('/api/admin/auditoria',       [AuditoriaController::class, 'listar'], true);
+$router->get('/api/admin/auditoria/pdf',   [AuditoriaController::class, 'pdf'],    true);
+$router->get('/api/admin/auditoria/excel', [AuditoriaController::class, 'excel'],  true);
 
 // Reporte de Localidades (ventas / pedidos / envíos por zona) — admin completo;
 // vendedor acotado (el alcance lo decide el Service según la sesión). Solo lectura.

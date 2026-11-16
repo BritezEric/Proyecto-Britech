@@ -122,7 +122,7 @@ class CompraService
             $pdo->beginTransaction();
             foreach ($aplicar as $a) {
                 $repo->sumarRecibido($a['detalle_id'], $a['cantidad']);
-                $inv->aumentar($a['producto_id'], $a['cantidad']);
+                $inv->aumentar($a['producto_id'], $a['cantidad'], "Recepción {$orden['numero']}");
                 $inv->registrarMovimiento(
                     $a['producto_id'], 'ingreso', $a['cantidad'],
                     "Recepción {$orden['numero']}", null, $usuarioId

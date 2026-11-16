@@ -151,7 +151,7 @@ class VentaService
 
                 // Solo descuenta stock si NO es sobre pedido.
                 if (!$l['sobre_pedido']) {
-                    $invRepo->descontar($l['producto_id'], $l['cantidad']);
+                    $invRepo->descontar($l['producto_id'], $l['cantidad'], "Venta $numero");
                     $invRepo->registrarMovimiento(
                         $l['producto_id'], 'egreso', $l['cantidad'],
                         "Venta $numero", $ventaId, $usuarioId
@@ -178,6 +178,8 @@ class VentaService
             $pdo->rollBack();
             throw $e;
         }
+        Auditoria::evento('venta', $ventaId, 'crear',
+            "Venta {$numero} · total $ " . number_format($total, 2, ',', '.'), $usuarioId);
 
         // Aviso de stock bajo: fuera de la transacción (una notificación nunca
         // debe frenar ni deshacer la venta ya confirmada).
@@ -318,7 +320,7 @@ class VentaService
 
             foreach ($detalle as $l) {
                 if ($l['estado'] === 'normal') {   // sobre_pedido no había descontado
-                    $invRepo->reintegrar((int) $l['producto_id'], (int) $l['cantidad']);
+                    $invRepo->reintegrar((int) $l['producto_id'], (int) $l['cantidad'], "Anulación venta {$venta['numero']}");
                     $invRepo->registrarMovimiento(
                         (int) $l['producto_id'], 'ingreso', (int) $l['cantidad'],
                         "Anulación venta {$venta['numero']}", $ventaId, $usuarioId

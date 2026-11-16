@@ -60,6 +60,7 @@
                         <button data-ent="solicitudes" class="nav-item" data-admin data-k="precios aprobar">Solicitudes mayoristas</button>
                         <button data-ent="empleados" class="nav-item" data-admin data-k="sueldos rendimiento personal pagar">Empleados</button>
                         <button data-ent="repartidores" class="nav-item" data-admin data-k="motoqueros paga">Repartidores</button>
+                        <button data-ent="usuarios" class="nav-item" data-admin data-k="roles permisos admin vendedor staff cuentas">Usuarios del sistema</button>
                     </div>
                 </div>
                 <div class="nav-grupo">
@@ -68,6 +69,7 @@
                         <button data-ent="cajas" class="nav-item" data-admin data-k="arqueo cierre apertura historial">Cajas</button>
                         <button data-ent="gastos" class="nav-item" data-admin data-k="egresos pagos finanzas">Gastos</button>
                         <button data-ent="reportes" class="nav-item" data-k="localidades estadisticas pdf excel csv informes medios de pago">Reportes</button>
+                        <button data-ent="auditoria" class="nav-item" data-admin data-k="historial registro quien cambio seguridad control log">Auditoría</button>
                     </div>
                 </div>
                 <div class="nav-grupo" data-admin>
@@ -443,6 +445,43 @@
                 </div><!-- /rep-localidades -->
             </section>
 
+            <!-- Vista: Auditoría (quién hizo qué, cuándo y qué cambió) — solo admin, solo lectura -->
+            <section id="vista-auditoria" class="oculto">
+                <header class="content-top">
+                    <div>
+                        <h1>Auditoría</h1>
+                        <p class="sub">Quién hizo qué, cuándo y qué cambió. El historial es de solo lectura: no se puede editar ni borrar.</p>
+                    </div>
+                    <div class="content-top-acciones">
+                        <button id="au-pdf" class="btn-secundario">Exportar PDF</button>
+                        <button id="au-excel" class="btn-primary">Exportar Excel</button>
+                    </div>
+                </header>
+                <div id="au-resumen" class="cards au-resumen"></div>
+                <div class="toolbar au-filtros">
+                    <div class="search-wrap">
+                        <input id="au-q" class="search" type="search" placeholder="Buscar en descripción, valores, usuario o N° de registro…" autocomplete="off">
+                    </div>
+                    <div class="filtros">
+                        <select id="au-usuario" aria-label="Usuario"><option value="">Todos los usuarios</option></select>
+                        <select id="au-accion" aria-label="Tipo de acción"><option value="">Todas las acciones</option></select>
+                        <select id="au-modulo" aria-label="Módulo"><option value="">Todos los módulos</option></select>
+                        <label class="au-fecha">Desde <input id="au-desde" type="date"></label>
+                        <label class="au-fecha">Hasta <input id="au-hasta" type="date"></label>
+                        <button id="au-limpiar" class="btn-secundario btn-sm">Limpiar</button>
+                    </div>
+                </div>
+                <p id="au-error" class="au-error oculto"></p>
+                <div class="tabla-caja">
+                    <table>
+                        <thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Acción</th><th>Módulo</th><th>Registro</th><th>Descripción</th><th>Antes → Después</th></tr></thead>
+                        <tbody id="au-tbody"></tbody>
+                    </table>
+                    <div id="au-vacio" class="tabla-vacia oculto">No hay registros para estos filtros.</div>
+                </div>
+                <div class="paginacion" id="au-paginacion"></div>
+            </section>
+
             <!-- Vista: Cajas (supervisión de aperturas/cierres del vendedor) -->
             <section id="vista-cajas" class="oculto">
                 <header class="content-top">
@@ -593,5 +632,6 @@
     <script src="/assets/js/admin-reportes.js"></script>
     <script src="/assets/js/admin-reportes-operativos.js"></script>
     <script src="/assets/js/admin-vendedor.js"></script>
+    <script src="/assets/js/admin-auditoria.js"></script>
 </body>
 </html>

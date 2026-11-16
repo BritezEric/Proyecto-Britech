@@ -41,6 +41,7 @@ class CajaService
         if ($monto < 0) throw new ValidacionException('El monto de apertura no puede ser negativo.');
 
         $id = $this->repo->abrir($usuarioId, round($monto, 2));
+        Auditoria::campo('caja', $id, 'monto_apertura', null, round($monto, 2), 'abrir', $usuarioId, 'Apertura de caja');
         return ['caja_id' => $id];
     }
 
@@ -52,6 +53,8 @@ class CajaService
         if ($monto <= 0) throw new ValidacionException('El monto tiene que ser mayor a 0.');
 
         $this->repo->agregarMovimiento((int) $caja['id'], $tipo, round($monto, 2), trim((string) $motivo) ?: null, $usuarioId);
+        Auditoria::campo('caja', (int) $caja['id'], $tipo, null, round($monto, 2), $tipo, $usuarioId,
+            ($tipo === 'retiro' ? 'Retiro de efectivo' : 'Ingreso de efectivo') . (trim((string) $motivo) !== '' ? ': ' . trim((string) $motivo) : ''));
         return ['ok' => true];
     }
 
@@ -67,6 +70,9 @@ class CajaService
         $diferencia = round($contado - $esperado, 2);
 
         $this->repo->cerrar((int) $caja['id'], $contado, $esperado, $diferencia, trim((string) $observacion) ?: null);
+        // Esperado → contado: la diferencia del arqueo queda a la vista en la auditoría.
+        Auditoria::campo('caja', (int) $caja['id'], 'efectivo', $esperado, $contado, 'cerrar', $usuarioId,
+            'Cierre de caja · diferencia $ ' . number_format($diferencia, 2, ',', '.'));
 
         // Aviso a los admin: se cerró una caja (marcamos alerta si no cuadra).
         $notif = new \App\Repositories\NotificacionRepository();

@@ -272,6 +272,26 @@ const ENTIDADES = {
         ],
     },
 
+    usuarios: {
+        titulo: 'Usuarios del sistema', sub: 'Quién entra al panel y al POS. Cambiá el rol (permisos) o desactivá una cuenta: cada cambio queda en la Auditoría. Las altas se hacen desde el POS → Usuarios.',
+        singular: 'usuario', endpoint: '/api/admin/usuarios', noCrear: true,
+        columnas: [
+            { key: 'nombre', label: 'Nombre', clase: 'td-fuerte' },
+            { key: 'email', label: 'Email' },
+            { key: 'rol', label: 'Rol', render: (v) => `<span class="badge ${v === 'admin' ? 'pend' : 'neutral'}">${v === 'admin' ? 'Administrador' : 'Vendedor'}</span>` },
+            { key: 'activo', label: 'Estado', render: badgeEstadoCliente },
+        ],
+        filtros: [
+            { key: 'rol_id', label: 'Rol', opciones: [{ v: '', t: 'Todos los roles' }, { v: '1', t: 'Administradores' }, { v: '2', t: 'Vendedores' }] },
+            { key: 'activo', label: 'Estado', opciones: [{ v: '', t: 'Todos' }, { v: '1', t: 'Activos' }, { v: '0', t: 'Inactivos' }] },
+        ],
+        campos: [
+            { key: 'nombre', label: 'Nombre', tipo: 'text', req: true, ancho: true },
+            { key: 'rol_id', label: 'Rol (permisos)', tipo: 'select', req: true, opciones: [{ v: 1, t: 'Administrador · todo el panel' }, { v: 2, t: 'Vendedor · POS, pedidos y su panel' }] },
+            { key: 'activo', label: 'Activo (puede entrar)', tipo: 'check', def: true },
+        ],
+    },
+
     repartidores: {
         titulo: 'Repartidores', sub: 'Motoqueros del Moto Express. Agregá, editá y mirá la paga del día según los barrios que entregó cada uno.',
         singular: 'repartidor', endpoint: '/api/admin/repartidores',
@@ -453,8 +473,8 @@ async function seleccionar(ent) {
     const vistaBloques = $('vista-bloques'), vistaEmpleados = $('vista-empleados'),
           vistaAjustes = $('vista-ajustes'), vistaRepartos = $('vista-repartos'),
           vistaReposicion = $('vista-reposicion'), vistaCompras = $('vista-compras'), vistaCajas = $('vista-cajas'),
-          vistaReclamos = $('vista-reclamos'), vistaMapa = $('vista-mapa'), vistaVoz = $('vista-voz'), vistaReportes = $('vista-reportes'), vistaVendedor = $('vista-vendedor');
-    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaAjustes, vistaRepartos, vistaReposicion, vistaCompras, vistaCajas, vistaReclamos, vistaMapa, vistaVoz, vistaReportes, vistaVendedor]
+          vistaReclamos = $('vista-reclamos'), vistaMapa = $('vista-mapa'), vistaVoz = $('vista-voz'), vistaReportes = $('vista-reportes'), vistaVendedor = $('vista-vendedor'), vistaAuditoria = $('vista-auditoria');
+    const ocultarTodo = () => [vistaAbm, vistaInicio, vistaBloques, vistaEmpleados, vistaAjustes, vistaRepartos, vistaReposicion, vistaCompras, vistaCajas, vistaReclamos, vistaMapa, vistaVoz, vistaReportes, vistaVendedor, vistaAuditoria]
         .forEach((v) => v && v.classList.add('oculto'));
     if (ent === 'inicio')   { ocultarTodo(); vistaInicio.classList.remove('oculto');   return renderInicio(); }
     if (ent === 'vendedor') { ocultarTodo(); vistaVendedor.classList.remove('oculto'); return renderVendedor(); }
@@ -467,6 +487,7 @@ async function seleccionar(ent) {
     if (ent === 'reclamos')  { ocultarTodo(); vistaReclamos.classList.remove('oculto');   return renderReclamos(); }
     if (ent === 'mapa')      { ocultarTodo(); vistaMapa.classList.remove('oculto');       return renderMapaEnvios(); }
     if (ent === 'voz')       { ocultarTodo(); vistaVoz.classList.remove('oculto');        return renderVoz(); }
+    if (ent === 'auditoria') { ocultarTodo(); vistaAuditoria.classList.remove('oculto'); return renderAuditoria(); }
     if (ent === 'reportes')  { ocultarTodo(); vistaReportes.classList.remove('oculto');   return renderReportes(); }
     if (ent === 'ajustes')  { ocultarTodo(); vistaAjustes.classList.remove('oculto');  return renderAjustes(); }
     entActual = ent; cfg = ENTIDADES[ent];

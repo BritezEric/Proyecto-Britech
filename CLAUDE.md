@@ -34,6 +34,12 @@ y **Franco** (Módulo 5: Salidas del Sistema — dashboards y reportes). Se habl
    (datos, opciones, csv, pdf). Script `database/schema_reportes_operativos.sql` (agrega
    `envio.asignado_en`, `pedido.actualizado_en` e índices; idempotente).
    Doc: `docs/modulos/reportes-operativos.md`.
+4. **Auditoría (solo admin, solo lectura)** — Panel → Dinero e informes → Auditoría, y
+   Personas → Usuarios del sistema (rol y estado). Todo se registra desde el backend con
+   `App\Services\Auditoria` (sesiones, usuarios/roles, precios, stock en `InventarioRepository`,
+   ventas/anulaciones, caja, mayoristas, datos de pago). `AuditoriaController` (listado, pdf,
+   excel), `app/Core/Xlsx.php`, `admin-auditoria.js`. Script `database/schema_auditoria.sql`
+   (re-ejecutable; triggers que impiden UPDATE/DELETE). Doc: `docs/modulos/auditoria.md`.
 
 ## Reglas del equipo
 - No borrar datos ni tocar claves primarias/foráneas; cambios de base solo con scripts
@@ -47,6 +53,8 @@ y **Franco** (Módulo 5: Salidas del Sistema — dashboards y reportes). Se habl
 - Reportes (solo contra una base cuyo nombre termine en `_test`, con el servidor levantado):
   `DB_NAME=britech_reportes_test BRITECH_TEST_URL=http://127.0.0.1:8125 php tests/reportes_operativos_test.php`
   y `tests/reporte_localidades_test.php`.
+- Auditoría (base `*_test` con `schema_auditoria.sql` y el servidor sobre esa base):
+  `DB_NAME=britech_auditoria_test BRITECH_TEST_URL=http://127.0.0.1:8125 php tests/auditoria_test.php`
 
 ## Repositorios
 - Repo del equipo: `https://github.com/BritezEric/Proyecto-Britech` (rama `master`).
