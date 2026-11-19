@@ -76,6 +76,8 @@ class CompraService
             $pdo->rollBack();
             throw $e;
         }
+        Auditoria::evento('compra', $ordenId, 'crear',
+            "Compra {$numero} · total $ " . number_format($total, 2, ',', '.'), $usuarioId);
 
         (new NotificacionRepository())->crear(
             'compra_creada', "Orden de compra {$numero} generada", 'compras', $ordenId, 'info'

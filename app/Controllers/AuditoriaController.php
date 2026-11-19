@@ -22,6 +22,7 @@ class AuditoriaController
         'sesion' => 'Sesiones', 'usuario' => 'Usuarios', 'producto' => 'Productos', 'stock' => 'Stock',
         'venta' => 'Ventas', 'pedido' => 'Pedidos', 'caja' => 'Caja', 'cliente' => 'Clientes',
         'proveedor' => 'Proveedores', 'repartidor' => 'Repartidores', 'config' => 'Configuración',
+        'compra' => 'Compras',
     ];
     public const ACCIONES = [
         'login' => 'Inicio de sesión', 'logout' => 'Cierre de sesión', 'login_fallido' => 'Login fallido',
@@ -31,6 +32,8 @@ class AuditoriaController
         'entrada' => 'Entrada de stock', 'salida' => 'Salida de stock', 'ajuste' => 'Ajuste de stock',
         'abrir' => 'Apertura de caja', 'cerrar' => 'Cierre de caja', 'ingreso' => 'Ingreso de caja', 'retiro' => 'Retiro de caja',
         'aprobar' => 'Aprobación', 'rechazar' => 'Rechazo',
+        // Solo para el filtro (ver AuditoriaRepository::ACCIONES_FILTRO).
+        'venta' => 'Ventas realizadas', 'compra' => 'Compras realizadas',
     ];
     /** Tipo de operación de cada acción (define el color en el panel y las tarjetas del resumen). */
     public const TIPOS = [

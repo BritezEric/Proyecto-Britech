@@ -14,6 +14,16 @@ class AuditoriaRepository
     /** Tope de filas para exportar (PDF/Excel), así un export nunca tumba el servidor. */
     public const MAX_EXPORT = 5000;
 
+    /**
+     * Acciones del filtro que agrupan registros por módulo: una venta del POS se guarda
+     * como (venta, crear) y una orden de compra a proveedor como (compra, crear).
+     * Filtro => [entidad, accion].
+     */
+    public const ACCIONES_FILTRO = [
+        'venta'  => ['venta', 'crear'],
+        'compra' => ['compra', 'crear'],
+    ];
+
     private static ?bool $tieneIp = null;
 
     public function registrar(
@@ -88,7 +98,11 @@ class AuditoriaRepository
         $pdo = Database::conexion();
         return [
             'entidades' => $pdo->query("SELECT DISTINCT entidad FROM auditoria ORDER BY entidad")->fetchAll(\PDO::FETCH_COLUMN),
-            'acciones'  => $pdo->query("SELECT DISTINCT accion FROM auditoria ORDER BY accion")->fetchAll(\PDO::FETCH_COLUMN),
+            // + "venta" y "compra": opciones fijas del filtro aunque todavía no haya registros.
+            'acciones'  => array_values(array_unique(array_merge(
+                $pdo->query("SELECT DISTINCT accion FROM auditoria ORDER BY accion")->fetchAll(\PDO::FETCH_COLUMN),
+                array_keys(self::ACCIONES_FILTRO)
+            ))),
             'usuarios'  => $pdo->query(
                 "SELECT DISTINCT u.id, u.nombre FROM auditoria a JOIN usuario u ON u.id = a.usuario_id ORDER BY u.nombre"
             )->fetchAll(),
@@ -103,7 +117,14 @@ class AuditoriaRepository
         $where = [];
         $params = [];
         if (!empty($f['entidad']))    { $where[] = 'a.entidad = ?';    $params[] = $f['entidad']; }
-        if (!empty($f['accion']))     { $where[] = 'a.accion = ?';     $params[] = $f['accion']; }
+        if (!empty($f['accion'])) {
+            if (isset(self::ACCIONES_FILTRO[$f['accion']])) {   // "Ventas realizadas" / "Compras realizadas"
+                $where[] = '(a.entidad = ? AND a.accion = ?)';
+                array_push($params, ...self::ACCIONES_FILTRO[$f['accion']]);
+            } else {
+                $where[] = 'a.accion = ?'; $params[] = $f['accion'];
+            }
+        }
         if (!empty($f['usuario_id'])) { $where[] = 'a.usuario_id = ?'; $params[] = (int) $f['usuario_id']; }
         if (!empty($f['desde']))      { $where[] = 'a.creado_en >= ?'; $params[] = $f['desde'] . ' 00:00:00'; }
         if (!empty($f['hasta']))      { $where[] = 'a.creado_en <= ?'; $params[] = $f['hasta'] . ' 23:59:59'; }
