@@ -116,4 +116,10 @@ return [
         'token' => $leer('TG_TOKEN', ''),
         'bot'   => $leer('TG_BOT', ''),   // usuario del bot sin @ (para armar el link t.me/<bot>?start=...)
     ],
+    // Pusher Beams: notificaciones push del navegador (staff y clientes).
+    // Si alguna queda vacía, queda desactivado (no-op).
+    'beams' => [
+        'instance_id' => $leer('BEAMS_INSTANCE_ID', ''),
+        'secret_key'  => $leer('BEAMS_SECRET_KEY', ''),
+    ],
 ];

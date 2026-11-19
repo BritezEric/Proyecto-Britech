@@ -962,3 +962,6 @@ td.acciones { text-align: right; white-space: nowrap; }
 .au-despues { font-weight: 700; }
 .au-resumen { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); }
 #vista-auditoria .tabla-caja { overflow-x: auto; }
+
+/* Botón "Activar notificaciones" (beams.js): en escritorio, que arranque después del sidebar. */
+@media (min-width: 721px) { body:has(.admin) .push-chip { left: calc(252px + var(--sp-5)); } }
