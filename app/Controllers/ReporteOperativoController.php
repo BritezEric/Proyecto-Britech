@@ -183,8 +183,10 @@ class ReporteOperativoController
         foreach ($g['labels'] as $i => $lab) {
             $valores[$lab] = array_sum(array_map(fn($s) => (float) ($s['data'][$i] ?? 0), !empty($g['apilado']) ? $g['series'] : [$g['series'][0]]));
         }
-        arsort($valores);
-        $valores = array_slice($valores, 0, 12, true);
+        if ($g['tipo'] !== 'line') {   // una línea de tiempo queda en orden cronológico
+            arsort($valores);
+            $valores = array_slice($valores, 0, 12, true);
+        }
         $max = max(1, ...array_values($valores ?: [1]));
         $barras = '';
         foreach ($valores as $lab => $v) {

@@ -29,7 +29,13 @@ class ReporteOperativoService
         'reclamos'   => 'Reclamos',
         'envios'     => 'Envíos sin asignar',
         'carga'      => 'Carga de envíos por barrio',
+        // Reportes gerenciales
+        'ventas'       => 'Ventas por período',
+        'clientes'     => 'Ventas por cliente',
+        'productos'    => 'Ventas por producto',
+        'rentabilidad' => 'Rentabilidad',
     ];
+    private const CANALES = ['local' => 'Local (POS)', 'online' => 'Tienda online'];
 
     /** Máximo de filas de detalle que viajan a la pantalla (los totales usan todas). */
     public const MAX_FILAS = 3000;
@@ -92,6 +98,7 @@ class ReporteOperativoService
             'usuarios'     => $this->repo->usuariosStaff(),
             'barrios'      => $this->repo->barrios(),
             'repartidores' => $this->repo->repartidores(),
+            'categorias'   => $this->repo->categorias(),
             'medios'       => array_map(fn($k, $t) => ['k' => $k, 't' => $t], array_keys($medios), $medios),
             'etapas'       => array_map(fn($k, $v) => ['k' => $k, 't' => $v[0]], array_keys(self::ETAPAS), self::ETAPAS),
             'estados_pago' => array_map(fn($k, $v) => ['k' => $k, 't' => $v[0]], array_keys(self::ESTADO_PAGO_PEDIDO), self::ESTADO_PAGO_PEDIDO),
@@ -114,6 +121,10 @@ class ReporteOperativoService
             'reclamos'   => $this->reclamos($f, $q),
             'envios'     => $this->envios($f, $q),
             'carga'      => $this->carga($f, $q),
+            'ventas'       => $this->ventasPeriodo($f, $q),
+            'clientes'     => $this->ventasCliente($f, $q),
+            'productos'    => $this->ventasProducto($f, $q),
+            'rentabilidad' => $this->rentabilidad($f, $q),
         };
         foreach ($datos['tablas'] as &$t) {
             $t['total'] = count($t['filas']);
@@ -842,6 +853,365 @@ class ReporteOperativoService
     // =================================================================
 
     /** Período [desde, hasta]: Y-m-d estricto, hasta ≥ desde, máximo 366 días. Por defecto, hoy. */
+    // =================================================================
+    // Reportes gerenciales: ventas por período, cliente y producto, y rentabilidad.
+    // Fuente común: lineasVendidas() (POS registradas + pedidos online pagados).
+    // =================================================================
+
+    /** Líneas vendidas del período con los filtros comunes (canal, categoría, cliente, producto). */
+    private function lineasGerenciales(array $f, array $q): array
+    {
+        $canal = $this->enumero($q, 'canal', array_keys(self::CANALES));
+        $cat   = $this->entero($q, 'categoria_id', 1);
+        $cli   = $this->texto($q, 'cliente', 80);
+        $prod  = $this->texto($q, 'producto', 80);
+        $lineas = array_values(array_filter($this->repo->lineasVendidas($f['desde'], $f['hasta']), fn($l) =>
+            (!$canal || $l['canal'] === $canal)
+            && (!$cat || (int) $l['categoria_id'] === $cat)
+            && (!$cli || mb_stripos((string) $l['cliente'], $cli) !== false)
+            && (!$prod || mb_stripos((string) $l['producto'], $prod) !== false)));
+        $txt = $this->filtrosTxt($f, [
+            'Canal' => $canal ? self::CANALES[$canal] : null,
+            'Categoría' => $cat ? $this->nombreDe($this->repo->categorias(), $cat) : null,
+            'Cliente contiene' => $cli,
+            'Producto contiene' => $prod,
+        ]);
+        return [$lineas, $txt];
+    }
+
+    /** Agrupa líneas en operaciones (una venta o un pedido). */
+    private function operaciones(array $lineas): array
+    {
+        $ops = [];
+        foreach ($lineas as $l) {
+            $k = $l['canal'] . $l['op_id'];
+            $ops[$k] ??= ['fecha' => $l['fecha'], 'numero' => $l['numero'], 'canal' => self::CANALES[$l['canal']],
+                'cliente_id' => (int) $l['cliente_id'], 'cliente' => $l['cliente'], 'unidades' => 0, 'total' => 0.0];
+            $ops[$k]['unidades'] += (int) $l['cantidad'];
+            $ops[$k]['total'] += (float) $l['importe'];
+        }
+        foreach ($ops as &$o) $o['total'] = round($o['total'], 2);
+        return array_values($ops);
+    }
+
+    private function pct(float $parte, float $total): float
+    {
+        return $total > 0 ? round($parte / $total * 100, 1) : 0.0;
+    }
+
+    private const NOTA_FUENTE = 'Se cuentan las ventas registradas del POS y los pedidos de la tienda online pagados y no cancelados. Las ventas anuladas y los pedidos sin pagar no entran.';
+    private const NOTA_IMPORTE = 'Importes netos de descuentos y sin el costo del envío. El descuento general de una venta se reparte entre sus productos en proporción a cada uno.';
+
+    // ---------- Ventas por período ----------
+    private function ventasPeriodo(array $f, array $q): array
+    {
+        [$lineas, $txt] = $this->lineasGerenciales($f, $q);
+        $dias = $f['desde_d']->diff($f['hasta_d'])->days;
+        $agrupar = $this->enumero($q, 'agrupar', ['dia', 'semana', 'mes']) ?? ($dias > 62 ? 'mes' : 'dia');
+        $clave = fn(\DateTimeImmutable $d) => match ($agrupar) {
+            'dia'    => $d->format('Y-m-d'),
+            'semana' => $d->modify('-' . ((int) $d->format('N') - 1) . ' days')->format('Y-m-d'),   // lunes de esa semana
+            'mes'    => $d->format('Y-m'),
+        };
+        $etiqueta = fn(\DateTimeImmutable $d) => match ($agrupar) {
+            'dia'    => $d->format('d/m'),
+            'semana' => 'Sem. ' . $d->modify('-' . ((int) $d->format('N') - 1) . ' days')->format('d/m'),
+            'mes'    => $d->format('m/Y'),
+        };
+
+        // Todos los tramos del período, aunque no tengan ventas (el gráfico muestra los ceros).
+        $tramos = [];
+        for ($d = $f['desde_d']; $d <= $f['hasta_d']; $d = $d->modify('+1 day')) {
+            $tramos[$clave($d)] ??= ['periodo' => $etiqueta($d), 'ventas' => 0, 'unidades' => 0, 'total' => 0.0];
+        }
+        $ops = $this->operaciones($lineas);
+        $porCanal = ['Local (POS)' => 0.0, 'Tienda online' => 0.0];
+        foreach ($ops as $o) {
+            $t = &$tramos[$clave(new \DateTimeImmutable(substr($o['fecha'], 0, 10)))];
+            $t['ventas']++; $t['unidades'] += $o['unidades']; $t['total'] += $o['total'];
+            unset($t);
+            $porCanal[$o['canal']] += $o['total'];
+        }
+        $filas = [];
+        foreach ($tramos as $t) {
+            $t['total'] = round($t['total'], 2);
+            $t['ticket'] = $t['ventas'] ? round($t['total'] / $t['ventas'], 2) : null;
+            $filas[] = $t;
+        }
+        $total = array_sum(array_column($ops, 'total'));
+        $n = count($ops);
+        $mejor = null;
+        foreach ($filas as $x) if ($x['total'] > 0 && (!$mejor || $x['total'] > $mejor['total'])) $mejor = $x;
+        usort($ops, fn($a, $b) => strcmp($b['fecha'], $a['fecha']));
+
+        return [
+            'kpis' => [
+                $this->kpi('total', 'Total vendido', round($total, 2), 'money', null, 'ok'),
+                $this->kpi('ventas', 'Cantidad de ventas', $n, 'int', 'Ventas del POS + pedidos online'),
+                $this->kpi('ticket', 'Ticket promedio', $n ? round($total / $n, 2) : null, 'money', 'Total vendido ÷ cantidad de ventas'),
+                $this->kpi('unidades', 'Unidades vendidas', array_sum(array_column($ops, 'unidades')), 'int'),
+                $this->kpi('mejor', 'Mejor ' . ['dia' => 'día', 'semana' => 'semana', 'mes' => 'mes'][$agrupar],
+                    $mejor['periodo'] ?? '—', 'text', $mejor ? '$ ' . number_format($mejor['total'], 2, ',', '.') : null),
+                $this->kpi('local', 'Local (POS)', round($porCanal['Local (POS)'], 2), 'money', $this->pct($porCanal['Local (POS)'], $total) . '% del total'),
+                $this->kpi('online', 'Tienda online', round($porCanal['Tienda online'], 2), 'money', $this->pct($porCanal['Tienda online'], $total) . '% del total'),
+            ],
+            'grafico' => [
+                'tipo' => 'line', 'titulo' => 'Total vendido por ' . ['dia' => 'día', 'semana' => 'semana', 'mes' => 'mes'][$agrupar], 'formato' => 'money',
+                'labels' => array_column($filas, 'periodo'),
+                'series' => [['label' => 'Total vendido', 'data' => array_column($filas, 'total')]],
+            ],
+            'tablas' => [
+                [
+                    'id' => 'periodos', 'titulo' => 'Ventas por ' . ['dia' => 'día', 'semana' => 'semana', 'mes' => 'mes'][$agrupar],
+                    'columnas' => [
+                        $this->col('periodo', 'Período'), $this->col('ventas', 'Ventas', 'int'), $this->col('unidades', 'Unidades', 'int'),
+                        $this->col('total', 'Total vendido', 'money'), $this->col('ticket', 'Ticket promedio', 'money'),
+                    ],
+                    'filas' => $filas,
+                ],
+                [
+                    'id' => 'operaciones', 'titulo' => 'Ventas del período',
+                    'columnas' => [
+                        $this->col('fecha', 'Fecha y hora', 'fecha'), $this->col('numero', 'N.º'), $this->col('canal', 'Canal'),
+                        $this->col('cliente', 'Cliente'), $this->col('unidades', 'Unidades', 'int'), $this->col('total', 'Total', 'money'),
+                    ],
+                    'filas' => $ops,
+                ],
+            ],
+            'filtros_txt' => $txt + ['Agrupado por' => ['dia' => 'Día', 'semana' => 'Semana', 'mes' => 'Mes'][$agrupar]],
+            'notas' => [
+                self::NOTA_FUENTE, self::NOTA_IMPORTE,
+                'Ticket promedio = total vendido ÷ cantidad de ventas. Si no se elige cómo agrupar, períodos de más de 62 días se agrupan por mes.',
+            ],
+        ];
+    }
+
+    // ---------- Ventas por cliente ----------
+    private function ventasCliente(array $f, array $q): array
+    {
+        [$lineas, $txt] = $this->lineasGerenciales($f, $q);
+        $ops = $this->operaciones($lineas);
+        $por = [];
+        foreach ($ops as $o) {
+            $id = $o['cliente_id'];
+            $por[$id] ??= ['cliente' => $o['cliente'], 'compras' => 0, 'unidades' => 0, 'total' => 0.0, 'ultima' => $o['fecha']];
+            $por[$id]['compras']++;
+            $por[$id]['unidades'] += $o['unidades'];
+            $por[$id]['total'] += $o['total'];
+            if ($o['fecha'] > $por[$id]['ultima']) $por[$id]['ultima'] = $o['fecha'];
+        }
+        $total = array_sum(array_column($por, 'total'));
+        $filas = [];
+        foreach ($por as $p) {
+            $p['total'] = round($p['total'], 2);
+            $p['ticket'] = round($p['total'] / $p['compras'], 2);
+            $p['pct'] = $this->pct($p['total'], $total);
+            $filas[] = $p;
+        }
+        usort($filas, fn($a, $b) => [$b['total'], $b['compras']] <=> [$a['total'], $a['compras']]);
+        foreach ($filas as $i => &$x) $x['puesto'] = $i + 1;
+        unset($x);
+
+        // Torta: los 6 mejores clientes y el resto junto.
+        $top = array_slice($filas, 0, 6);
+        $resto = array_sum(array_column(array_slice($filas, 6), 'total'));
+        $labels = array_column($top, 'cliente');
+        $data = array_column($top, 'total');
+        if ($resto > 0) { $labels[] = 'Otros clientes'; $data[] = round($resto, 2); }
+        $mejor = $filas[0] ?? null;
+        $top3 = array_sum(array_column(array_slice($filas, 0, 3), 'total'));
+
+        return [
+            'kpis' => [
+                $this->kpi('clientes', 'Clientes que compraron', count($filas), 'int'),
+                $this->kpi('total', 'Total vendido', round($total, 2), 'money', null, 'ok'),
+                $this->kpi('promedio', 'Promedio por cliente', $filas ? round($total / count($filas), 2) : null, 'money', 'Total vendido ÷ clientes'),
+                $this->kpi('mejor', 'Mejor cliente', $mejor['cliente'] ?? '—', 'text', $mejor ? '$ ' . number_format($mejor['total'], 2, ',', '.') : null),
+                $this->kpi('top3', 'Concentración top 3', $this->pct($top3, $total), 'pct', 'Parte de las ventas de los 3 mejores clientes'),
+            ],
+            'grafico' => [
+                'tipo' => 'doughnut', 'titulo' => 'Participación de cada cliente en las ventas', 'formato' => 'money',
+                'labels' => $labels, 'series' => [['label' => 'Total vendido', 'data' => $data]],
+            ],
+            'tablas' => [[
+                'id' => 'clientes', 'titulo' => 'Ranking de clientes',
+                'columnas' => [
+                    $this->col('puesto', 'N.º', 'int'), $this->col('cliente', 'Cliente'), $this->col('compras', 'Compras', 'int'),
+                    $this->col('unidades', 'Unidades', 'int'), $this->col('total', 'Total comprado', 'money'),
+                    $this->col('ticket', 'Ticket promedio', 'money'), $this->col('pct', '% del total', 'pct'),
+                    $this->col('ultima', 'Última compra', 'fecha'),
+                ],
+                'filas' => $filas,
+            ]],
+            'filtros_txt' => $txt,
+            'notas' => [
+                self::NOTA_FUENTE, self::NOTA_IMPORTE,
+                'Las ventas del POS sin cliente identificado quedan a nombre del cliente genérico (consumidor final), que aparece como un cliente más.',
+            ],
+        ];
+    }
+
+    // ---------- Ventas por producto ----------
+    private function ventasProducto(array $f, array $q): array
+    {
+        [$lineas, $txt] = $this->lineasGerenciales($f, $q);
+        $por = [];
+        $cats = [];
+        foreach ($lineas as $l) {
+            $id = (int) $l['producto_id'];
+            $cat = $l['categoria'] ?? 'Sin categoría';
+            $por[$id] ??= ['producto' => $l['producto'], 'categoria' => $cat, 'unidades' => 0, 'total' => 0.0];
+            $por[$id]['unidades'] += (int) $l['cantidad'];
+            $por[$id]['total'] += (float) $l['importe'];
+            $cats[$cat] ??= ['categoria' => $cat, 'productos' => [], 'unidades' => 0, 'total' => 0.0];
+            $cats[$cat]['productos'][$id] = true;
+            $cats[$cat]['unidades'] += (int) $l['cantidad'];
+            $cats[$cat]['total'] += (float) $l['importe'];
+        }
+        $total = array_sum(array_column($por, 'total'));
+        $filas = [];
+        foreach ($por as $p) {
+            $p['total'] = round($p['total'], 2);
+            $p['precio'] = $p['unidades'] ? round($p['total'] / $p['unidades'], 2) : null;
+            $p['pct'] = $this->pct($p['total'], $total);
+            $filas[] = $p;
+        }
+        usort($filas, fn($a, $b) => [$b['unidades'], $b['total']] <=> [$a['unidades'], $a['total']]);
+        $filasCat = array_map(fn($c) => ['categoria' => $c['categoria'], 'productos' => count($c['productos']),
+            'unidades' => $c['unidades'], 'total' => round($c['total'], 2), 'pct' => $this->pct($c['total'], $total)], array_values($cats));
+        usort($filasCat, fn($a, $b) => $b['total'] <=> $a['total']);
+        $porMonto = $filas;
+        usort($porMonto, fn($a, $b) => $b['total'] <=> $a['total']);
+        $top = array_slice($filas, 0, 10);
+
+        return [
+            'kpis' => [
+                $this->kpi('productos', 'Productos vendidos', count($filas), 'int', 'Productos distintos'),
+                $this->kpi('unidades', 'Unidades vendidas', array_sum(array_column($filas, 'unidades')), 'int'),
+                $this->kpi('total', 'Total vendido', round($total, 2), 'money', null, 'ok'),
+                $this->kpi('mas_unidades', 'Más vendido', $filas[0]['producto'] ?? '—', 'text', $filas ? $filas[0]['unidades'] . ' unidades' : null),
+                $this->kpi('mas_monto', 'Más facturó', $porMonto[0]['producto'] ?? '—', 'text',
+                    $porMonto ? '$ ' . number_format($porMonto[0]['total'], 2, ',', '.') : null),
+            ],
+            'grafico' => [
+                'tipo' => 'bar', 'horizontal' => true, 'titulo' => 'Productos más vendidos (unidades)', 'formato' => 'int',
+                'labels' => array_column($top, 'producto'),
+                'series' => [['label' => 'Unidades', 'data' => array_column($top, 'unidades')]],
+            ],
+            'tablas' => [
+                [
+                    'id' => 'productos', 'titulo' => 'Productos más vendidos',
+                    'columnas' => [
+                        $this->col('producto', 'Producto'), $this->col('categoria', 'Categoría'), $this->col('unidades', 'Unidades', 'int'),
+                        $this->col('total', 'Total vendido', 'money'), $this->col('precio', 'Precio promedio', 'money'),
+                        $this->col('pct', '% del total', 'pct'),
+                    ],
+                    'filas' => $filas,
+                ],
+                [
+                    'id' => 'categorias', 'titulo' => 'Ventas por categoría',
+                    'columnas' => [
+                        $this->col('categoria', 'Categoría'), $this->col('productos', 'Productos', 'int'), $this->col('unidades', 'Unidades', 'int'),
+                        $this->col('total', 'Total vendido', 'money'), $this->col('pct', '% del total', 'pct'),
+                    ],
+                    'filas' => $filasCat,
+                ],
+            ],
+            'filtros_txt' => $txt,
+            'notas' => [
+                self::NOTA_FUENTE, self::NOTA_IMPORTE,
+                'Precio promedio = total vendido del producto ÷ unidades (cambia si hubo descuentos o ventas mayoristas).',
+            ],
+        ];
+    }
+
+    // ---------- Rentabilidad ----------
+    private function rentabilidad(array $f, array $q): array
+    {
+        [$lineas, $txt] = $this->lineasGerenciales($f, $q);
+        $por = [];
+        $cats = [];
+        foreach ($lineas as $l) {
+            $id = (int) $l['producto_id'];
+            $costo = $l['costo'] !== null && (float) $l['costo'] > 0 ? (float) $l['costo'] : null;
+            $por[$id] ??= ['producto' => $l['producto'], 'categoria' => $l['categoria'] ?? 'Sin categoría',
+                'unidades' => 0, 'ingresos' => 0.0, 'costo_unit' => $costo];
+            $por[$id]['unidades'] += (int) $l['cantidad'];
+            $por[$id]['ingresos'] += (float) $l['importe'];
+        }
+        $filas = [];
+        $ing = 0.0; $cos = 0.0; $sinCosto = 0; $ingSinCosto = 0.0;
+        foreach ($por as $p) {
+            $p['ingresos'] = round($p['ingresos'], 2);
+            if ($p['costo_unit'] === null) {
+                $p += ['costo_total' => null, 'ganancia' => null, 'margen' => null, 'estado' => 'Sin costo cargado', 'estado_tono' => 'warn'];
+                $sinCosto++; $ingSinCosto += $p['ingresos'];
+            } else {
+                $p['costo_total'] = round($p['costo_unit'] * $p['unidades'], 2);
+                $p['ganancia'] = round($p['ingresos'] - $p['costo_total'], 2);
+                $p['margen'] = $this->pct($p['ganancia'], $p['ingresos']);
+                $p['estado'] = $p['ganancia'] < 0 ? 'Pérdida' : 'Con costo';
+                $p['estado_tono'] = $p['ganancia'] < 0 ? 'off' : 'ok';
+                $ing += $p['ingresos']; $cos += $p['costo_total'];
+                $cats[$p['categoria']] ??= ['categoria' => $p['categoria'], 'ingresos' => 0.0, 'costo' => 0.0];
+                $cats[$p['categoria']]['ingresos'] += $p['ingresos'];
+                $cats[$p['categoria']]['costo'] += $p['costo_total'];
+            }
+            $filas[] = $p;
+        }
+        // Primero los que tienen costo, de mayor a menor ganancia; al final los que no tienen costo.
+        usort($filas, fn($a, $b) => [$a['ganancia'] === null, -($a['ganancia'] ?? 0)] <=> [$b['ganancia'] === null, -($b['ganancia'] ?? 0)]);
+        $filasCat = array_map(fn($c) => ['categoria' => $c['categoria'], 'ingresos' => round($c['ingresos'], 2), 'costo' => round($c['costo'], 2),
+            'ganancia' => round($c['ingresos'] - $c['costo'], 2), 'margen' => $this->pct($c['ingresos'] - $c['costo'], $c['ingresos'])], array_values($cats));
+        usort($filasCat, fn($a, $b) => $b['ganancia'] <=> $a['ganancia']);
+        $conCosto = array_slice(array_values(array_filter($filas, fn($x) => $x['ganancia'] !== null)), 0, 10);
+        $gan = $ing - $cos;
+
+        return [
+            'kpis' => [
+                $this->kpi('ingresos', 'Ingresos (con costo)', round($ing, 2), 'money', 'Solo productos con costo cargado'),
+                $this->kpi('costo', 'Costo de lo vendido', round($cos, 2), 'money', 'Costo unitario × unidades'),
+                $this->kpi('ganancia', 'Ganancia bruta', round($gan, 2), 'money', 'Ingresos − costo', $gan < 0 ? 'danger' : 'ok'),
+                $this->kpi('margen', 'Margen', $this->pct($gan, $ing), 'pct', 'Ganancia ÷ ingresos'),
+                $this->kpi('sin_costo', 'Productos sin costo', $sinCosto, 'int',
+                    $sinCosto ? 'Vendieron $ ' . number_format($ingSinCosto, 2, ',', '.') . ' sin calcular' : null, $sinCosto ? 'warn' : 'ok'),
+            ],
+            'grafico' => [
+                'tipo' => 'bar', 'titulo' => 'Ganancia por producto (los 10 que más dejaron)', 'formato' => 'money',
+                'labels' => array_column($conCosto, 'producto'),
+                'series' => [['label' => 'Ganancia', 'data' => array_column($conCosto, 'ganancia')],
+                             ['label' => 'Costo', 'data' => array_column($conCosto, 'costo_total')]],
+            ],
+            'tablas' => [
+                [
+                    'id' => 'productos', 'titulo' => 'Rentabilidad por producto',
+                    'columnas' => [
+                        $this->col('producto', 'Producto'), $this->col('categoria', 'Categoría'), $this->col('unidades', 'Unidades', 'int'),
+                        $this->col('ingresos', 'Ingresos', 'money'), $this->col('costo_unit', 'Costo unitario', 'money'),
+                        $this->col('costo_total', 'Costo total', 'money'), $this->col('ganancia', 'Ganancia', 'money'),
+                        $this->col('margen', 'Margen', 'pct'), $this->col('estado', 'Estado', 'badge'),
+                    ],
+                    'filas' => $filas,
+                ],
+                [
+                    'id' => 'categorias', 'titulo' => 'Rentabilidad por categoría',
+                    'columnas' => [
+                        $this->col('categoria', 'Categoría'), $this->col('ingresos', 'Ingresos', 'money'), $this->col('costo', 'Costo', 'money'),
+                        $this->col('ganancia', 'Ganancia', 'money'), $this->col('margen', 'Margen', 'pct'),
+                    ],
+                    'filas' => $filasCat,
+                ],
+            ],
+            'filtros_txt' => $txt,
+            'notas' => [
+                self::NOTA_FUENTE, self::NOTA_IMPORTE,
+                'Ganancia bruta = ingresos − costo unitario × unidades. Margen = ganancia ÷ ingresos. No descuenta gastos fijos ni comisiones.',
+                'Se usa el costo actual del producto (campo costo); el sistema no guarda el costo de cada venta, así que si el costo cambió, la ganancia de ventas viejas es aproximada.',
+                'Los productos sin costo cargado se listan al final y no entran en los totales: cargarles el costo en Productos para que cuenten.',
+            ],
+        ];
+    }
+
     public function periodo(array $q): array
     {
         $hoy = substr($this->ahora(), 0, 10);

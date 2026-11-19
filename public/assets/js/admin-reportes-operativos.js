@@ -24,7 +24,30 @@ const RO_POR_PAGINA = 15;
 const roNum = new Intl.NumberFormat('es-AR');
 
 /** Qué muestra cada reporte: subtítulo y filtros propios (además del período). */
+const RO_CANAL = { k: 'canal', t: 'Canal', tipo: 'select', ops: () => [{ v: 'local', t: 'Local (POS)' }, { v: 'online', t: 'Tienda online' }] };
+const RO_CATEGORIA = { k: 'categoria_id', t: 'Categoría', tipo: 'select', ops: (o) => o.categorias.map((c) => ({ v: c.id, t: c.nombre })) };
 const RO_DEF = {
+    ventas: {
+        sub: 'Cuánto se vendió en el período, por día, semana o mes, con cantidad de ventas y ticket promedio. Suma el local y la tienda online.',
+        filtros: [
+            { k: 'agrupar', t: 'Agrupar por', tipo: 'select', ops: () => [{ v: 'dia', t: 'Día' }, { v: 'semana', t: 'Semana' }, { v: 'mes', t: 'Mes' }] },
+            RO_CANAL, RO_CATEGORIA,
+            { k: 'cliente', t: 'Cliente', tipo: 'text', ph: 'Nombre del cliente' },
+            { k: 'producto', t: 'Producto', tipo: 'text', ph: 'Nombre del producto' },
+        ],
+    },
+    clientes: {
+        sub: 'Ranking de clientes por monto comprado y cantidad de compras.',
+        filtros: [RO_CANAL, RO_CATEGORIA, { k: 'cliente', t: 'Cliente', tipo: 'text', ph: 'Nombre del cliente' }],
+    },
+    productos: {
+        sub: 'Productos más vendidos por unidades y por monto, y ventas por categoría.',
+        filtros: [RO_CANAL, RO_CATEGORIA, { k: 'producto', t: 'Producto', tipo: 'text', ph: 'Nombre del producto' }],
+    },
+    rentabilidad: {
+        sub: 'Ganancia y margen por producto y por categoría: precio de venta menos costo. Los productos sin costo cargado se avisan aparte.',
+        filtros: [RO_CANAL, RO_CATEGORIA, { k: 'producto', t: 'Producto', tipo: 'text', ph: 'Nombre del producto' }],
+    },
     pagos: {
         sub: 'Cuánto dinero ingresó y por qué medio. Solo suma lo acreditado: pendientes, rechazados y anulados se listan aparte.',
         filtros: [
@@ -305,9 +328,11 @@ function roDibujarChart() {
         const tonos = { pendiente: '#f59e0b', asignado: '#0ea5e9', en_reparto: t.primary, entregado: '#10b981', cancelado: t.muted };
         const val = { stacked: apilado, grid: { color: t.line }, ticks: { color: t.muted, precision: 0, callback: dinero ? (x) => montoCorto(x) : undefined } };
         const cat = { stacked: apilado, grid: { display: false }, ticks: { color: t.muted } };
-        cfg = { type: 'bar',
+        const linea = g.tipo === 'line';
+        cfg = { type: linea ? 'line' : 'bar',
             data: { labels: g.labels, datasets: g.series.map((s, i) => ({ label: s.label, data: s.data,
-                backgroundColor: tonos[s.k] || pal[i % pal.length], borderRadius: 4, maxBarThickness: 34 })) },
+                backgroundColor: tonos[s.k] || pal[i % pal.length], borderRadius: 4, maxBarThickness: 34,
+                ...(linea ? { borderColor: pal[i % pal.length], tension: 0.3, cubicInterpolationMode: 'monotone', pointRadius: 3 } : {}) })) },
             options: { indexAxis: horizontal ? 'y' : 'x', scales: horizontal ? { x: val, y: cat } : { x: cat, y: val },
                 plugins: { legend: { display: g.series.length > 1, labels: { color: t.ink } }, tooltip } } };
     }
