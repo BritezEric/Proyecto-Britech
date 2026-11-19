@@ -24,6 +24,27 @@ const RL_VISTAS = [
 ];
 const rlNum = new Intl.NumberFormat('es-AR');
 
+// ---------- Íconos de los reportes (librería Lucide, ya cargada en admin.html) ----------
+// repIco('map-pin') → SVG en línea con el mismo estilo que ICO (trazo, currentColor).
+// Si Lucide no cargó (sin internet), devuelve '' y queda solo el texto.
+function repIco(nombre, extra = '') {
+    const pascal = nombre.replace(/(^|-)(\w)/g, (_, __, c) => c.toUpperCase());
+    const nodo = window.lucide && window.lucide.icons && window.lucide.icons[pascal];
+    if (!nodo) return '';
+    const hijos = nodo.map(([tag, at]) => `<${tag} ${Object.entries(at).map(([k, v]) => `${k}="${v}"`).join(' ')}/>`).join('');
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ico rep-ic ${extra}" aria-hidden="true">${hijos}</svg>`;
+}
+// Ícono de cada pestaña de Reportes (también encabeza las tablas de ese reporte).
+const REP_ICONO = {
+    localidades: 'map-pinned', pagos: 'credit-card', cajas: 'vault', vendedores: 'users',
+    pedidos: 'shopping-bag', reclamos: 'message-square-warning', envios: 'truck', carga: 'map',
+};
+// Encabezados escritos en admin.html: <h2 data-lu="map-pin">…</h2> (y las pestañas de Reportes).
+(function repIconosEstaticos() {
+    document.querySelectorAll('#rep-tabs [data-rep]').forEach((b) => { b.dataset.lu = REP_ICONO[b.dataset.rep] || ''; });
+    document.querySelectorAll('[data-lu]').forEach((el) => el.insertAdjacentHTML('afterbegin', repIco(el.dataset.lu)));
+})();
+
 async function renderReporteLocalidades() {
     if (!RL.iniciado) {
         try { await rlIniciar(); }
@@ -470,7 +491,7 @@ function rlPintarLogistica(log) {
 
     const rep = $('rl-repartidores');
     if (!admin || !log.repartidores) { rep.innerHTML = ''; return; }
-    rep.innerHTML = `<div class="dash-panel rl-rep"><h3>🏍️ Repartidores (Moto Express)</h3>` + (log.repartidores.length
+    rep.innerHTML = `<div class="dash-panel rl-rep"><h3>${repIco('bike')}Repartidores (Moto Express)</h3>` + (log.repartidores.length
         ? `<table class="rl-mini"><thead><tr><th>Repartidor</th><th class="num">Asignados</th><th class="num">Entregados</th><th class="num">Activos</th><th class="num">Cancelados</th><th class="num">Zonas</th></tr></thead><tbody>
             ${log.repartidores.map((x) => `<tr><td>${esc(x.nombre)}</td><td class="num">${x.asignados}</td><td class="num">${x.entregados}</td>
                 <td class="num">${x.activos}</td><td class="num">${x.cancelados}</td><td class="num">${x.zonas}</td></tr>`).join('')}</tbody></table>`

@@ -962,3 +962,15 @@ td.acciones { text-align: right; white-space: nowrap; }
 .au-despues { font-weight: 700; }
 .au-resumen { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); }
 #vista-auditoria .tabla-caja { overflow-x: auto; }
+
+
+/* Íconos Lucide de los reportes (repIco en admin-reportes.js) */
+.rep-ic { margin-right: 0.4em; }
+.dash-h .rep-ic { margin-right: 0; color: var(--primary); width: 1.15em; height: 1.15em; }
+.dash-panel h3 .rep-ic, .chart-titulo .rep-ic { color: var(--primary); }
+.rep-tabs .rep-ic { margin-right: 0.35em; }
+.btn-secundario .rep-ic { margin-right: 0.35em; }
+.vend-pos .rep-ic { margin: 0; width: 1.25em; height: 1.25em; vertical-align: -0.25em; }
+.vend-oro    { color: oklch(0.72 0.15 85); }
+.vend-plata  { color: oklch(0.65 0.01 260); }
+.vend-bronce { color: oklch(0.58 0.11 55); }
