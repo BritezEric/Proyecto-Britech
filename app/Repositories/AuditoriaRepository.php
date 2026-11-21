@@ -143,7 +143,7 @@ class AuditoriaRepository
         // "referencia": nombre legible del registro afectado cuando es un producto.
         $sql = "SELECT a.id, a.usuario_id, a.entidad, a.entidad_id, a.accion, a.campo,
                        a.valor_anterior, a.valor_nuevo, a.detalle, a.creado_en,
-                       u.nombre AS usuario,
+                       u.nombre AS usuario, u.email AS usuario_email,
                        CASE WHEN a.entidad IN ('producto', 'stock') THEN p.nombre END AS referencia
                 FROM auditoria a
                 LEFT JOIN usuario u ON u.id = a.usuario_id

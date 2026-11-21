@@ -97,6 +97,7 @@ function auTabla(filas) {
         return `<tr>
             <td class="au-nowrap">${auFecha(a.creado_en)}</td>
             <td>${a.usuario ? esc(a.usuario) : '<span class="td-mute">Sistema</span>'}</td>
+            <td>${a.usuario_email ? esc(a.usuario_email) : '<span class="td-mute">—</span>'}</td>
             <td><span class="au-tag au-${tipo}${fallido}">${esc(AU.acciones[a.accion] || a.accion)}</span></td>
             <td>${esc(AU.modulos[a.entidad] || a.entidad)}</td>
             <td class="au-nowrap">${registro}</td>
