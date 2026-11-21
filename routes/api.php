@@ -162,6 +162,15 @@ $router->post('/api/admin/precios/aplicar',       [PrecioController::class, 'apl
 $router->get('/api/admin/auditoria',       [AuditoriaController::class, 'listar'], true);
 $router->get('/api/admin/auditoria/pdf',   [AuditoriaController::class, 'pdf'],    true);
 $router->get('/api/admin/auditoria/excel', [AuditoriaController::class, 'excel'],  true);
+// Centro de control: tarjetas, secciones, detalle, alertas e integridad. La única escritura es
+// marcar una alerta como revisada (no se puede deshacer; la base limita qué se puede cambiar).
+$router->get('/api/admin/auditoria/kpis',            [\App\Controllers\AuditoriaSeccionController::class, 'kpis'],       true);
+$router->get('/api/admin/auditoria/seccion',         [\App\Controllers\AuditoriaSeccionController::class, 'seccion'],    true);
+$router->get('/api/admin/auditoria/seccion/pdf',     [\App\Controllers\AuditoriaSeccionController::class, 'pdf'],        true);
+$router->get('/api/admin/auditoria/seccion/excel',   [\App\Controllers\AuditoriaSeccionController::class, 'excel'],      true);
+$router->get('/api/admin/auditoria/detalle',         [\App\Controllers\AuditoriaSeccionController::class, 'detalle'],    true);
+$router->get('/api/admin/auditoria/integridad',      [\App\Controllers\AuditoriaSeccionController::class, 'integridad'], true);
+$router->post('/api/admin/auditoria/alertas/revisar', [\App\Controllers\AuditoriaSeccionController::class, 'revisar'],   true);
 
 // Reporte de Localidades (ventas / pedidos / envíos por zona) — admin completo;
 // vendedor acotado (el alcance lo decide el Service según la sesión). Solo lectura.

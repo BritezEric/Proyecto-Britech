@@ -132,14 +132,30 @@ class PedidoRepository
     /** El admin aprueba/rechaza el pago. */
     public function cambiarEstadoPago(int $id, string $estadoPago): void
     {
+        $antes = $this->buscarPorId($id);
         Database::conexion()->prepare("UPDATE pedido SET estado_pago = ? WHERE id = ?")->execute([$estadoPago, $id]);
+        $this->auditarPago($antes, $estadoPago, \App\Core\Session::usuarioId() ? 'Revisión del pago' : 'Mercado Pago');
     }
 
     /** Pago aprobado por Mercado Pago: deja el pedido 'pagado' y guarda el id del pago. */
     public function pagarConMercadoPago(int $id, string $paymentId): void
     {
+        $antes = $this->buscarPorId($id);
         Database::conexion()
             ->prepare("UPDATE pedido SET estado_pago = 'pagado', mp_payment_id = ? WHERE id = ?")
             ->execute([$paymentId, $id]);
+        $this->auditarPago($antes, 'pagado', "Mercado Pago · pago #$paymentId");
+    }
+
+    /**
+     * Auditoría del estado de pago (anterior → nuevo). Se registra acá para cubrir todas las vías:
+     * revisión manual del staff y confirmación automática de Mercado Pago (usuario = Sistema).
+     */
+    private function auditarPago(?array $antes, string $nuevo, string $origen): void
+    {
+        if ($antes === null || $antes['estado_pago'] === $nuevo) return;
+        \App\Services\Auditoria::campo('pedido', (int) $antes['id'], 'estado_pago', $antes['estado_pago'], $nuevo,
+            'estado_pago', null, "Pedido {$antes['numero']} · {$origen} · método {$antes['metodo_pago']} · total $ "
+            . number_format((float) $antes['total'], 2, ',', '.'));
     }
 }

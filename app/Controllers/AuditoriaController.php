@@ -22,7 +22,7 @@ class AuditoriaController
         'sesion' => 'Sesiones', 'usuario' => 'Usuarios', 'producto' => 'Productos', 'stock' => 'Stock',
         'venta' => 'Ventas', 'pedido' => 'Pedidos', 'caja' => 'Caja', 'cliente' => 'Clientes',
         'proveedor' => 'Proveedores', 'repartidor' => 'Repartidores', 'config' => 'Configuración',
-        'compra' => 'Compras',
+        'compra' => 'Compras', 'alerta' => 'Alertas', 'auditoria' => 'Auditoría',
     ];
     public const ACCIONES = [
         'login' => 'Inicio de sesión', 'logout' => 'Cierre de sesión', 'login_fallido' => 'Login fallido',
@@ -32,6 +32,8 @@ class AuditoriaController
         'entrada' => 'Entrada de stock', 'salida' => 'Salida de stock', 'ajuste' => 'Ajuste de stock',
         'abrir' => 'Apertura de caja', 'cerrar' => 'Cierre de caja', 'ingreso' => 'Ingreso de caja', 'retiro' => 'Retiro de caja',
         'aprobar' => 'Aprobación', 'rechazar' => 'Rechazo',
+        'acceso_denegado' => 'Acceso denegado', 'bloqueo_ip' => 'Bloqueo de IP', 'revisar' => 'Alerta revisada',
+        'exportar' => 'Exportación', 'verificar' => 'Verificación de integridad',
         // Solo para el filtro (ver AuditoriaRepository::ACCIONES_FILTRO).
         'venta' => 'Ventas realizadas', 'compra' => 'Compras realizadas',
     ];
@@ -41,7 +43,7 @@ class AuditoriaController
         'cambio' => ['editar', 'precio_masivo', 'estado', 'estado_pago', 'cambio_password', 'ingreso', 'retiro', 'cerrar'],
         'baja'   => ['baja', 'anular', 'rechazar'],
         'stock'  => ['entrada', 'salida', 'ajuste'],
-        'sesion' => ['login', 'logout', 'login_fallido'],
+        'sesion' => ['login', 'logout', 'login_fallido', 'acceso_denegado', 'bloqueo_ip'],
     ];
     private const MAX_PDF = 1000;
 
@@ -72,6 +74,7 @@ class AuditoriaController
         try {
             $repo = new AuditoriaRepository();
             $filas = $repo->listarParaExportar($f);
+            \App\Services\Auditoria::evento('auditoria', null, 'exportar', 'PDF · Historial general · ' . count($filas) . ' fila(s) · ' . $this->filtrosTexto($f));
             $html = $this->htmlPdf($f, $filas, $this->resumen($repo, $f, $repo->listarPaginado($f, 1, 0)['total']));
             $dompdf = new Dompdf();
             $dompdf->loadHtml($html, 'UTF-8');
@@ -94,6 +97,7 @@ class AuditoriaController
         if ($f === null) return;
         try {
             $filas = (new AuditoriaRepository())->listarParaExportar($f);
+            \App\Services\Auditoria::evento('auditoria', null, 'exportar', 'Excel · Historial general · ' . count($filas) . ' fila(s) · ' . $this->filtrosTexto($f));
             $datos = array_map(fn($a) => [
                 $a['id'], $this->fecha($a['creado_en']), $a['usuario'] ?? 'Sistema',
                 self::ACCIONES[$a['accion']] ?? $a['accion'], self::MODULOS[$a['entidad']] ?? $a['entidad'],

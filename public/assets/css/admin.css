@@ -974,3 +974,43 @@ td.acciones { text-align: right; white-space: nowrap; }
 .vend-oro    { color: oklch(0.72 0.15 85); }
 .vend-plata  { color: oklch(0.65 0.01 260); }
 .vend-bronce { color: oklch(0.58 0.11 55); }
+
+/* ===== Auditoría · centro de control ===== */
+.au-kpis-dia { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: var(--sp-4); }
+.au-kpi-btn { text-align: left; font: inherit; color: inherit; cursor: pointer; transition: box-shadow .15s, transform .15s; }
+.au-kpi-btn:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.au-kpi-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.au-kpi-pie { font-size: var(--text-xs); color: var(--ink-muted); margin-top: 2px; }
+.au-tabs { margin-bottom: var(--sp-2); }
+.au-sub { margin: 0 0 var(--sp-3); font-size: var(--text-sm); color: var(--ink-muted); }
+.au-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 4px;
+    border-radius: var(--r-full); background: var(--warn-tint); color: var(--warn-strong); font-size: 11px; font-weight: 700; }
+.au-badge.au-badge-critica { background: var(--danger); color: #fff; }
+.au-input { font-family: inherit; font-size: var(--text-sm); padding: 7px 8px; border: 1px solid var(--line); border-radius: var(--r-md);
+    background: var(--surface); color: var(--ink); }
+.au-fila { cursor: pointer; }
+.au-fila:hover td { background: var(--surface-sunk); }
+.au-fila:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.au-fila-pendiente td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+.au-tag.au-nivel-critica { background: var(--danger-tint); color: var(--danger-strong); }
+.au-tag.au-nivel-advertencia { background: var(--warn-tint); color: var(--warn-strong); }
+.au-tag.au-nivel-informativa { background: var(--info-tint); color: var(--info-strong); }
+.au-link { font-size: var(--text-sm); padding: 0; }
+#modal-au .modal-caja { max-width: 980px; width: 96vw; max-height: 90vh; overflow-y: auto; }
+.au-det-cab { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.au-det h3 { font-size: var(--text-sm); margin: var(--sp-4) 0 var(--sp-2); }
+.au-datos { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--sp-2) var(--sp-4); margin: var(--sp-2) 0; }
+.au-dato span { display: block; font-size: var(--text-xs); font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: .03em; }
+.au-dato > div { font-size: var(--text-sm); margin-top: 2px; word-break: break-word; }
+.au-det-links { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin: var(--sp-2) 0; }
+.au-mini table { font-size: var(--text-sm); }
+.au-mini { max-height: 340px; overflow: auto; }
+.au-anulacion { margin: var(--sp-3) 0; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); background: var(--danger-tint); color: var(--danger-strong); font-size: var(--text-sm); }
+.au-aviso { margin-top: var(--sp-3); font-size: var(--text-xs); color: var(--ink-muted); }
+.au-hash { font-size: var(--text-xs); color: var(--ink-muted); word-break: break-all; }
+.au-hash code { font-size: 11px; }
+.au-alerta-cab { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.au-nota { width: 100%; font-family: inherit; font-size: var(--text-sm); padding: var(--sp-2); border: 1px solid var(--line); border-radius: var(--r-md);
+    background: var(--surface); color: var(--ink); margin-bottom: var(--sp-2); resize: vertical; }
+.au-posterior td { opacity: .7; }
+@media (max-width: 720px) { .au-kpis-dia { grid-template-columns: repeat(2, 1fr); } }

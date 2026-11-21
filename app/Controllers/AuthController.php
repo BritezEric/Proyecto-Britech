@@ -23,6 +23,11 @@ class AuthController
             Response::json(['ok' => true, 'usuario' => $usuario]);
         } catch (ValidacionException $e) {
             RateLimit::registrar('login-staff');   // solo contamos los fallidos
+            // Este intento hizo que la IP quede bloqueada: se registra una sola vez (los siguientes
+            // pedidos ya cortan arriba con 429, sin llegar acá).
+            if (RateLimit::excedido('login-staff')) {
+                \App\Services\Auditoria::evento('sesion', null, 'bloqueo_ip', 'Inicios de sesión bloqueados temporalmente por intentos fallidos');
+            }
             Response::json(['ok' => false, 'error' => $e->getMessage()], 401);
         }
     }

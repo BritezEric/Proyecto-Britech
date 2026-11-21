@@ -40,5 +40,11 @@ class Router
 
         [$clase, $metodoAccion] = $r['accion'];
         (new $clase())->$metodoAccion();
+
+        // Auditoría: un usuario con sesión que pidió algo sin permiso (403). Queda registrado
+        // en el servidor sin importar desde qué pantalla o herramienta se hizo el pedido.
+        if (http_response_code() === 403 && Session::usuarioId() !== null) {
+            \App\Services\Auditoria::evento('sesion', Session::usuarioId(), 'acceso_denegado', "Sin permiso: $metodo $ruta");
+        }
     }
 }
