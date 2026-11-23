@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="/assets/css/tokens.css">
     <link rel="stylesheet" href="/assets/css/admin.css">
+    <link rel="stylesheet" href="/assets/css/caja.css">
     <script>try { var t = localStorage.getItem('britech_admin_theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
     <!-- Leaflet (mapas, OpenStreetMap) para el seguimiento de envíos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -488,8 +489,9 @@
                     <div>
                         <button class="volver-link" data-ir-inicio>‹ Panel</button>
                         <h1>Cajas</h1>
-                        <p class="sub">Historial de cajas: aperturas, cierres y arqueos de cada vendedor.</p>
+                        <p class="sub">Aperturas, cierres y diferencias de cada vendedor.</p>
                     </div>
+                    <div class="content-top-acciones"><button type="button" class="btn-primary" id="cx-btn-dia">Cierre del día</button></div>
                 </header>
                 <div id="cajas-cont"></div>
             </section>
@@ -617,6 +619,7 @@
     <script src="/assets/js/admin-repartidores.js"></script>
     <script src="/assets/js/admin-reposicion.js"></script>
     <script src="/assets/js/admin-compras.js"></script>
+    <script src="/assets/js/caja-ui.js"></script>
     <script src="/assets/js/admin-cajas.js"></script>
     <script src="/assets/js/admin-reclamos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.544.0/dist/umd/lucide.min.js"></script>

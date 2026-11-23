@@ -28,6 +28,11 @@ decisiones**. Tres bloques:
   - `hbarList()` (barras horizontales): top productos, vendedores, categorías, stock.
 
 ### 2) Cierre de caja
+> **Actualizado (v2):** la caja ahora tiene arqueo por forma de pago, conteo de billetes,
+> gastos de caja, línea de tiempo de movimientos, cierre del día y cierre administrativo.
+> Esta sección describe la versión 1; la guía completa y vigente está en
+> [cierre-de-caja.md](cierre-de-caja.md).
+
 - [`database/schema_caja.sql`](../../database/schema_caja.sql)
   Tablas `caja` (apertura, estado, monto_contado, esperado, diferencia, cierre) y
   `caja_movimiento` (retiros/ingresos). También agrega `caja_id` a `venta`.

@@ -962,3 +962,4 @@ td.acciones { text-align: right; white-space: nowrap; }
 .au-despues { font-weight: 700; }
 .au-resumen { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); }
 #vista-auditoria .tabla-caja { overflow-x: auto; }
+

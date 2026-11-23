@@ -461,3 +461,4 @@ body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     .barra { flex-wrap: wrap; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); }
     .barra-derecha { flex-wrap: wrap; }
 }
+

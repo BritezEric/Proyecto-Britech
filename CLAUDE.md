@@ -55,6 +55,9 @@ y **Franco** (Módulo 5: Salidas del Sistema — dashboards y reportes). Se habl
   y `tests/reporte_localidades_test.php`.
 - Auditoría (base `*_test` con `schema_auditoria.sql` y el servidor sobre esa base):
   `DB_NAME=britech_auditoria_test BRITECH_TEST_URL=http://127.0.0.1:8125 php tests/auditoria_test.php`
+- Cierre de caja (base `*_test` con `schema_caja_cierre.sql` y el servidor sobre esa base):
+  `DB_NAME=britech_caja_test BRITECH_TEST_URL=http://127.0.0.1:8125 php tests/caja_test.php`
+  Doc: `docs/modulos/caja.md`, guía oral: `docs/exposicion/cierre-de-caja.md`.
 
 ## Repositorios
 - Repo del equipo: `https://github.com/BritezEric/Proyecto-Britech` (rama `master`).

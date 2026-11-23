@@ -31,5 +31,21 @@ window.ICO = (function () {
         mail: svg('<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>'),
         idcard: svg('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/>'),
         mappin: svg('<path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>'),
+        // Caja / cierre de caja
+        check: svg('<path d="M20 6 9 17l-5-5"/>'),
+        checkCircle: svg('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>'),
+        plus: svg('<path d="M12 5v14M5 12h14"/>'),
+        minus: svg('<path d="M5 12h14"/>'),
+        x: svg('<path d="M18 6 6 18M6 6l12 12"/>'),
+        clock: svg('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>'),
+        arrowUp: svg('<path d="M12 19V5M5 12l7-7 7 7"/>'),
+        arrowDown: svg('<path d="M12 5v14M19 12l-7 7-7-7"/>'),
+        undo: svg('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'),
+        unlock: svg('<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>'),
+        banknote: svg('<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>'),
+        calendar: svg('<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
+        chevronLeft: svg('<path d="m15 18-6-6 6-6"/>'),
+        arrowRight: svg('<path d="M5 12h14M12 5l7 7-7 7"/>'),
+        file: svg('<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 13H8M16 17H8"/>'),
     };
 })();

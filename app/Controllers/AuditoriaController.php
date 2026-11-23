@@ -30,12 +30,13 @@ class AuditoriaController
         'precio_masivo' => 'Precio masivo', 'estado' => 'Cambio de estado', 'estado_pago' => 'Estado de pago',
         'entrada' => 'Entrada de stock', 'salida' => 'Salida de stock', 'ajuste' => 'Ajuste de stock',
         'abrir' => 'Apertura de caja', 'cerrar' => 'Cierre de caja', 'ingreso' => 'Ingreso de caja', 'retiro' => 'Retiro de caja',
+        'gasto' => 'Gasto de caja', 'cerrar_admin' => 'Cierre de caja por admin',
         'aprobar' => 'Aprobación', 'rechazar' => 'Rechazo',
     ];
     /** Tipo de operación de cada acción (define el color en el panel y las tarjetas del resumen). */
     public const TIPOS = [
         'alta'   => ['crear', 'activar', 'abrir', 'aprobar'],
-        'cambio' => ['editar', 'precio_masivo', 'estado', 'estado_pago', 'cambio_password', 'ingreso', 'retiro', 'cerrar'],
+        'cambio' => ['editar', 'precio_masivo', 'estado', 'estado_pago', 'cambio_password', 'ingreso', 'retiro', 'gasto', 'cerrar', 'cerrar_admin'],
         'baja'   => ['baja', 'anular', 'rechazar'],
         'stock'  => ['entrada', 'salida', 'ajuste'],
         'sesion' => ['login', 'logout', 'login_fallido'],

@@ -189,8 +189,12 @@ $router->get('/api/caja/estado',       [CajaController::class, 'estado'],     tr
 $router->post('/api/caja/abrir',       [CajaController::class, 'abrir'],      true);
 $router->post('/api/caja/movimiento',  [CajaController::class, 'movimiento'], true);
 $router->post('/api/caja/cerrar',      [CajaController::class, 'cerrar'],     true);
+$router->get('/api/caja/detalle',      [CajaController::class, 'detalle'],    true);
+$router->get('/api/caja/reporte',      [CajaController::class, 'reporte'],    true);
 $router->get('/api/admin/cajas',         [CajaController::class, 'adminListar'],  true);
 $router->get('/api/admin/cajas/detalle', [CajaController::class, 'adminDetalle'], true);
+$router->get('/api/admin/cajas/dia',     [CajaController::class, 'adminDia'],     true);
+$router->post('/api/admin/cajas/cerrar', [CajaController::class, 'adminCerrar'],  true);
 
 // Reclamos — cliente (tienda) abre/sigue; staff (panel) gestiona
 $router->post('/api/tienda/reclamos',          [ReclamoController::class, 'crear']);

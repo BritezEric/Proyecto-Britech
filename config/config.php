@@ -20,6 +20,10 @@ Dotenv\Dotenv::createImmutable(dirname(__DIR__))->safeLoad();
 $leer = fn(string $clave, ?string $def = null): ?string
     => getenv($clave) !== false ? getenv($clave) : ($_ENV[$clave] ?? $def);
 
+// Hora local del negocio: sin esto PHP usa UTC y date() no coincide con el NOW()
+// de MySQL (se nota en los reportes de cierre de caja y en la fecha de los gastos).
+date_default_timezone_set($leer('APP_TZ', 'America/Argentina/Buenos_Aires') ?: 'America/Argentina/Buenos_Aires');
+
 // 3. Devuelve la config lista para usar.
 return [
     'app' => [

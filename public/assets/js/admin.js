@@ -483,7 +483,7 @@ async function seleccionar(ent) {
     if (ent === 'repartos') { ocultarTodo(); vistaRepartos.classList.remove('oculto'); return renderRepartos(); }
     if (ent === 'reposicion'){ ocultarTodo(); vistaReposicion.classList.remove('oculto'); return renderReposicion(); }
     if (ent === 'compras')   { ocultarTodo(); vistaCompras.classList.remove('oculto');    return renderCompras(); }
-    if (ent === 'cajas')     { ocultarTodo(); vistaCajas.classList.remove('oculto');      return renderCajas(); }
+    if (ent === 'cajas')     { ocultarTodo(); vistaCajas.classList.remove('oculto');      return window.renderCajas && renderCajas(); }   // si admin-cajas.js aún no cargó, se dibuja solo al cargar
     if (ent === 'reclamos')  { ocultarTodo(); vistaReclamos.classList.remove('oculto');   return renderReclamos(); }
     if (ent === 'mapa')      { ocultarTodo(); vistaMapa.classList.remove('oculto');       return renderMapaEnvios(); }
     if (ent === 'voz')       { ocultarTodo(); vistaVoz.classList.remove('oculto');        return renderVoz(); }

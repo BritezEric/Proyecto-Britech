@@ -10,6 +10,7 @@ hacer.
 | **Tobi** | Notificaciones | [notificaciones-tobi.md](notificaciones-tobi.md) |
 | **Franco** | Salidas del Sistema (reportes + cierre de caja + PDF) | [salidas-franco.md](salidas-franco.md) |
 | **Eric** | Transacciones (Ventas, Compras, Pedidos, Pago) | [transacciones-eric.md](transacciones-eric.md) |
+| — | Cierre de caja (v2: arqueo por forma de pago, movimientos, cierre del día, caja olvidada) | [cierre-de-caja.md](cierre-de-caja.md) |
 
 ## Arquitectura común (la sabe todo el equipo)
 

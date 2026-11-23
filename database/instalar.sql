@@ -29,6 +29,7 @@ SOURCE database/schema_reposicion.sql;
 SOURCE database/schema_reposicion_pedidos.sql;
 SOURCE database/schema_compras.sql;
 SOURCE database/schema_caja.sql;
+SOURCE database/schema_caja_cierre.sql;
 SOURCE database/schema_reclamos.sql;
 SOURCE database/schema_mercadopago.sql;
 SOURCE database/schema_notificaciones_v2.sql;

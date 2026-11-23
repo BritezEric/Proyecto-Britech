@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="/assets/css/tokens.css">
     <link rel="stylesheet" href="/assets/css/pos.css">
+    <link rel="stylesheet" href="/assets/css/caja.css">
 </head>
 <body>
     <header class="barra">
@@ -100,13 +101,8 @@
     </div>
 
     <!-- CAJA (apertura / movimientos / cierre) -->
-    <div id="modal-caja-ov" class="modal oculto">
-        <div class="modal-caja">
-            <div id="caja-cont"></div>
-            <div class="modal-botones">
-                <button id="btn-caja-cerrar-modal" class="btn-secundario">Cerrar</button>
-            </div>
-        </div>
+    <div id="modal-caja-ov" class="modal oculto" role="dialog" aria-modal="true" aria-labelledby="cx-titulo">
+        <div class="modal-caja cx-modal" id="caja-cont"></div>
     </div>
 
     <!-- TICKET -->
@@ -124,6 +120,7 @@
     <script src="/assets/js/api.js"></script>
     <script src="/assets/js/iconos.js"></script>
     <script src="/assets/js/voz.js"></script>
+    <script src="/assets/js/caja-ui.js"></script>
     <script src="/assets/js/pos.js"></script>
 </body>
 </html>
