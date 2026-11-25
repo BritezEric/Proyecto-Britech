@@ -712,6 +712,7 @@ async function refrescarCliente() {
     pintarCuenta();
     pintarMayorista();
     cargarNotisCliente();
+    window.BritechPush?.sincronizar();     // push del navegador para este cliente (beams.js)
 }
 
 // ============ Acceso mayorista (B2B) ============
@@ -867,6 +868,7 @@ async function registro(e) {
 
 async function salir() {
     let redirect = null;
+    await window.BritechPush?.salir();      // este navegador deja de recibir sus avisos push
     try { redirect = (await api.post('/api/tienda/logout', {})).redirect; } catch {}
     // Si entró por Google, Auth0 nos da una URL para cerrar también SU sesión.
     if (redirect) { location.href = redirect; return; }

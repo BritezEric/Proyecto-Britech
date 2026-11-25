@@ -28,6 +28,13 @@ class NotificacionRepository
             try { (new \App\Services\TelegramService())->avisar($usuarioId, mb_substr($titulo, 0, 400), $tipo, $nivel); }
             catch (\Throwable $e) { /* el aviso es secundario */ }
         }
+
+        // Push del navegador con Pusher Beams (no-op si no está configurado).
+        try {
+            $beams = new \App\Services\BeamsService();
+            if ($usuarioId !== null) $beams->avisarStaff($usuarioId, $titulo, $tipo, $ir);
+            elseif ($clienteId !== null) $beams->avisarCliente($clienteId, $titulo, $tipo);
+        } catch (\Throwable $e) { /* el aviso es secundario */ }
     }
 
     /** Avisa a TODO el staff activo (admin + vendedores). Firma compatible con el código previo. */

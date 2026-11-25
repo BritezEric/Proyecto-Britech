@@ -86,6 +86,9 @@ $router->post('/api/admin/notificaciones/leer-todas', [NotificacionController::c
 $router->get('/api/admin/telegram/vincular', [\App\Controllers\TelegramController::class, 'vincular'], true);
 $router->get('/api/admin/telegram/estado',   [\App\Controllers\TelegramController::class, 'estado'],   true);
 $router->post('/api/telegram/webhook',       [\App\Controllers\TelegramController::class, 'webhook']);  // público (lo llama Telegram)
+// Pusher Beams (push del navegador): config pública y token firmado para el usuario de la sesión
+$router->get('/api/beams/config', [\App\Controllers\BeamsController::class, 'config']);
+$router->get('/api/beams/token',  [\App\Controllers\BeamsController::class, 'token']);
 $router->get('/api/admin/clientes',            [ClienteController::class, 'admin'],   true);
 $router->post('/api/admin/clientes/guardar',   [ClienteController::class, 'guardar'], true);
 $router->post('/api/admin/clientes/baja',      [ClienteController::class, 'baja'],    true);

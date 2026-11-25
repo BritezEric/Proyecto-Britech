@@ -1014,3 +1014,6 @@ td.acciones { text-align: right; white-space: nowrap; }
     background: var(--surface); color: var(--ink); margin-bottom: var(--sp-2); resize: vertical; }
 .au-posterior td { opacity: .7; }
 @media (max-width: 720px) { .au-kpis-dia { grid-template-columns: repeat(2, 1fr); } }
+
+/* Botón "Activar notificaciones" (beams.js): en escritorio, que arranque después del sidebar. */
+@media (min-width: 721px) { body:has(.admin) .push-chip { left: calc(252px + var(--sp-5)); } }

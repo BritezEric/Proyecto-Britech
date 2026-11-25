@@ -125,4 +125,10 @@ return [
     'auditoria' => [
         'hmac_key' => $leer('AUDIT_HMAC_KEY', ''),
     ],
+    // Pusher Beams: notificaciones push del navegador (staff y clientes).
+    // Si alguna queda vacía, queda desactivado (no-op).
+    'beams' => [
+        'instance_id' => $leer('BEAMS_INSTANCE_ID', ''),
+        'secret_key'  => $leer('BEAMS_SECRET_KEY', ''),
+    ],
 ];
