@@ -158,9 +158,7 @@ class PedidoController
                     (int) $p['cliente_id'], 'pedido_estado',
                     "Tu pedido {$p['numero']} está: {$estado}", 'mis-pedidos', $id,
                     $estado === 'entregado' ? 'exito' : ($estado === 'cancelado' ? 'alerta' : 'info')
-                );
-                \App\Services\Auditoria::evento('pedido', $id, 'estado', "{$p['numero']} → {$estado}");
-            }
+                );            }
             Response::json(['ok' => true]);
         } catch (ValidacionException $e) {
             Response::json(['ok' => false, 'error' => $e->getMessage()], 422);
@@ -181,8 +179,7 @@ class PedidoController
             Response::json(['ok' => false, 'error' => 'El pedido no existe.'], 404); return;
         }
         $pedidoId = (int) $d['pedido_id'];
-        $repo->cambiarEstadoPago($pedidoId, $estado);
-        \App\Services\Auditoria::evento('pedido', $pedidoId, 'estado_pago', "Pago → {$estado}");
+        $repo->cambiarEstadoPago($pedidoId, $estado);   // registra la auditoría (anterior → nuevo)
         Response::json(['ok' => true]);
     }
 

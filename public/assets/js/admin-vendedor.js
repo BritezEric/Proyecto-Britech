@@ -32,8 +32,8 @@ function vendLeyenda(serie, series) {
     }).join('')}</div>`;
 }
 
-function vendPanelSerie(id, titulo, serie, series) {
-    $(id).innerHTML = `<div class="chart-head"><h3>${esc(titulo)} · ${VEND_TXT_PERIODO[vendPeriodo]}</h3></div>
+function vendPanelSerie(id, icono, titulo, serie, series) {
+    $(id).innerHTML = `<div class="chart-head"><h3>${repIco(icono)}${esc(titulo)} · ${VEND_TXT_PERIODO[vendPeriodo]}</h3></div>
         ${vendLeyenda(serie, series)}
         ${vendBarras(serie, series)}`;
 }
@@ -55,25 +55,25 @@ async function renderVendedor() {
         kpi('Anuladas', r.anuladas ?? 0, 'ventas anuladas'),
     ].join('');
 
-    // --- 📈 Frecuencia de mis ventas ---
-    vendPanelSerie('vend-ventas', '📈 Frecuencia de mis ventas', d.ventas, [
+    // --- Frecuencia de mis ventas ---
+    vendPanelSerie('vend-ventas', 'trending-up', 'Frecuencia de mis ventas', d.ventas, [
         { campo: 'ventas',   cls: 'fisica', nombre: 'Ventas' },
         { campo: 'anuladas', cls: 'gasto',  nombre: 'Anuladas' },
     ]);
 
-    // --- 🛒 Frecuencia de compras de mis clientes ---
-    vendPanelSerie('vend-compras', '🛒 Compras de mis clientes', d.compras, [
+    // --- Frecuencia de compras de mis clientes ---
+    vendPanelSerie('vend-compras', 'shopping-cart', 'Compras de mis clientes', d.compras, [
         { campo: 'identificados',    cls: 'fisica', nombre: 'Clientes identificados' },
         { campo: 'consumidor_final', cls: 'online', nombre: 'Consumidor final' },
     ]);
 
-    // --- 📦 Mis cajas abiertas vs cerradas ---
+    // --- Mis cajas abiertas vs cerradas ---
     const cj = d.cajas || { abiertas: 0, cerradas: 0, serie: [] };
     const seriesCaja = [
         { campo: 'abiertas', cls: 'online', nombre: 'Abiertas' },
         { campo: 'cerradas', cls: 'fisica', nombre: 'Cerradas' },
     ];
-    $('vend-cajas').innerHTML = `<h3>📦 Mis cajas abiertas y cerradas</h3>
+    $('vend-cajas').innerHTML = `<h3>${repIco('wallet')}Mis cajas abiertas y cerradas</h3>
         <div class="cards vend-cajas-kpis">
             ${kpi('Abiertas ahora', cj.abiertas, cj.abiertas > 0 ? 'sin cerrar todavía' : 'ninguna abierta')}
             ${kpi('Cerradas', cj.cerradas, VEND_TXT_PERIODO[vendPeriodo])}
@@ -81,22 +81,22 @@ async function renderVendedor() {
         ${vendLeyenda(cj.serie, seriesCaja)}
         ${vendBarras(cj.serie, seriesCaja)}`;
 
-    // --- 🏆 Mis mejores momentos: mis ventas por hora/día/semana/mes, de MAYOR a MENOR ---
+    // --- Mis mejores momentos: mis ventas por hora/día/semana/mes, de MAYOR a MENOR ---
     const top = (d.ventas || []).filter((x) => Number(x.ventas) > 0)
         .sort((a, b) => Number(b.ventas) - Number(a.ventas));
     const maxTop = Math.max(1, ...top.map((x) => Number(x.ventas)));
-    const medalla = ['🥇', '🥈', '🥉'];
-    $('vend-ranking').innerHTML = `<h3>🏆 Mis ventas por ${VEND_TXT_BALDE[vendPeriodo].toLowerCase()} · de mayor a menor</h3>` + (top.length === 0
+    const medalla = ['vend-oro', 'vend-plata', 'vend-bronce'];   // ícono de medalla en los 3 primeros
+    $('vend-ranking').innerHTML = `<h3>${repIco('trophy')}Mis ventas por ${VEND_TXT_BALDE[vendPeriodo].toLowerCase()} · de mayor a menor</h3>` + (top.length === 0
         ? `<p class="dash-vacio">Sin ventas ${VEND_TXT_PERIODO[vendPeriodo]}.</p>`
         : `<ol class="vend-ranking">${top.map((x, i) => `<li>
-                <span class="vend-pos">${i < 3 ? medalla[i] : (i + 1)}</span>
+                <span class="vend-pos">${i < 3 ? repIco('medal', medalla[i]) : (i + 1)}</span>
                 <span class="hbar-label">${esc(x.label)}</span>
                 <div class="hbar-track"><div class="hbar-fill" style="width:${Math.max(3, Math.round(Number(x.ventas) / maxTop * 100))}%"></div></div>
                 <span class="hbar-val">${Number(x.ventas)}</span></li>`).join('')}</ol>`);
 
-    // --- ⭐ Mis clientes que más compran ---
+    // --- Mis clientes que más compran ---
     const cf = d.clientes_frecuentes || [];
-    $('vend-clientes').innerHTML = `<h3>⭐ Mis clientes que más compran</h3>` + (cf.length === 0
+    $('vend-clientes').innerHTML = `<h3>${repIco('star')}Mis clientes que más compran</h3>` + (cf.length === 0
         ? `<p class="dash-vacio">Sin ventas a clientes identificados en el período.</p>`
         : `<ul class="dash-lista">${cf.map((c) =>
             `<li><span>${esc(c.cliente)}</span><span class="dash-num">${Number(c.compras)} compra(s)</span></li>`).join('')}</ul>`);

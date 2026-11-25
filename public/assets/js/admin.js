@@ -1523,6 +1523,9 @@ async function iniciar() {
     wire();
     // El vendedor ve su panel y lo operativo (pedidos y envíos); lo demás es solo admin.
     if (!ES_ADMIN) document.querySelectorAll('[data-admin]').forEach((el) => el.classList.add('oculto'));
+    // /api/yo puede responder antes de que terminen de bajar los scripts de abajo (Lucide, reportes,
+    // Mi panel): se espera a que estén todos, si no #reportes / #vendedor abren vacíos.
+    if (document.readyState === 'loading') await new Promise((ok) => document.addEventListener('DOMContentLoaded', ok, { once: true }));
     // Abre la sección del link (#vendedor desde el POS, o al recargar); si no hay, la de inicio.
     seleccionar(location.hash.slice(1));
     cargarNotificaciones();

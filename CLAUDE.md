@@ -40,6 +40,10 @@ y **Franco** (Módulo 5: Salidas del Sistema — dashboards y reportes). Se habl
    ventas/anulaciones, caja, mayoristas, datos de pago). `AuditoriaController` (listado, pdf,
    excel), `app/Core/Xlsx.php`, `admin-auditoria.js`. Script `database/schema_auditoria.sql`
    (re-ejecutable; triggers que impiden UPDATE/DELETE). Doc: `docs/modulos/auditoria.md`.
+   **Centro de control:** pestañas (historial, alertas, ventas, cajas, stock, usuarios), detalle
+   lateral, alertas automáticas (`AlertaService`, tabla `auditoria_alerta`), hash encadenado con
+   `AUDIT_HMAC_KEY` (.env), `AuditoriaSeccionController` / `AuditoriaSeccionRepository`.
+   Test: `tests/auditoria_centro_test.php`.
 
 ## Reglas del equipo
 - No borrar datos ni tocar claves primarias/foráneas; cambios de base solo con scripts

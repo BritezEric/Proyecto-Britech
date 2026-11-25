@@ -172,14 +172,17 @@ class VentaService
                 );
             }
 
+            // Auditoría dentro de la transacción: si la venta se deshace, su registro también.
+            Auditoria::evento('venta', $ventaId, 'crear',
+                "Venta {$numero} · presencial · cliente {$cliente['nombre']} · total $ " . number_format($total, 2, ',', '.')
+                . ' · ' . $this->mediosTexto($pagos), $usuarioId);
+
             $pdo->commit();
         } catch (\Throwable $e) {
             // Si algo falló, deshacemos TODO.
             $pdo->rollBack();
             throw $e;
         }
-        Auditoria::evento('venta', $ventaId, 'crear',
-            "Venta {$numero} · total $ " . number_format($total, 2, ',', '.'), $usuarioId);
 
         // Aviso de stock bajo: fuera de la transacción (una notificación nunca
         // debe frenar ni deshacer la venta ya confirmada).
@@ -199,6 +202,14 @@ class VentaService
     }
 
     /** Id del medio de pago "Efectivo" (o el primero activo). Para el pago automático. */
+    /** "Efectivo $ 1.000,00 + Transferencia $ 500,00" (para el registro de auditoría). */
+    private function mediosTexto(array $pagos): string
+    {
+        $nombres = Database::conexion()->query("SELECT id, nombre FROM tipo_pago")->fetchAll(\PDO::FETCH_KEY_PAIR);
+        return implode(' + ', array_map(fn($p) => ($nombres[(int) $p['tipo_pago_id']] ?? 'Pago')
+            . ' $ ' . number_format((float) $p['monto'], 2, ',', '.'), $pagos));
+    }
+
     private function tipoPagoEfectivoId(): int
     {
         $db = Database::conexion();
@@ -328,6 +339,10 @@ class VentaService
                 }
             }
 
+            // Estado anterior → nuevo + motivo, dentro de la misma transacción que la anulación.
+            Auditoria::campo('venta', $ventaId, 'estado', $venta['estado'], 'anulada', 'anular', $usuarioId,
+                "Venta {$venta['numero']} · total $ " . number_format((float) $venta['total'], 2, ',', '.') . " · Motivo: {$motivo}");
+
             $pdo->commit();
         } catch (\Throwable $e) {
             $pdo->rollBack();
@@ -337,7 +352,6 @@ class VentaService
         (new \App\Repositories\NotificacionRepository())->crear(
             'venta_anulada', "Venta {$venta['numero']} anulada · {$motivo}", null, $ventaId, 'alerta'
         );
-        Auditoria::evento('venta', $ventaId, 'anular', "Venta {$venta['numero']} · {$motivo}", $usuarioId);
         return ['venta_id' => $ventaId, 'numero' => $venta['numero']];
     }
 }

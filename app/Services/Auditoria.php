@@ -21,11 +21,7 @@ class Auditoria
     /** Registra un evento de operación (anular, aprobar pago, cambiar estado, baja, login…). */
     public static function evento(string $entidad, ?int $id, string $accion, ?string $detalle = null, ?int $usuarioId = null): void
     {
-        try {
-            (new AuditoriaRepository())->registrar(
-                $usuarioId ?? Session::usuarioId(), $entidad, $id, $accion, null, null, null, $detalle, self::ip()
-            );
-        } catch (\Throwable $e) { /* la auditoría no debe frenar la operación */ }
+        self::guardar($usuarioId ?? Session::usuarioId(), $entidad, $id, $accion, null, null, null, $detalle);
     }
 
     /** Registra un cambio de un campo puntual (valor anterior → valor nuevo). */
@@ -33,15 +29,50 @@ class Auditoria
         string $entidad, ?int $id, string $campo, $anterior, $nuevo,
         string $accion = 'editar', ?int $usuarioId = null, ?string $detalle = null
     ): void {
+        $sensible = preg_match(self::SENSIBLE, $campo) === 1;
+        self::guardar(
+            $usuarioId ?? Session::usuarioId(), $entidad, $id, $accion, $campo,
+            $sensible && $anterior !== null ? self::OCULTO : self::str($anterior),
+            $sensible && $nuevo !== null ? self::OCULTO : self::str($nuevo),
+            $detalle
+        );
+    }
+
+    /** Registros ya guardados en este pedido HTTP (evita duplicar un evento por llamadas internas repetidas). */
+    private static array $vistos = [];
+
+    /**
+     * Guarda el registro y se lo pasa al detector de alertas. Nunca frena la operación:
+     * si falla, se traga la excepción. Si la operación corre dentro de una transacción,
+     * el registro y sus alertas se confirman o se deshacen junto con ella.
+     */
+    private static function guardar(?int $usuarioId, string $entidad, ?int $id, string $accion,
+                                    ?string $campo, ?string $anterior, ?string $nuevo, ?string $detalle): void
+    {
+        $clave = md5(json_encode([$usuarioId, $entidad, $id, $accion, $campo, $anterior, $nuevo, $detalle]));
+        if (isset(self::$vistos[$clave])) return;
+        self::$vistos[$clave] = true;
         try {
-            $sensible = preg_match(self::SENSIBLE, $campo) === 1;
-            (new AuditoriaRepository())->registrar(
-                $usuarioId ?? Session::usuarioId(), $entidad, $id, $accion, $campo,
-                $sensible && $anterior !== null ? self::OCULTO : self::str($anterior),
-                $sensible && $nuevo !== null ? self::OCULTO : self::str($nuevo),
-                $detalle, self::ip()
+            $ip = self::ip();
+            $agente = self::agente();
+            $auditoriaId = (new AuditoriaRepository())->registrar(
+                $usuarioId, $entidad, $id, $accion, $campo, $anterior, $nuevo, $detalle, $ip, $agente
             );
-        } catch (\Throwable $e) { /* idem */ }
+            if ($auditoriaId) {
+                AlertaService::analizar($auditoriaId, [
+                    'usuario_id' => $usuarioId, 'entidad' => $entidad, 'entidad_id' => $id, 'accion' => $accion,
+                    'campo' => $campo, 'anterior' => $anterior, 'nuevo' => $nuevo, 'detalle' => $detalle,
+                    'ip' => $ip, 'agente' => $agente,
+                ]);
+            }
+        } catch (\Throwable $e) { error_log('[Auditoria] ' . $e->getMessage()); }
+    }
+
+    /** Navegador / dispositivo de quien hace la acción (null en consola). Nunca cookies ni tokens. */
+    private static function agente(): ?string
+    {
+        $ua = $_SERVER['HTTP_USER_AGENT'] ?? null;
+        return is_string($ua) && $ua !== '' ? mb_substr($ua, 0, 255) : null;
     }
 
     /**

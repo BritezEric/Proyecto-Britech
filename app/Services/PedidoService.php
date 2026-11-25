@@ -142,6 +142,12 @@ class PedidoService
                 }
             }
             $envioId = (new EnvioRepository())->crear($pedidoId, $empresaId, $datosEnvio, $costoEnvio, $barrioId);
+            // Auditoría (venta online, la hace el cliente: no hay usuario del staff) dentro de la transacción.
+            $stCli = $pdo->prepare('SELECT nombre FROM cliente WHERE id = ?');
+            $stCli->execute([$clienteId]);
+            \App\Services\Auditoria::evento('pedido', $pedidoId, 'crear',
+                "Pedido {$numero} · online · cliente " . ($stCli->fetchColumn() ?: "#$clienteId")
+                . ' · total $ ' . number_format($totalFinal, 2, ',', '.') . " · pago: {$metodoPago}", null);
             $pdo->commit();
         } catch (\Throwable $e) {
             $pdo->rollBack();
@@ -308,6 +314,7 @@ class PedidoService
                     $inv->reintegrar((int) $l['producto_id'], (int) $l['cantidad'], 'Cancelación pedido ' . ($pedido['numero'] ?? '#' . $id));
                 }
                 $this->repo->cambiarEstado($id, $estado);
+                $this->auditarEstado($pedido, $estado);
                 $pdo->commit();
             } catch (\Throwable $e) {
                 $pdo->rollBack();
@@ -317,6 +324,17 @@ class PedidoService
         }
 
         $this->repo->cambiarEstado($id, $estado);
+        $this->auditarEstado($pedido, $estado);
+    }
+
+    /** Auditoría del cambio de estado (anterior → nuevo), desde el backend: vale para cualquier pantalla. */
+    private function auditarEstado(array $pedido, string $estado): void
+    {
+        if ($pedido['estado'] === $estado) return;
+        \App\Services\Auditoria::campo('pedido', (int) $pedido['id'], 'estado', $pedido['estado'], $estado,
+            $estado === 'cancelado' ? 'anular' : 'estado', null,
+            "Pedido {$pedido['numero']} · total $ " . number_format((float) $pedido['total'], 2, ',', '.')
+            . ($estado === 'cancelado' ? ' · cancelado (stock reintegrado)' : ''));
     }
 
     /**

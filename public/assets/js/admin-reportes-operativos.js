@@ -264,7 +264,7 @@ function roPintar(d) {
         <p class="rl-periodo">Período: ${esc(periodo)} · Actualizado a las ${esc(hora)}</p>
         <div class="cards rl-kpis">${d.kpis.map(roKpi).join('')}</div>
         <div class="chart-card">
-            <p class="chart-titulo">${esc(d.grafico.titulo)}</p>
+            <p class="chart-titulo">${repIco('chart-column')}${esc(d.grafico.titulo)}</p>
             <div class="chart-box"><canvas id="ro-chart" role="img" aria-label="${esc(d.grafico.titulo)}"></canvas></div>
             <p id="ro-chart-vacio" class="dash-vacio oculto">Sin datos para graficar con estos filtros.</p>
         </div>
@@ -390,7 +390,7 @@ function roPintarTabla(i) {
     };
 
     sec.innerHTML = `
-        <h2 class="dash-h">${titulo}</h2>
+        <h2 class="dash-h">${repIco(REP_ICONO[RO.actual] || 'table')}${titulo}</h2>
         <div class="toolbar">
             <div class="search-wrap"><input class="search" type="search" data-buscar placeholder="Buscar en esta tabla…" aria-label="Buscar en ${esc(t.titulo)}" value="${esc(st.q)}"></div>
         </div>

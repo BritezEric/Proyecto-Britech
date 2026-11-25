@@ -120,4 +120,9 @@ return [
         'token' => $leer('TG_TOKEN', ''),
         'bot'   => $leer('TG_BOT', ''),   // usuario del bot sin @ (para armar el link t.me/<bot>?start=...)
     ],
+    // Auditoría: clave para firmar la cadena de hashes (HMAC). Vacía = SHA-256 sin clave (más débil).
+    // Va SOLO en .env (nunca en git) y conviene guardarla también fuera del servidor.
+    'auditoria' => [
+        'hmac_key' => $leer('AUDIT_HMAC_KEY', ''),
+    ],
 ];

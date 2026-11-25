@@ -185,7 +185,7 @@
                             <button data-p="mes">Mes</button>
                             <button data-p="ano">Año</button>
                         </div>
-                        <a class="btn-secundario" href="/pos.html">🧾 Ir al POS</a>
+                        <a class="btn-secundario" href="/pos.html" data-lu="receipt">Ir al POS</a>
                     </div>
                 </header>
                 <div id="vend-kpis" class="cards"></div>
@@ -378,7 +378,7 @@
                     <div id="rl-kpis" class="cards rl-kpis"></div>
                     <div id="rl-kpis-fin" class="cards rl-kpis oculto"></div>
 
-                    <h2 class="dash-h">📊 Análisis geográfico</h2>
+                    <h2 class="dash-h" data-lu="chart-column">Análisis geográfico</h2>
                     <div class="chart-card">
                         <div class="chart-card-top"><div class="chart-switch" id="rl-chart-switch"></div></div>
                         <p id="rl-chart-titulo" class="chart-titulo"></p>
@@ -386,7 +386,7 @@
                         <p id="rl-chart-vacio" class="dash-vacio oculto">Sin ventas para graficar con estos filtros.</p>
                     </div>
 
-                    <h2 class="dash-h">📍 Ventas por localidad</h2>
+                    <h2 class="dash-h" data-lu="map-pin">Ventas por localidad</h2>
                     <div class="toolbar">
                         <div class="search-wrap"><input id="rl-q" class="search" type="search" placeholder="Buscar localidad o barrio…" aria-label="Buscar localidad o barrio"></div>
                     </div>
@@ -402,7 +402,7 @@
                     <div class="dash-grid rl-dos">
                         <div class="dash-panel">
                             <div class="chart-head">
-                                <h3>🛒 Productos más vendidos por zona</h3>
+                                <h3 data-lu="shopping-cart">Productos más vendidos por zona</h3>
                                 <div class="periodo-toggle" id="rl-prod-orden">
                                     <button type="button" data-o="unidades" class="activo">Unidades</button>
                                     <button type="button" data-o="importe">Importe</button>
@@ -412,7 +412,7 @@
                             <div id="rl-productos"></div>
                         </div>
                         <div class="dash-panel">
-                            <h3>⚖️ Comparar dos localidades</h3>
+                            <h3 data-lu="scale">Comparar dos localidades</h3>
                             <div class="rl-comp-zonas">
                                 <select id="rl-zona-a" class="rl-select" aria-label="Primera zona"></select>
                                 <span class="td-mute">vs</span>
@@ -423,7 +423,7 @@
                         </div>
                     </div>
 
-                    <h2 class="dash-h">🚚 Entregas por zona</h2>
+                    <h2 class="dash-h" data-lu="truck">Entregas por zona</h2>
                     <div class="tabla-caja rl-tabla-scroll">
                         <table class="rl-tabla">
                             <thead id="rl-log-thead"></thead>
@@ -455,31 +455,36 @@
                 <header class="content-top">
                     <div>
                         <h1>Auditoría</h1>
-                        <p class="sub">Quién hizo qué, cuándo y qué cambió. El historial es de solo lectura: no se puede editar ni borrar.</p>
+                        <p class="sub">Centro de control: quién hizo qué, cuándo y qué cambió. El historial es de solo lectura: no se puede editar ni borrar.</p>
                     </div>
                     <div class="content-top-acciones">
+                        <button id="au-integridad" class="btn-secundario" title="Recalcula la cadena de hashes del historial">Verificar integridad</button>
                         <button id="au-pdf" class="btn-secundario">Exportar PDF</button>
                         <button id="au-excel" class="btn-primary">Exportar Excel</button>
                     </div>
                 </header>
+                <!-- Tarjetas del día (salen de la base; un clic abre la sección filtrada) -->
+                <div id="au-kpis" class="cards au-kpis-dia"></div>
+                <nav class="rep-tabs au-tabs" id="au-tabs" aria-label="Secciones de auditoría">
+                    <button type="button" data-s="historial" class="activo">Historial general</button>
+                    <button type="button" data-s="alertas">Alertas <span id="au-tab-alertas" class="au-badge oculto"></span></button>
+                    <button type="button" data-s="ventas">Ventas y anulaciones</button>
+                    <button type="button" data-s="cajas">Cajas y dinero</button>
+                    <button type="button" data-s="stock">Movimientos de stock</button>
+                    <button type="button" data-s="usuarios">Usuarios y accesos</button>
+                </nav>
+                <p id="au-sub" class="au-sub"></p>
                 <div id="au-resumen" class="cards au-resumen"></div>
                 <div class="toolbar au-filtros">
-                    <div class="search-wrap">
-                        <input id="au-q" class="search" type="search" placeholder="Buscar en descripción, valores, usuario o N° de registro…" autocomplete="off">
+                    <div class="search-wrap" id="au-q-wrap">
+                        <input id="au-q" class="search" type="search" placeholder="Buscar…" autocomplete="off">
                     </div>
-                    <div class="filtros">
-                        <select id="au-usuario" aria-label="Usuario"><option value="">Todos los usuarios</option></select>
-                        <select id="au-accion" aria-label="Tipo de acción"><option value="">Todas las acciones</option></select>
-                        <select id="au-modulo" aria-label="Módulo"><option value="">Todos los módulos</option></select>
-                        <label class="au-fecha">Desde <input id="au-desde" type="date"></label>
-                        <label class="au-fecha">Hasta <input id="au-hasta" type="date"></label>
-                        <button id="au-limpiar" class="btn-secundario btn-sm">Limpiar</button>
-                    </div>
+                    <div class="filtros" id="au-filtros"></div>
                 </div>
                 <p id="au-error" class="au-error oculto"></p>
                 <div class="tabla-caja">
-                    <table>
-                        <thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Acción</th><th>Módulo</th><th>Registro</th><th>Descripción</th><th>Antes → Después</th></tr></thead>
+                    <table class="au-tabla">
+                        <thead id="au-thead"></thead>
                         <tbody id="au-tbody"></tbody>
                     </table>
                     <div id="au-vacio" class="tabla-vacia oculto">No hay registros para estos filtros.</div>
@@ -551,6 +556,20 @@
                     <button type="submit" id="btn-guardar" class="btn-primary">Guardar</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Auditoría: detalle de un registro (solo lectura; la única acción es revisar una alerta) -->
+    <div id="modal-au" class="modal oculto" role="dialog" aria-modal="true" aria-labelledby="au-det-titulo">
+        <div class="modal-caja">
+            <div class="au-det-cab">
+                <h2 id="au-det-titulo">Detalle</h2>
+                <button type="button" id="au-det-volver" class="btn-secundario btn-sm oculto">‹ Volver</button>
+            </div>
+            <div id="au-det-cuerpo" class="au-det"></div>
+            <div class="modal-botones">
+                <button type="button" id="au-det-cerrar" class="btn-secundario">Cerrar</button>
+            </div>
         </div>
     </div>
 
