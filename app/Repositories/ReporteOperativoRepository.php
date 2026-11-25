@@ -300,4 +300,52 @@ class ReporteOperativoRepository
     {
         return Database::conexion()->query("SELECT id, nombre FROM tipo_pago ORDER BY nombre")->fetchAll();
     }
+
+    public function categorias(): array
+    {
+        return Database::conexion()->query("SELECT id, nombre FROM categoria ORDER BY nombre")->fetchAll();
+    }
+
+    // ---------------------------------------------------------------
+    // Reportes gerenciales (ventas por período, cliente, producto y rentabilidad)
+    // ---------------------------------------------------------------
+
+    /**
+     * Una fila por LÍNEA vendida en el período: ventas registradas del POS y
+     * pedidos online pagados y no cancelados. El importe es neto de descuentos
+     * (el descuento general de la venta se reparte proporcional entre sus líneas)
+     * y no incluye el costo del envío.
+     */
+    public function lineasVendidas(string $desde, string $hasta): array
+    {
+        $st = Database::conexion()->prepare(
+            "SELECT 'local' AS canal, v.id AS op_id, v.numero, v.creado_en AS fecha,
+                    c.id AS cliente_id, c.nombre AS cliente,
+                    p.id AS producto_id, p.nombre AS producto, p.categoria_id, cat.nombre AS categoria,
+                    d.cantidad,
+                    d.subtotal * CASE WHEN v.subtotal > 0 THEN 1 - v.descuento / v.subtotal ELSE 1 END AS importe,
+                    p.costo
+             FROM venta_detalle d
+             JOIN venta v            ON v.id = d.venta_id
+             JOIN cliente c          ON c.id = v.cliente_id
+             JOIN producto p         ON p.id = d.producto_id
+             LEFT JOIN categoria cat ON cat.id = p.categoria_id
+             WHERE v.estado = 'registrada' AND v.creado_en >= ? AND v.creado_en < ?
+             UNION ALL
+             SELECT 'online', pe.id, pe.numero, pe.creado_en,
+                    c.id, c.nombre,
+                    p.id, p.nombre, p.categoria_id, cat.nombre,
+                    d.cantidad, d.subtotal, p.costo
+             FROM pedido_detalle d
+             JOIN pedido pe          ON pe.id = d.pedido_id
+             JOIN cliente c          ON c.id = pe.cliente_id
+             JOIN producto p         ON p.id = d.producto_id
+             LEFT JOIN categoria cat ON cat.id = p.categoria_id
+             WHERE pe.estado_pago = 'pagado' AND pe.estado <> 'cancelado'
+               AND pe.creado_en >= ? AND pe.creado_en < ?
+             ORDER BY fecha, numero"
+        );
+        $st->execute([$desde, $hasta, $desde, $hasta]);
+        return $st->fetchAll();
+    }
 }
