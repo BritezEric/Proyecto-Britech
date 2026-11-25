@@ -1515,7 +1515,7 @@ function wire() {
 
 let ES_ADMIN = true;   // el vendedor entra con acceso acotado (solo Pedidos)
 
-(async function iniciar() {
+async function iniciar() {
     let sesion;
     try { sesion = await api.get('/api/yo'); }
     catch { window.location.href = '/login.html'; return; }
@@ -1527,7 +1527,11 @@ let ES_ADMIN = true;   // el vendedor entra con acceso acotado (solo Pedidos)
     seleccionar(location.hash.slice(1));
     cargarNotificaciones();
     setInterval(cargarNotificaciones, 60000);   // refresca cada 60s
-})();
+}
+// Esperar a que carguen TODOS los scripts (admin-reportes-operativos.js define
+// renderReportes, etc.) antes de iniciar: así entrar directo a #reportes no rompe.
+if (document.readyState === 'complete') iniciar();
+else window.addEventListener('load', iniciar);
 
 // ===== Modal con mapa para fijar el destino del envío (pin manual del admin) =====
 function fijarDestinoMapa(envioId, lat, lng, onSaved) {
