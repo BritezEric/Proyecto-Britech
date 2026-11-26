@@ -1022,6 +1022,19 @@ function chartTema() {
         line:    cssVar('--line')     || '#e5e7eb',
     };
 }
+// Color con transparencia para rellenos. Los colores del tema vienen en oklch(), así que
+// concatenar "22" (como en hex) daba un color inválido y Chart.js pintaba el relleno negro.
+function chartAlpha(color, a) {
+    const cv = chartAlpha.cv || (chartAlpha.cv = document.createElement('canvas'));
+    cv.width = cv.height = 1;
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
+    ctx.clearRect(0, 0, 1, 1);
+    ctx.fillStyle = '#000';
+    ctx.fillStyle = color;          // el navegador interpreta cualquier color CSS
+    ctx.fillRect(0, 0, 1, 1);
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
 // Formato corto para los ejes de dinero ($1,2 M / $350 k).
 function montoCorto(v) {
     v = Number(v) || 0;
@@ -1057,8 +1070,8 @@ function chartConfig(vista, tema) {
         return {
             type: 'line',
             data: { labels: s.map((x) => x.label), datasets: [
-                { label: 'Ingresos', data: s.map((x) => Number(x.ingresos)), borderColor: tema.primary, backgroundColor: tema.primary + '22', fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2 },
-                { label: 'Gastos', data: s.map((x) => Number(x.gastos)), borderColor: tema.danger, backgroundColor: tema.danger + '22', fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2 },
+                { label: 'Ingresos', data: s.map((x) => Number(x.ingresos)), borderColor: tema.primary, backgroundColor: chartAlpha(tema.primary, 0.13), fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2 },
+                { label: 'Gastos', data: s.map((x) => Number(x.gastos)), borderColor: tema.danger, backgroundColor: chartAlpha(tema.danger, 0.13), fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2 },
             ] },
             options: { scales: { x: ejeCat, y: ejeDinero }, plugins: { tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + money.format(c.parsed.y) } } } },
         };
