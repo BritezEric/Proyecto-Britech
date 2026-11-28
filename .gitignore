@@ -15,3 +15,7 @@
 # Temporales de sesión (NO subir: pueden tener claves)
 scratchpad/
 Claude outputs/
+
+# Log del servidor WebSocket (Workerman)
+bin/workerman.log
+bin/*.pid
