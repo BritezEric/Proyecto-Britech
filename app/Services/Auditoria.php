@@ -64,6 +64,9 @@ class Auditoria
                     'campo' => $campo, 'anterior' => $anterior, 'nuevo' => $nuevo, 'detalle' => $detalle,
                     'ip' => $ip, 'agente' => $agente,
                 ]);
+                // Tiempo real: las pantallas abiertas del módulo se refrescan solas. Solo viaja
+                // módulo + acción + id (nunca el detalle); TiempoReal decide quién lo recibe.
+                TiempoReal::cambio($entidad, $accion, $id, $usuarioId);
             }
         } catch (\Throwable $e) { error_log('[Auditoria] ' . $e->getMessage()); }
     }

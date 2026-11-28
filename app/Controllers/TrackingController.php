@@ -38,6 +38,16 @@ class TrackingController
         if ($rep === null) { Response::json(['ok' => false, 'error' => 'Token inválido.'], 401); return; }
 
         $repo->guardarPosicion((int) $rep['id'], $lat, $lng);
+
+        // Tiempo real: la moto se mueve en el mapa del staff y en el seguimiento de cada
+        // cliente con un envío activo de este repartidor (cada cliente solo recibe SU pedido).
+        try {
+            \App\Services\TiempoReal::emitir(['staff'], 'envio_posicion', ['repartidor_id' => (int) $rep['id'], 'lat' => $lat, 'lng' => $lng]);
+            foreach ($repo->clientesEnCamino((int) $rep['id']) as $e) {
+                \App\Services\TiempoReal::emitir(['c:' . $e['cliente_id']], 'envio_posicion',
+                    ['pedido_id' => (int) $e['pedido_id'], 'lat' => $lat, 'lng' => $lng]);
+            }
+        } catch (\Throwable $e) { /* el aviso en vivo es secundario */ }
         Response::json(['ok' => true]);
     }
 

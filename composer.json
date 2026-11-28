@@ -10,7 +10,8 @@
         "auth0/auth0-php": "^9.0",
         "guzzlehttp/guzzle": "^8.2",
         "guzzlehttp/psr7": "^3.1",
-        "composer/ca-bundle": "^1.5"
+        "composer/ca-bundle": "^1.5",
+        "workerman/workerman": "^5.2"
     },
     "autoload": {
         "psr-4": {

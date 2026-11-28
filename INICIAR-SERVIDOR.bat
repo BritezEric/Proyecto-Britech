@@ -37,6 +37,12 @@ if %PUERTO% LEQ 8133 goto buscar_puerto
 goto sin_puerto
 
 :arrancar
+REM --- Tiempo real (WebSocket): si WS_SECRET esta configurado y no esta corriendo, se abre en otra ventana
+set "WS_PUERTO=8090"
+for /f "tokens=2 delims==" %%V in ('findstr /b "WS_PORT=" ".env"') do set "WS_PUERTO=%%V"
+findstr /b /r /c:"WS_SECRET=..*" ".env" >nul && if exist "vendor\workerman" (
+    netstat -an | findstr /r /c:":%WS_PUERTO% .*LISTENING" >nul || start "Britech - tiempo real" cmd /c ""%PHP%" bin\websocket.php start"
+)
 echo.
 echo   Britech corriendo en:
 echo   -^> http://127.0.0.1:%PUERTO%/login.html   (staff: admin / vendedor)

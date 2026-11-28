@@ -12,6 +12,7 @@
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/lucide@0.544.0/dist/umd/lucide.min.js"></script>
     <script defer src="/assets/js/mapas.js"></script>
+    <script src="/assets/js/tiempo-real.js"></script>
     <style>
         [hidden] { display: none !important; }   /* el atributo hidden gana a las clases con display */
         body { min-height: 100dvh; display: flex; flex-direction: column; }
@@ -214,6 +215,7 @@
         }
         function logout() {
             try { localStorage.removeItem('britech_rep_token'); localStorage.removeItem('britech_rep_nombre'); } catch (e) {}
+            window.BritechRT?.detener();
             token = '';
             if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; soltarWakeLock(); }
             location.href = '/repartidor.html';
@@ -226,7 +228,19 @@
             $('login').hidden = true; $('rep-top').hidden = false;
             $('rep-nombre').textContent = repNombre;
             setEstado(false);
-            cargarJob(); setInterval(cargarJob, 5000);
+            cargarJob();
+            // Tiempo real: con el WebSocket conectado, un envío asignado o cambiado aparece al
+            // instante (evento "envio" para este repartidor) y el refresco baja a cada 30 s.
+            let vueltas = 0;
+            setInterval(() => {
+                if (window.BritechRT?.conectado() && ++vueltas % 6 !== 0) return;
+                cargarJob();
+            }, 5000);
+            if (window.BritechRT) {
+                BritechRT.on('envio', () => cargarJob());
+                BritechRT.on('reconectado', () => cargarJob());
+                BritechRT.iniciar({ token });   // la app del repartidor se identifica con su token
+            }
         }
 
         function setEstado(on) {

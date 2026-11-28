@@ -1017,3 +1017,9 @@ td.acciones { text-align: right; white-space: nowrap; }
 
 /* Botón "Activar notificaciones" (beams.js): en escritorio, que arranque después del sidebar. */
 @media (min-width: 721px) { body:has(.admin) .push-chip { left: calc(252px + var(--sp-5)); } }
+
+/* Tiempo real: puntito verde en la campana cuando el WebSocket está conectado */
+html[data-rt="on"] .noti-btn::after {
+    content: ""; position: absolute; left: 6px; bottom: 6px; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 2px var(--surface);
+}

@@ -48,16 +48,22 @@ class EnvioRepository
     /** Deriva (asigna) un envío a un repartidor. $repartidorId null = sin asignar. */
     public function derivar(int $envioId, ?int $repartidorId): void
     {
+        $antes = $this->buscarPorId($envioId);
         if (self::tieneAsignadoEn()) {
             // asignado_en va ANTES que repartidor_id: MySQL evalúa el SET en orden.
             Database::conexion()
                 ->prepare("UPDATE envio SET " . self::SET_ASIGNADO . ", repartidor_id = ? WHERE id = ?")
                 ->execute([$repartidorId, $repartidorId, $envioId]);
-            return;
+        } else {
+            Database::conexion()
+                ->prepare("UPDATE envio SET repartidor_id = ? WHERE id = ?")
+                ->execute([$repartidorId, $envioId]);
         }
-        Database::conexion()
-            ->prepare("UPDATE envio SET repartidor_id = ? WHERE id = ?")
-            ->execute([$repartidorId, $envioId]);
+        // Tiempo real: al repartidor nuevo le aparece el envío sin recargar; al anterior se le va.
+        $avisar = ['staff'];
+        if ($repartidorId) $avisar[] = 'r:' . $repartidorId;
+        if (!empty($antes['repartidor_id']) && (int) $antes['repartidor_id'] !== (int) $repartidorId) $avisar[] = 'r:' . $antes['repartidor_id'];
+        \App\Services\TiempoReal::emitir($avisar, 'envio', ['envio_id' => $envioId, 'accion' => 'asignado']);
     }
 
     /**
@@ -88,6 +94,21 @@ class EnvioRepository
         Database::conexion()
             ->prepare("UPDATE envio SET estado = ? WHERE id = ?")
             ->execute([$estado, $envioId]);
+
+        // Tiempo real: staff, el repartidor del envío y el cliente dueño del pedido (solo el suyo).
+        try {
+            $st = Database::conexion()->prepare(
+                "SELECT e.repartidor_id, e.pedido_id, p.cliente_id FROM envio e LEFT JOIN pedido p ON p.id = e.pedido_id WHERE e.id = ?");
+            $st->execute([$envioId]);
+            $e = $st->fetch() ?: [];
+            $avisar = ['staff'];
+            if (!empty($e['repartidor_id'])) $avisar[] = 'r:' . $e['repartidor_id'];
+            \App\Services\TiempoReal::emitir($avisar, 'envio', ['envio_id' => $envioId, 'accion' => 'estado', 'estado' => $estado]);
+            if (!empty($e['cliente_id'])) {
+                \App\Services\TiempoReal::emitir(['c:' . $e['cliente_id']], 'envio',
+                    ['pedido_id' => (int) $e['pedido_id'], 'accion' => 'estado', 'estado' => $estado]);
+            }
+        } catch (\Throwable $ex) { /* el aviso en vivo es secundario */ }
     }
 
     public function buscarPorId(int $envioId): ?array

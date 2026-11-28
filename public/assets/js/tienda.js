@@ -713,6 +713,27 @@ async function refrescarCliente() {
     pintarMayorista();
     cargarNotisCliente();
     window.BritechPush?.sincronizar();     // push del navegador para este cliente (beams.js)
+    if (cliente) conectarTiempoRealCliente();
+}
+
+// ===== Tiempo real (WebSockets, tiempo-real.js) =====
+// El cliente recibe SOLO lo suyo (el servidor lo filtra por el ticket de su sesión):
+// su campana y la posición de la moto de SU pedido en el seguimiento.
+let _rtCliente = false;
+function conectarTiempoRealCliente() {
+    const rt = window.BritechRT;
+    if (!rt || _rtCliente) return;
+    _rtCliente = true;
+    rt.on('notificacion', () => cargarNotisCliente());
+    const seguir = (d) => {
+        if (_segPedidoId && Number(d.pedido_id) === Number(_segPedidoId) && !$('modal-seguir').classList.contains('oculto')) {
+            cargarSeguimiento(_segPedidoId);
+        }
+    };
+    rt.on('envio_posicion', seguir);
+    rt.on('envio', seguir);
+    rt.on('reconectado', () => cargarNotisCliente());
+    rt.iniciar();
 }
 
 // ============ Acceso mayorista (B2B) ============
@@ -869,6 +890,8 @@ async function registro(e) {
 async function salir() {
     let redirect = null;
     await window.BritechPush?.salir();      // este navegador deja de recibir sus avisos push
+    window.BritechRT?.detener();            // cierra el tiempo real de esta cuenta
+    _rtCliente = false;
     try { redirect = (await api.post('/api/tienda/logout', {})).redirect; } catch {}
     // Si entró por Google, Auth0 nos da una URL para cerrar también SU sesión.
     if (redirect) { location.href = redirect; return; }
@@ -969,9 +992,10 @@ async function verMisPedidos() {
 }
 
 // ===== Seguimiento en vivo del envío (mapa del cliente) =====
-let _segMapa = null, _segMoto = null, _segDest = null, _segInterval = null;
+let _segMapa = null, _segMoto = null, _segDest = null, _segInterval = null, _segPedidoId = null;
 
 async function abrirSeguimiento(pedidoId, numero) {
+    _segPedidoId = pedidoId;   // el tiempo real actualiza el mapa cuando se mueve la moto de ESTE pedido
     cerrar('modal-pedidos');
     // Limpiar marcadores de un seguimiento anterior.
     if (_segMapa) { if (_segMoto) { _segMapa.removeLayer(_segMoto); _segMoto = null; } if (_segDest) { _segMapa.removeLayer(_segDest); _segDest = null; } }
@@ -987,8 +1011,11 @@ async function abrirSeguimiento(pedidoId, numero) {
         setTimeout(() => _segMapa.invalidateSize(), 60);
         clearInterval(_segInterval);
         cargarSeguimiento(pedidoId);
+        let vueltas = 0;
         _segInterval = setInterval(() => {
             if ($('modal-seguir').classList.contains('oculto')) { clearInterval(_segInterval); return; }
+            // Con tiempo real conectado la moto se mueve por evento; acá solo un refresco cada 30 s.
+            if (window.BritechRT?.conectado() && ++vueltas % 10 !== 0) return;
             cargarSeguimiento(pedidoId);
         }, 3000);
     };
@@ -1204,7 +1231,8 @@ async function iniciar() {
             $('noti-cli-panel').classList.add('oculto');
         }
     });
-    setInterval(cargarNotisCliente, 60000);   // refresca cada 60s
+    // Respaldo: sin tiempo real conectado, la campana se refresca cada 60 s como siempre.
+    setInterval(() => { if (!window.BritechRT?.conectado()) cargarNotisCliente(); }, 60000);
 
     // cuenta
     $('btn-cuenta').addEventListener('click', () => {

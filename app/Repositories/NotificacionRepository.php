@@ -35,6 +35,16 @@ class NotificacionRepository
             if ($usuarioId !== null) $beams->avisarStaff($usuarioId, $titulo, $tipo, $ir);
             elseif ($clienteId !== null) $beams->avisarCliente($clienteId, $titulo, $tipo);
         } catch (\Throwable $e) { /* el aviso es secundario */ }
+
+        // Tiempo real: la campana de ESA persona se actualiza al instante si tiene el sistema
+        // abierto (no-op si el servidor WebSocket no está configurado o apagado).
+        try {
+            $para = $usuarioId !== null ? 'u:' . $usuarioId : ($clienteId !== null ? 'c:' . $clienteId : null);
+            if ($para !== null) {
+                \App\Services\TiempoReal::emitir([$para], 'notificacion',
+                    ['tipo' => $tipo, 'titulo' => mb_substr($titulo, 0, 200), 'nivel' => $nivel, 'ir' => $ir]);
+            }
+        } catch (\Throwable $e) { /* el aviso es secundario */ }
     }
 
     /** Avisa a TODO el staff activo (admin + vendedores). Firma compatible con el código previo. */

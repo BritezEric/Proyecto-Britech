@@ -1456,6 +1456,7 @@ function wire() {
     $('modal-detalle').addEventListener('click', (e) => { if (e.target === $('modal-detalle')) $('modal-detalle').classList.add('oculto'); });
 
     $('btn-salir').addEventListener('click', async () => {
+        window.BritechRT?.detener();   // corta el tiempo real de esta sesión
         try { await api.post('/api/logout', {}); } catch {}
         window.location.href = '/login.html';
     });
@@ -1529,7 +1530,44 @@ async function iniciar() {
     // Abre la sección del link (#vendedor desde el POS, o al recargar); si no hay, la de inicio.
     seleccionar(location.hash.slice(1));
     cargarNotificaciones();
-    setInterval(cargarNotificaciones, 60000);   // refresca cada 60s
+    conectarTiempoReal();
+    // Respaldo: si el tiempo real no está conectado, la campana se refresca cada 60 s como siempre.
+    setInterval(() => { if (!window.BritechRT?.conectado()) cargarNotificaciones(); }, 60000);
+}
+
+// ===== Tiempo real (WebSockets, tiempo-real.js) =====
+// La campana se actualiza al instante y la pantalla abierta se refresca sola cuando otro
+// usuario cambia algo (pedido nuevo, venta, envío, alerta de auditoría…).
+function conectarTiempoReal() {
+    const rt = window.BritechRT;
+    if (!rt) return;
+    rt.on('notificacion', () => cargarNotificaciones());
+    rt.on('cambio', () => refrescarVistaEnVivo());
+    rt.on('envio', () => refrescarVistaEnVivo());
+    rt.on('alerta', () => refrescarVistaEnVivo());
+    rt.on('envio_posicion', () => {
+        if (!$('vista-mapa').classList.contains('oculto') && typeof cargarMapa === 'function') cargarMapa();
+    });
+    // Al volver de un corte se recarga lo que pudo haberse perdido.
+    rt.on('reconectado', () => { cargarNotificaciones(); refrescarVistaEnVivo(); });
+    rt.iniciar();
+}
+
+// Refresca SOLO la vista visible, agrupando varios eventos seguidos en una sola recarga.
+// Si hay un modal abierto (el usuario está editando), espera a que lo cierre.
+let _rtTimer = null;
+function refrescarVistaEnVivo() {
+    clearTimeout(_rtTimer);
+    _rtTimer = setTimeout(() => {
+        if (document.querySelector('.modal:not(.oculto)')) { refrescarVistaEnVivo(); return; }
+        const visible = (id) => { const el = $(id); return el && !el.classList.contains('oculto'); };
+        if (visible('vista-inicio')) renderInicio();
+        else if (visible('vista-abm') && ['pedidos', 'envios', 'productos', 'gastos', 'solicitudes'].includes(entActual)) cargar();
+        else if (visible('vista-auditoria') && typeof cargarAuditoria === 'function') { auKpis(); cargarAuditoria(); }
+        else if (visible('vista-repartos') && typeof renderRepartos === 'function') renderRepartos();
+        else if (visible('vista-vendedor') && typeof renderVendedor === 'function') renderVendedor();
+        else if (visible('vista-mapa') && typeof cargarMapa === 'function') cargarMapa();
+    }, 1200);
 }
 // Esperar a que carguen TODOS los scripts (admin-reportes-operativos.js define
 // renderReportes, etc.) antes de iniciar: así entrar directo a #reportes no rompe.

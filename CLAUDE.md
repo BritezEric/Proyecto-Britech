@@ -45,6 +45,13 @@ y **Franco** (Módulo 5: Salidas del Sistema — dashboards y reportes). Se habl
    `AUDIT_HMAC_KEY` (.env), `AuditoriaSeccionController` / `AuditoriaSeccionRepository`.
    Test: `tests/auditoria_centro_test.php`.
 
+## Tiempo real (WebSockets)
+Servidor aparte `bin/websocket.php` (Workerman; `INICIAR-WEBSOCKET.bat`, lo abre también
+`INICIAR-SERVIDOR.bat`). El backend publica con `App\Services\TiempoReal::emitir()/cambio()`;
+el navegador usa `public/assets/js/tiempo-real.js` (`BritechRT`) con un ticket de
+`/api/tiempo-real/ticket`. Sin `WS_SECRET` en el `.env` queda apagado y todo sigue con polling.
+Doc: `docs/modulos/tiempo-real.md`. Test: `node tests/tiempo_real_test.mjs` (base `*_test`).
+
 ## Reglas del equipo
 - No borrar datos ni tocar claves primarias/foráneas; cambios de base solo con scripts
   `database/schema_*.sql` que se puedan volver a ejecutar.

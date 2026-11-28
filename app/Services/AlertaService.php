@@ -261,10 +261,12 @@ class AlertaService
     private function alerta(int $aid, string $tipo, string $nivel, ?int $usuarioId, string $titulo, string $desc,
                             ?string $entidad, ?int $entidadId, string $clave): void
     {
-        $this->repo->crear([
+        $nueva = $this->repo->crear([
             'auditoria_id' => $aid, 'tipo' => $tipo, 'nivel' => $nivel, 'usuario_id' => $usuarioId ?: null,
             'titulo' => $titulo, 'descripcion' => $desc, 'entidad' => $entidad, 'entidad_id' => $entidadId, 'clave' => $clave,
         ]);
+        // Tiempo real: solo a los administradores, y solo si la alerta es nueva (no duplicada).
+        if ($nueva) TiempoReal::emitir(['admin'], 'alerta', ['nivel' => $nivel, 'titulo' => $titulo]);
     }
 
     /** "Chrome · Windows" a partir del User-Agent (solo para mostrar). */

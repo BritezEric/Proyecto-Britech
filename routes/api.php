@@ -174,6 +174,10 @@ $router->get('/api/admin/auditoria/seccion/excel',   [\App\Controllers\Auditoria
 $router->get('/api/admin/auditoria/detalle',         [\App\Controllers\AuditoriaSeccionController::class, 'detalle'],    true);
 $router->get('/api/admin/auditoria/integridad',      [\App\Controllers\AuditoriaSeccionController::class, 'integridad'], true);
 $router->post('/api/admin/auditoria/alertas/revisar', [\App\Controllers\AuditoriaSeccionController::class, 'revisar'],   true);
+// Tiempo real (WebSockets): ticket firmado para conectarse (staff, cliente o repartidor con su token)
+// y estado de las conexiones para el admin. El servidor WebSocket corre aparte: bin/websocket.php.
+$router->get('/api/tiempo-real/ticket',        [\App\Controllers\TiempoRealController::class, 'ticket']);
+$router->get('/api/admin/tiempo-real/estado',  [\App\Controllers\TiempoRealController::class, 'estado'], true);
 
 // Reporte de Localidades (ventas / pedidos / envíos por zona) — admin completo;
 // vendedor acotado (el alcance lo decide el Service según la sesión). Solo lectura.

@@ -18,8 +18,12 @@ function renderMapaEnvios() {
     setTimeout(() => _mapa.invalidateSize(), 60);   // el contenedor estaba oculto
     clearInterval(_mapaInterval);
     cargarMapa();
+    let vueltas = 0;
     _mapaInterval = setInterval(() => {
         if ($('vista-mapa').classList.contains('oculto')) { clearInterval(_mapaInterval); return; }
+        // Con tiempo real conectado, la moto se mueve por evento (envio_posicion): acá solo
+        // un refresco de seguridad cada 30 s. Sin conexión, el refresco de siempre cada 3 s.
+        if (window.BritechRT?.conectado() && ++vueltas % 10 !== 0) return;
         cargarMapa();
     }, 3000);
 }

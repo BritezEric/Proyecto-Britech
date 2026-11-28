@@ -20,6 +20,17 @@ class TrackingRepository
         return $st->fetch() ?: null;
     }
 
+    /** Pedidos (y su cliente) que este repartidor lleva ahora mismo (para el seguimiento en vivo). */
+    public function clientesEnCamino(int $repartidorId): array
+    {
+        $st = Database::conexion()->prepare(
+            "SELECT e.pedido_id, p.cliente_id FROM envio e JOIN pedido p ON p.id = e.pedido_id
+             WHERE e.repartidor_id = ? AND e.estado IN ('despachado', 'en_camino')"
+        );
+        $st->execute([$repartidorId]);
+        return $st->fetchAll();
+    }
+
     /** Guarda la posición actual del repartidor y la agrega al historial. */
     public function guardarPosicion(int $repartidorId, float $lat, float $lng): void
     {

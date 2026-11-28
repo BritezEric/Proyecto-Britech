@@ -122,6 +122,16 @@ return [
     ],
     // Auditoría: clave para firmar la cadena de hashes (HMAC). Vacía = SHA-256 sin clave (más débil).
     // Va SOLO en .env (nunca en git) y conviene guardarla también fuera del servidor.
+    // Tiempo real (WebSockets, servidor bin/websocket.php con Workerman).
+    // WS_SECRET vacío = desactivado: el sistema funciona igual, con el refresco periódico de siempre.
+    'tiempo_real' => [
+        'secret'         => $leer('WS_SECRET', ''),            // firma de los tickets y del canal interno (solo .env)
+        'host'           => $leer('WS_HOST', '127.0.0.1'),     // 0.0.0.0 para aceptar conexiones de la red
+        'puerto'         => (int) $leer('WS_PORT', '8090'),     // puerto público (navegadores)
+        'puerto_interno' => (int) $leer('WS_PORT_INTERNO', '8091'), // solo 127.0.0.1: el backend publica eventos
+        'url'            => $leer('WS_URL', ''),               // ej. wss://britech.com/ws (vacío = ws://<host>:<puerto>)
+        'origenes'       => $leer('WS_ORIGINS', ''),           // orígenes permitidos separados por coma (vacío = cualquiera)
+    ],
     'auditoria' => [
         'hmac_key' => $leer('AUDIT_HMAC_KEY', ''),
     ],
